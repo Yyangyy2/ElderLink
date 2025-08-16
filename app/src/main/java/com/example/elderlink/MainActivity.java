@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Base64;
+import android.util.Log;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -20,6 +21,9 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -36,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
     private String uid;
     private String selectedImageBase64 = "";
     private ImageView imagePreview;
+    private ListenerRegistration peopleListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,30 +55,41 @@ public class MainActivity extends AppCompatActivity {
         adapter = new PersonAdapter(this, personList);
         recyclerView.setAdapter(adapter);
 
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+            Toast.makeText(this, "User not signed in", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
         uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
         firestore = FirebaseFirestore.getInstance();
+        Log.d("MainActivity", "Current UID: " + uid);
 
-        // Load people from Firestore
-        firestore.collection("users").document(uid).collection("people")
-                .addSnapshotListener((snapshots, e) -> {
-                    if (e != null) {
-                        Toast.makeText(this, "Error loading", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                    personList.clear();
-                    for (DocumentSnapshot doc : snapshots) {
-                        Person p = doc.toObject(Person.class);
-                        if (p != null) {
-                            personList.add(p);
-                        }
-                    }
-                    adapter.notifyDataSetChanged();
-
-                });
-
-
+        // Safe snapshot listener
+        peopleListener = firestore.collection("users")
+                .document(uid)
+                .collection("people")
+                .addSnapshotListener(this::onPeopleSnapshot);
 
         addPersonBtn.setOnClickListener(v -> showAddPersonDialog());
+    }
+
+    private void onPeopleSnapshot(@NonNull QuerySnapshot snapshots, @NonNull FirebaseFirestoreException e) {
+        if (e != null) {
+            Log.e("FirestoreListener", "Error loading people", e);
+            Toast.makeText(this, "Error loading people", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        personList.clear();
+        for (DocumentSnapshot doc : snapshots) {
+            Person p = doc.toObject(Person.class);
+            if (p != null) {
+                p.setId(doc.getId());
+                personList.add(p);
+            }
+        }
+        adapter.notifyDataSetChanged();
     }
 
     private void showAddPersonDialog() {
@@ -97,17 +113,25 @@ public class MainActivity extends AppCompatActivity {
             }
 
             Person newPerson = new Person(name, selectedImageBase64);
-            firestore.collection("users").document(uid).collection("people")
+
+            firestore.collection("users")
+                    .document(uid)
+                    .collection("people")
                     .add(newPerson)
-                    .addOnSuccessListener(docRef -> Toast.makeText(this, "Saved", Toast.LENGTH_SHORT).show())
-                    .addOnFailureListener(err -> Toast.makeText(this, "Error saving", Toast.LENGTH_SHORT).show());
+                    .addOnSuccessListener(docRef -> {
+                        Log.d("FirestoreAdd", "Saved person with ID: " + docRef.getId());
+                        Toast.makeText(this, "Saved successfully", Toast.LENGTH_SHORT).show();
+                        // No need to manually update personList; snapshot listener will handle it
+                    })
+                    .addOnFailureListener(err -> {
+                        Log.e("FirestoreAdd", "Failed to save person", err);
+                        Toast.makeText(this, "Error saving: " + err.getMessage(), Toast.LENGTH_LONG).show();
+                    });
         });
 
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
-
         builder.show();
     }
-
 
     private void pickImage(ImageView preview) {
         imagePreview = preview;
@@ -122,21 +146,28 @@ public class MainActivity extends AppCompatActivity {
                         InputStream inputStream = getContentResolver().openInputStream(uri);
                         Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
 
-                        // Compress to smaller size
+                        // Compress image
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                        bitmap.compress(Bitmap.CompressFormat.JPEG, 50, baos);
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, 25, baos);
                         byte[] imageBytes = baos.toByteArray();
 
-                        // Encode Base64
                         selectedImageBase64 = Base64.encodeToString(imageBytes, Base64.DEFAULT);
 
                         if (imagePreview != null) {
                             imagePreview.setImageBitmap(bitmap);
                         }
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        Log.e("ImagePicker", "Failed to load image", e);
                     }
                 }
             }
     );
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (peopleListener != null) {
+            peopleListener.remove(); // Clean up listener
+        }
+    }
 }

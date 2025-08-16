@@ -28,4 +28,12 @@
         android:layout_height="wrap_content"
         android:text="Check" />
 
+    <ImageButton
+        android:id="@+id/moreBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="More options"
+        android:src="@drawable/menu_vertical" />
+
 </LinearLayout>

@@ -40,6 +40,13 @@
             android:exported="false"
             android:label="@string/app_name"
             android:theme="@style/Theme.ElderLink" />
+
+        <activity
+            android:name=".CheckOnElderlyActivity"
+            android:exported="false"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.ElderLink"/>
+
     </application>
 
 </manifest>

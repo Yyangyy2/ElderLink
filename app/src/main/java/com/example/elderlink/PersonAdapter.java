@@ -2,6 +2,7 @@
 package com.example.elderlink;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Base64;
@@ -52,11 +53,23 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
             byte[] decodedBytes = Base64.decode(person.getImageBase64(), Base64.DEFAULT);
             Bitmap decodedBitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
             holder.personImage.setImageBitmap(decodedBitmap);
+        } else {
+            holder.personImage.setImageResource(R.drawable.profile_placeholder); // fallback image
         }
 
-        holder.checkBtn.setOnClickListener(v ->
-                Toast.makeText(context, "Checked " + person.getName(), Toast.LENGTH_SHORT).show()
-        );
+
+        holder.checkBtn.setOnClickListener(v ->{
+                Toast.makeText(context, "Checked " + person.getName(), Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(context, CheckOnElderlyActivity.class);
+
+            // Pass data so the new page knows which person it is
+            intent.putExtra("personName", person.getName());
+            intent.putExtra("personImageBase64", person.getImageBase64());
+
+
+            context.startActivity(intent);
+        });
+
 
         // Handle 3-dot menu
         holder.moreBtn.setOnClickListener(v -> {
@@ -96,7 +109,7 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
                         .collection("users")
                         .document(FirebaseAuth.getInstance().getCurrentUser().getUid())
                         .collection("people")
-                        .document(person.getId()) // 👈 use Firestore doc ID
+                        .document(person.getId())
                         .set(person)
                         .addOnCompleteListener(task -> {
                             if (task.isSuccessful()) {

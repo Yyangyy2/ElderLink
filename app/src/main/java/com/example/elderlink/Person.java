@@ -41,6 +41,7 @@ public class Person {
     public void setImageBase64(String imageBase64) {
         this.imageBase64 = imageBase64;
     }
+
 }
 
 

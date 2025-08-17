@@ -161,8 +161,8 @@ public class MainActivity extends AppCompatActivity {
 
         builder.setPositiveButton("Save", (dialog, which) -> {
             String name = editName.getText().toString().trim();
-            if (name.isEmpty() || selectedImageBase64.isEmpty()) {
-                Toast.makeText(this, "Name and Image required", Toast.LENGTH_SHORT).show();
+            if (name.isEmpty()) {
+                Toast.makeText(this, "Name required", Toast.LENGTH_SHORT).show();
                 return;
             }
 

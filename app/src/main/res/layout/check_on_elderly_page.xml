@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/white">
@@ -20,7 +21,7 @@
             android:layout_height="35dp"
             android:background="@drawable/back_arrow"
             android:contentDescription="Back"
-            android:src="@drawable/ic_back" />
+            tools:ignore="TouchTargetSizeCheck" />
     </LinearLayout>
 
     <!-- Profile Section -->
@@ -44,12 +45,11 @@
         android:padding="12dp">
 
         <ImageView
-            android:id="@+id/profileImage"
+            android:id="@+id/personImage"
             android:layout_width="77dp"
             android:layout_height="71dp"
-            android:background="@drawable/round_image_background"
             android:scaleType="centerCrop"
-            android:src="@drawable/sample_profile" />
+            android:src="@drawable/profile_placeholder" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -58,10 +58,10 @@
             android:paddingStart="12dp">
 
             <TextView
-                android:id="@+id/userName"
+                android:id="@+id/personName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Mr. Mahathir"
+                android:text="Person Name"
                 android:textSize="28sp"
                 android:textStyle="bold" />
 
@@ -108,7 +108,7 @@
             android:layout_margin="6dp"
             android:orientation="vertical"
             android:gravity="center"
-            android:background="@drawable/feature_item_bg">
+            >
 
             <ImageButton
                 android:layout_width="60dp"
@@ -136,7 +136,7 @@
             android:layout_margin="6dp"
             android:orientation="vertical"
             android:gravity="center"
-            android:background="@drawable/feature_item_bg">
+            >
 
             <ImageButton
                 android:layout_width="60dp"
@@ -164,7 +164,7 @@
             android:layout_margin="6dp"
             android:orientation="vertical"
             android:gravity="center"
-            android:background="@drawable/feature_item_bg">
+            >
 
             <ImageButton
                 android:layout_width="60dp"
@@ -192,7 +192,7 @@
             android:layout_margin="6dp"
             android:orientation="vertical"
             android:gravity="center"
-            android:background="@drawable/feature_item_bg">
+            >
 
             <ImageButton
                 android:layout_width="60dp"
@@ -220,7 +220,7 @@
             android:layout_margin="6dp"
             android:orientation="vertical"
             android:gravity="center"
-            android:background="@drawable/feature_item_bg">
+            >
 
             <ImageButton
                 android:layout_width="60dp"
@@ -248,7 +248,7 @@
             android:layout_margin="6dp"
             android:orientation="vertical"
             android:gravity="center"
-            android:background="@drawable/feature_item_bg">
+            >
 
             <ImageButton
                 android:layout_width="60dp"
@@ -289,7 +289,9 @@
         android:layout_marginEnd="16dp"
         android:text="View More >"
         android:textColor="#2962FF"
-        android:textSize="14sp"/>
+        android:textSize="14sp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/notificationsRecyclerView"
@@ -302,7 +304,8 @@
         android:layout_marginTop="27dp"
         android:layout_marginEnd="8dp"
         android:layout_marginRight="8dp"
-        android:layout_marginBottom="8dp" />
+        android:layout_marginBottom="8dp"
+        tools:ignore="SpeakableTextPresentCheck" />
 
     <!-- Bottom Navigation -->
     <LinearLayout
@@ -320,27 +323,27 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:src="@drawable/nav_home"
             android:background="@android:color/transparent"
-            />
+            android:src="@drawable/nav_home"
+            tools:ignore="SpeakableTextPresentCheck" />
 
         <ImageButton
             android:id="@+id/navNotifications"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:src="@drawable/nav_notification"
             android:background="@android:color/transparent"
-            />
+            android:src="@drawable/nav_notification"
+            tools:ignore="SpeakableTextPresentCheck" />
 
         <ImageButton
             android:id="@+id/navSettings"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:src="@drawable/nav_settings"
             android:background="@android:color/transparent"
-            />
+            android:src="@drawable/nav_settings"
+            tools:ignore="SpeakableTextPresentCheck" />
     </LinearLayout>
 
 </RelativeLayout>

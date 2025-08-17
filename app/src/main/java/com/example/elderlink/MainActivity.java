@@ -1,12 +1,15 @@
 package com.example.elderlink;
 
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Base64;
 import android.util.Log;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import android.os.Bundle;
@@ -19,6 +22,11 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
@@ -49,6 +57,8 @@ public class MainActivity extends AppCompatActivity {
 
         recyclerView = findViewById(R.id.peopleRecyclerView);
         addPersonBtn = findViewById(R.id.addPersonBtn);
+        TextView userNameTextView = findViewById(R.id.userName); //Mainpage Caregiver Username
+        Button logoutButton = findViewById(R.id.logoutButton); //Logout caregiver
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         personList = new ArrayList<>();
@@ -72,6 +82,50 @@ public class MainActivity extends AppCompatActivity {
                 .addSnapshotListener(this::onPeopleSnapshot);
 
         addPersonBtn.setOnClickListener(v -> showAddPersonDialog());
+
+
+
+
+        //Caregiver username-----------------------------------------------------------------------------
+        DatabaseReference userRef = FirebaseDatabase.getInstance()
+                .getReference("users")
+                .child(uid)
+                .child("username"); // adjust path according to your database
+
+
+        userRef.get().addOnSuccessListener(snapshot -> {
+            if (snapshot.exists()) {
+                String username = snapshot.getValue(String.class);
+                userNameTextView.setText(username);
+            } else {
+                userNameTextView.setText("No Name");
+            }
+        }).addOnFailureListener(e -> {
+            userNameTextView.setText("No Name");
+        });
+
+
+        //Log out Caregiver----------------------------------------------------------------------------
+        logoutButton.setOnClickListener(v -> {
+            // Sign out from Firebase
+            FirebaseAuth.getInstance().signOut();
+
+            //Redirect to SignupActivity
+            Intent intent = new Intent(MainActivity.this, SignupActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            // Clear back stack so user can't press back to return
+            startActivity(intent);
+            finish(); //ensures current activity is finished
+        });
+
+
+
+
+
+
+
+
+
     }
 
     private void onPeopleSnapshot(@NonNull QuerySnapshot snapshots, @NonNull FirebaseFirestoreException e) {

@@ -47,6 +47,17 @@
             android:label="@string/app_name"
             android:theme="@style/Theme.ElderLink"/>
 
+        <activity
+            android:name=".view_medication.ViewMedicationActivity"
+            android:exported="false"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.ElderLink"/>
+        <activity
+            android:name=".view_medication.AddMedicationActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ElderLink" />
+
+
     </application>
 
 </manifest>

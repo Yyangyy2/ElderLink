@@ -12,6 +12,8 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.elderlink.view_medication.ViewMedicationActivity;
+
 public class CheckOnElderlyActivity extends AppCompatActivity {
 
     @Override
@@ -48,6 +50,26 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
                 finish();
             }
         });
+
+
+        //View Medication Button (to Medication)------------------------------------------------
+        //View Medication Button (to Medication)------------------------------------------------
+        ImageButton btnMedication = findViewById(R.id.btnMedication);
+
+        btnMedication.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(CheckOnElderlyActivity.this, ViewMedicationActivity.class);
+
+                // Pass along personUid so next activity knows which elderly
+                String personUid = getIntent().getStringExtra("personUid");
+                intent.putExtra("personUid", personUid);
+
+                startActivity(intent);
+                finish();
+            }
+        });
+
 
 
 

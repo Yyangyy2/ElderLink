@@ -101,16 +101,17 @@
 
         <!-- Feature Buttons -->
         <LinearLayout
-            android:id="@+id/btnMedication"
             android:layout_width="0dp"
             android:layout_height="120dp"
             android:layout_columnWeight="1"
             android:layout_margin="6dp"
             android:orientation="vertical"
             android:gravity="center"
+            android:background="@drawable/custom_border"
             >
 
             <ImageButton
+                android:id="@+id/btnMedication"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
                 android:src="@drawable/view_medication_logo"
@@ -136,6 +137,7 @@
             android:layout_margin="6dp"
             android:orientation="vertical"
             android:gravity="center"
+            android:background="@drawable/custom_border"
             >
 
             <ImageButton
@@ -164,6 +166,7 @@
             android:layout_margin="6dp"
             android:orientation="vertical"
             android:gravity="center"
+            android:background="@drawable/custom_border"
             >
 
             <ImageButton
@@ -192,6 +195,7 @@
             android:layout_margin="6dp"
             android:orientation="vertical"
             android:gravity="center"
+            android:background="@drawable/custom_border"
             >
 
             <ImageButton
@@ -220,6 +224,7 @@
             android:layout_margin="6dp"
             android:orientation="vertical"
             android:gravity="center"
+            android:background="@drawable/custom_border"
             >
 
             <ImageButton
@@ -248,6 +253,7 @@
             android:layout_margin="6dp"
             android:orientation="vertical"
             android:gravity="center"
+            android:background="@drawable/custom_border"
             >
 
             <ImageButton

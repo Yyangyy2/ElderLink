@@ -47,6 +47,7 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
     public void onBindViewHolder(@NonNull PersonViewHolder holder, int position) {
         Person person = personList.get(position);
         holder.personName.setText(person.getName());
+        String personUid = person.getId();
 
         // Decode Base64 image if available
         if (person.getImageBase64() != null && !person.getImageBase64().isEmpty()) {
@@ -62,10 +63,11 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
                 Toast.makeText(context, "Checked " + person.getName(), Toast.LENGTH_SHORT).show();
                 Intent intent = new Intent(context, CheckOnElderlyActivity.class);
 
+
             // Pass data so the new page knows which person it is
             intent.putExtra("personName", person.getName());
             intent.putExtra("personImageBase64", person.getImageBase64());
-
+            intent.putExtra("personUid", personUid);
 
             context.startActivity(intent);
         });

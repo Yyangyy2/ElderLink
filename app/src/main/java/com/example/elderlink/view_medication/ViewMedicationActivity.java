@@ -7,6 +7,7 @@ import android.view.View.OnClickListener;
 import android.widget.ImageButton;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -39,7 +40,10 @@ public class ViewMedicationActivity extends AppCompatActivity {
 
 
         recyclerView = findViewById(R.id.medicationRecyclerView);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        // Use 2 columns
+        GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 2);
+        recyclerView.setLayoutManager(gridLayoutManager);
+
 
         adapter = new MedicationAdapter(this, medicationList, medication -> {
             // handle edit click → open AddMedicationActivity in edit mode
@@ -91,7 +95,8 @@ public class ViewMedicationActivity extends AppCompatActivity {
 
     }
 
-
+    //Out of onCreate boundary--------------------------------------------------------------------------
+    //Display medications-------------------------------------------------------------------------------
     private void loadMedications() {
         String userUid = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser().getUid();
         db.collection("users")

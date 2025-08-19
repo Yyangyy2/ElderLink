@@ -57,7 +57,7 @@ public class Model_medication {
 
     private String imageBase64;
 
-    // Empty constructor required for Firestore
+
     public Model_medication() {
 
     }

@@ -93,7 +93,10 @@ public class ViewMedicationActivity extends AppCompatActivity {
 
 
     private void loadMedications() {
-        db.collection("people").document(personUid)
+        String userUid = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser().getUid();
+        db.collection("users")
+                .document(userUid)
+                .collection("people").document(personUid)
                 .collection("medications")
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {

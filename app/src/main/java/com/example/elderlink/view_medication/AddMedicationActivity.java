@@ -1,6 +1,5 @@
 package com.example.elderlink.view_medication;
 
-
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.graphics.Bitmap;
@@ -17,10 +16,12 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.elderlink.R;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.io.ByteArrayOutputStream;
@@ -35,15 +36,19 @@ public class AddMedicationActivity extends AppCompatActivity {
 
     private EditText editMedicationName, editMedicationDate, editMedicationTime;
     private ImageView selectedMedicationImage;
-    private Button selectMedicationImageBtn, saveMedicationBtn;
+    private Button selectMedicationImageBtn, saveMedicationBtn, deleteMedicationBtn;
     private Spinner spinnerMedicationUnit;
 
     private String selectedImageBase64 = "";
     private ActivityResultLauncher<String> imagePickerLauncher;
 
     private FirebaseFirestore firestore;
-    private String caregiverUid; // current signed-in caregiver uid
-    private String personUid;    // required: the person doc id under users/{caregiverUid}/people/{personUid}
+    private String caregiverUid;
+    private String personUid;
+    @Nullable
+    private String medId;
+
+    private boolean isEditMode = false;
 
     private final Calendar calendar = Calendar.getInstance();
     private final SimpleDateFormat sdfDate = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
@@ -52,7 +57,7 @@ public class AddMedicationActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.medication_add_page); // <-- ensure this layout file exists
+        setContentView(R.layout.medication_add_page);
 
         // Views
         editMedicationName = findViewById(R.id.editMedicationName);
@@ -62,8 +67,9 @@ public class AddMedicationActivity extends AppCompatActivity {
         selectMedicationImageBtn = findViewById(R.id.selectMedicationImageBtn);
         saveMedicationBtn = findViewById(R.id.saveMedicationBtn);
         spinnerMedicationUnit = findViewById(R.id.spinnerMedicationUnit);
+        deleteMedicationBtn = findViewById(R.id.deleteMedicationBtn);
 
-        // Spinner - units
+        // Spinner setup
         ArrayAdapter<String> unitsAdapter = new ArrayAdapter<>(
                 this,
                 android.R.layout.simple_spinner_item,
@@ -72,7 +78,7 @@ public class AddMedicationActivity extends AppCompatActivity {
         unitsAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerMedicationUnit.setAdapter(unitsAdapter);
 
-        // Firestore & auth
+        // Firestore
         firestore = FirebaseFirestore.getInstance();
         if (FirebaseAuth.getInstance().getCurrentUser() == null) {
             Toast.makeText(this, "Please sign in first", Toast.LENGTH_SHORT).show();
@@ -81,28 +87,33 @@ public class AddMedicationActivity extends AppCompatActivity {
         }
         caregiverUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
-        // Read required personUid from Intent
+        // Intent extras
         personUid = getIntent().getStringExtra("personUid");
+        medId = getIntent().getStringExtra("medId");
+        isEditMode = (medId != null && !medId.isEmpty());
+
         if (personUid == null || personUid.isEmpty()) {
-            Toast.makeText(this, "No person specified. Cannot save medication.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "No person specified.", Toast.LENGTH_LONG).show();
             finish();
             return;
         }
-        Log.d(TAG, "Saving for caregiverUid=" + caregiverUid + " personUid=" + personUid);
+
+        Log.d(TAG, "caregiverUid=" + caregiverUid + ", personUid=" + personUid + ", medId=" + medId);
+
+        // Hide delete button if adding new
+        if (!isEditMode) {
+            deleteMedicationBtn.setVisibility(Button.GONE);
+        }
 
         // Date/time pickers
         editMedicationDate.setOnClickListener(v -> showDatePicker());
-        editMedicationDate.setOnFocusChangeListener((v, hasFocus) -> { if (hasFocus) showDatePicker(); });
-
         editMedicationTime.setOnClickListener(v -> showTimePicker());
-        editMedicationTime.setOnFocusChangeListener((v, hasFocus) -> { if (hasFocus) showTimePicker(); });
 
         // Image picker
         imagePickerLauncher = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
             if (uri == null) return;
             try (InputStream inputStream = getContentResolver().openInputStream(uri)) {
                 Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
-                // compress to reduce size
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 40, baos);
                 selectedImageBase64 = Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT);
@@ -116,6 +127,15 @@ public class AddMedicationActivity extends AppCompatActivity {
         selectMedicationImageBtn.setOnClickListener(v -> imagePickerLauncher.launch("image/*"));
 
         saveMedicationBtn.setOnClickListener(v -> saveMedication());
+        deleteMedicationBtn.setOnClickListener(v -> deleteMedication());
+
+        // If editing, load existing data
+        if (isEditMode) {
+            loadMedicationForEdit();
+            setTitle("Edit Medication");
+        } else {
+            setTitle("Add Medication");
+        }
     }
 
     private void showDatePicker() {
@@ -138,33 +158,69 @@ public class AddMedicationActivity extends AppCompatActivity {
         }, hour, minute, true).show();
     }
 
+    private void loadMedicationForEdit() {
+        DocumentReference docRef = firestore.collection("users")
+                .document(caregiverUid)
+                .collection("people")
+                .document(personUid)
+                .collection("medications")
+                .document(medId);
+
+        docRef.get()
+                .addOnSuccessListener(snap -> {
+                    if (!snap.exists()) {
+                        Toast.makeText(this, "Medication not found.", Toast.LENGTH_LONG).show();
+                        finish();
+                        return;
+                    }
+                    Model_medication med = snap.toObject(Model_medication.class);
+                    if (med == null) return;
+
+                    editMedicationName.setText(med.getName());
+                    editMedicationDate.setText(med.getDate());
+                    editMedicationTime.setText(med.getTime());
+
+                    if (med.getUnit() != null) {
+                        ArrayAdapter adapter = (ArrayAdapter) spinnerMedicationUnit.getAdapter();
+                        int pos = adapter.getPosition(med.getUnit());
+                        if (pos >= 0) spinnerMedicationUnit.setSelection(pos);
+                    }
+
+                    selectedImageBase64 = med.getImageBase64();
+                    if (selectedImageBase64 != null && !selectedImageBase64.isEmpty()) {
+                        byte[] decoded = Base64.decode(selectedImageBase64, Base64.DEFAULT);
+                        selectedMedicationImage.setImageBitmap(BitmapFactory.decodeByteArray(decoded, 0, decoded.length));
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "loadMedicationForEdit failed", e);
+                    Toast.makeText(this, "Error loading medication: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    finish();
+                });
+    }
+
     private void saveMedication() {
         String med_name = editMedicationName.getText().toString().trim();
         String med_date = editMedicationDate.getText().toString().trim();
         String med_time = editMedicationTime.getText().toString().trim();
         String med_unit = (String) spinnerMedicationUnit.getSelectedItem();
 
-        if (med_name.isEmpty()) {
-            editMedicationName.setError("Name required");
-            editMedicationName.requestFocus();
-            return;
-        }
-        if (med_date.isEmpty()) {
-            editMedicationDate.setError("Date required");
-            editMedicationDate.requestFocus();
-            return;
-        }
-        if (med_time.isEmpty()) {
-            editMedicationTime.setError("Time required");
-            editMedicationTime.requestFocus();
+        if (med_name.isEmpty() || med_date.isEmpty() || med_time.isEmpty()) {
+            Toast.makeText(this, "All fields required", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        String docId = UUID.randomUUID().toString();
-        Model_medication medication = new Model_medication(docId, med_name, med_date, med_time, med_unit, selectedImageBase64);
+        String docId = isEditMode ? medId : UUID.randomUUID().toString();
 
+        Model_medication medication = new Model_medication(
+                docId,
+                med_name,
+                med_date,
+                med_time,
+                med_unit,
+                selectedImageBase64 == null ? "" : selectedImageBase64
+        );
 
-        // SAVE to users/{caregiverUid}/people/{personUid}/medications/{docId}
         firestore.collection("users")
                 .document(caregiverUid)
                 .collection("people")
@@ -173,15 +229,37 @@ public class AddMedicationActivity extends AppCompatActivity {
                 .document(docId)
                 .set(medication)
                 .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Saved medication for personUid=" + personUid + " docId=" + docId);
-                    Toast.makeText(AddMedicationActivity.this, "Medication saved", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this,
+                            isEditMode ? "Medication updated" : "Medication saved",
+                            Toast.LENGTH_SHORT).show();
                     finish();
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Failed to save medication", e);
-                    Toast.makeText(AddMedicationActivity.this, "Failed to save: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    Log.e(TAG, "Save failed", e);
+                    Toast.makeText(this, "Failed to save: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 });
     }
 
+    private void deleteMedication() {
+        if (!isEditMode || medId == null) {
+            Toast.makeText(this, "No medication to delete", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
+        firestore.collection("users")
+                .document(caregiverUid)
+                .collection("people")
+                .document(personUid)
+                .collection("medications")
+                .document(medId)
+                .delete()
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(this, "Medication deleted", Toast.LENGTH_SHORT).show();
+                    finish();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Delete failed", e);
+                    Toast.makeText(this, "Failed to delete: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
+    }
 }

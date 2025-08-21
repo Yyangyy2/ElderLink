@@ -2,6 +2,7 @@ package com.example.elderlink.view_medication;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ImageButton;
@@ -16,6 +17,7 @@ import com.example.elderlink.R;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -97,23 +99,31 @@ public class ViewMedicationActivity extends AppCompatActivity {
 
     //Out of onCreate boundary--------------------------------------------------------------------------
     //Display medications-------------------------------------------------------------------------------
+    // do not use .get(), it is not realtime and i have to reenter the page to only see the changes (add/delete), instead use SnapshotListener() to listen for updates
     private void loadMedications() {
         String userUid = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser().getUid();
         db.collection("users")
                 .document(userUid)
-                .collection("people").document(personUid)
+                .collection("people")
+                .document(personUid)
                 .collection("medications")
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    medicationList.clear();
-                    for (DocumentSnapshot doc : queryDocumentSnapshots) {
-                        Model_medication med = doc.toObject(Model_medication.class);
-                        if (med != null) {
-                            med.setId(doc.getId()); // keep Firestore doc id
-                            medicationList.add(med);
-                        }
+                .addSnapshotListener((snapshots, e) -> {
+                    if (e != null) {
+                        Log.w("Firestore", "Listen failed.", e);
+                        return;
                     }
-                    adapter.notifyDataSetChanged();
+
+                    if (snapshots != null) {
+                        medicationList.clear();
+                        for (QueryDocumentSnapshot doc : snapshots) {
+                            Model_medication medication = doc.toObject(Model_medication.class);
+                            if (medication != null) {
+                                medication.setId(doc.getId()); // set Firestore doc id
+                                medicationList.add(medication);
+                            }
+                        }
+                        adapter.notifyDataSetChanged();
+                    }
                 });
     }
 

@@ -1,5 +1,6 @@
 package com.example.elderlink.view_medication;
 
+
 public class Model_medication {
     private String id;
     private String name;

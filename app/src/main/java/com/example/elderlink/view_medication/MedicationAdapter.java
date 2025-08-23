@@ -55,6 +55,7 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
         }
 
         holder.btnEdit.setOnClickListener(v -> listener.onEditClick(med));
+
     }
 
     @Override

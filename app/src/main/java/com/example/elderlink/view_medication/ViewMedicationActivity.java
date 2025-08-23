@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ImageButton;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -19,17 +20,27 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 
 public class ViewMedicationActivity extends AppCompatActivity {
 
 
     private RecyclerView recyclerView;
     private MedicationAdapter adapter;
+    // For view medicines shown in recyclerView but before selceting date
     private List<Model_medication> medicationList = new ArrayList<>();
+    // For view medicines shown in recyclerView, then filter by selected date
+    private List<Model_medication> allMedications = new ArrayList<>();
     private FirebaseFirestore db;
     private String personUid;
+
+
+    private RecyclerView calendarRecyclerView;
+    private CalendarAdapter calendarAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,7 +67,11 @@ public class ViewMedicationActivity extends AppCompatActivity {
         });
         recyclerView.setAdapter(adapter);
 
-        loadMedications();
+        setupCalendar();
+        loadMedications(personUid);
+
+
+
 
 
 
@@ -100,31 +115,89 @@ public class ViewMedicationActivity extends AppCompatActivity {
     //Out of onCreate boundary--------------------------------------------------------------------------
     //Display medications-------------------------------------------------------------------------------
     // do not use .get(), it is not realtime and i have to reenter the page to only see the changes (add/delete), instead use SnapshotListener() to listen for updates
-    private void loadMedications() {
-        String userUid = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser().getUid();
+    private void loadMedications(String personUid) {
+        if (personUid == null || personUid.isEmpty()) {
+            Toast.makeText(this, "No person specified.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        String userUid = com.google.firebase.auth.FirebaseAuth.getInstance()
+                .getCurrentUser()
+                .getUid();
+
         db.collection("users")
                 .document(userUid)
                 .collection("people")
                 .document(personUid)
                 .collection("medications")
-                .addSnapshotListener((snapshots, e) -> {
-                    if (e != null) {
-                        Log.w("Firestore", "Listen failed.", e);
+                .addSnapshotListener((querySnapshot, error) -> {
+                    if (error != null) {
+                        Log.e("Firestore", "Listen failed.", error);
                         return;
                     }
 
-                    if (snapshots != null) {
-                        medicationList.clear();
-                        for (QueryDocumentSnapshot doc : snapshots) {
-                            Model_medication medication = doc.toObject(Model_medication.class);
-                            if (medication != null) {
-                                medication.setId(doc.getId()); // set Firestore doc id
-                                medicationList.add(medication);
+                    if (querySnapshot != null) {
+                        allMedications.clear();
+                        for (QueryDocumentSnapshot doc : querySnapshot) {
+                            Model_medication med = doc.toObject(Model_medication.class);
+                            if (med != null) {
+                                med.setId(doc.getId());
+                                allMedications.add(med);
                             }
                         }
-                        adapter.notifyDataSetChanged();
+
+                        // Default to today’s date
+                        String today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                                .format(Calendar.getInstance().getTime());
+                        filterMedicationsByDate(today);
                     }
                 });
+    }
+
+
+
+
+
+
+
+
+    // Setup horizontal scrolling calendar ---------------------------------------------------------------
+    private void setupCalendar() {
+        calendarRecyclerView = findViewById(R.id.calendarRecyclerView);
+        calendarRecyclerView.setLayoutManager(
+                new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        );
+
+        // Generate ±15 days around today
+        List<String> dateList = new ArrayList<>();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        Calendar cal = Calendar.getInstance();
+        for (int i = -15; i <= 15; i++) {
+            Calendar tempCal = (Calendar) cal.clone();
+            tempCal.add(Calendar.DAY_OF_MONTH, i);
+            dateList.add(sdf.format(tempCal.getTime()));
+        }
+
+        String today = sdf.format(cal.getTime());
+
+        calendarAdapter = new CalendarAdapter(dateList, today, selectedDate -> {
+            // filter meds when a new date is selected
+            filterMedicationsByDate(selectedDate);
+        });
+        calendarRecyclerView.setAdapter(calendarAdapter);
+    }
+
+
+
+    // Filter by date -----------------------------------------------------------------------------------
+    private void filterMedicationsByDate(String date) {
+        medicationList.clear();
+        for (Model_medication med : allMedications) {
+            if (med.getDate() != null && med.getDate().equals(date)) {
+                medicationList.add(med);
+            }
+        }
+        adapter.notifyDataSetChanged();
     }
 
 

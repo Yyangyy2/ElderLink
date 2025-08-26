@@ -58,13 +58,33 @@
             android:layout_marginTop="10dp"
             android:drawableEnd="@android:drawable/ic_menu_recent_history" />
 
-        <!-- Dosage Unit -->
-        <Spinner
-            android:id="@+id/spinnerMedicationUnit"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            tools:ignore="TouchTargetSizeCheck" />
+            android:orientation="horizontal"
+            android:layout_marginTop="10dp">
+
+            <!-- Dosage Number Input -->
+            <EditText
+                android:id="@+id/editMedicationDosage"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Dosage amount"
+                android:inputType="number"
+                android:padding="8dp"
+                tools:ignore="TouchTargetSizeCheck" />
+
+            <!-- Dosage Unit Spinner -->
+            <Spinner
+                android:id="@+id/spinnerMedicationUnit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:minWidth="100dp"
+                tools:ignore="TouchTargetSizeCheck" />
+
+        </LinearLayout>
 
         <!-- Save Button -->
         <Button

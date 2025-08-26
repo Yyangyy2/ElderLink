@@ -34,7 +34,7 @@ import java.util.UUID;
 public class AddMedicationActivity extends AppCompatActivity {
     private static final String TAG = "AddMedicationActivity";
 
-    private EditText editMedicationName, editMedicationDate, editMedicationTime;
+    private EditText editMedicationName, editMedicationDate, editMedicationTime,editMedicationDosage;
     private ImageView selectedMedicationImage;
     private Button selectMedicationImageBtn, saveMedicationBtn, deleteMedicationBtn;
     private Spinner spinnerMedicationUnit;
@@ -63,6 +63,7 @@ public class AddMedicationActivity extends AppCompatActivity {
         editMedicationName = findViewById(R.id.editMedicationName);
         editMedicationDate = findViewById(R.id.editMedicationDate);
         editMedicationTime = findViewById(R.id.editMedicationTime);
+        editMedicationDosage = findViewById(R.id.editMedicationDosage);
         selectedMedicationImage = findViewById(R.id.selectedMedicationImage);
         selectMedicationImageBtn = findViewById(R.id.selectMedicationImageBtn);
         saveMedicationBtn = findViewById(R.id.saveMedicationBtn);
@@ -180,6 +181,12 @@ public class AddMedicationActivity extends AppCompatActivity {
                     editMedicationDate.setText(med.getDate());
                     editMedicationTime.setText(med.getTime());
 
+
+                    if (med.getDosage() != null) {
+                        editMedicationDosage.setText(med.getDosage());
+                    }
+
+
                     if (med.getUnit() != null) {
                         ArrayAdapter adapter = (ArrayAdapter) spinnerMedicationUnit.getAdapter();
                         int pos = adapter.getPosition(med.getUnit());
@@ -200,9 +207,11 @@ public class AddMedicationActivity extends AppCompatActivity {
     }
 
     private void saveMedication() {
+        //trim() remove whitespace
         String med_name = editMedicationName.getText().toString().trim();
         String med_date = editMedicationDate.getText().toString().trim();
         String med_time = editMedicationTime.getText().toString().trim();
+        String med_dosage = editMedicationDosage.getText().toString().trim();
         String med_unit = (String) spinnerMedicationUnit.getSelectedItem();
 
         if (med_name.isEmpty() || med_date.isEmpty() || med_time.isEmpty()) {
@@ -217,6 +226,7 @@ public class AddMedicationActivity extends AppCompatActivity {
                 med_name,
                 med_date,
                 med_time,
+                med_dosage,
                 med_unit,
                 selectedImageBase64 == null ? "" : selectedImageBase64
         );

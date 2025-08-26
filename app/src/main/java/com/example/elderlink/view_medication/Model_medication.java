@@ -6,7 +6,9 @@ public class Model_medication {
     private String name;
     private String date;
     private String time;
+    private String dosage;
     private String unit;
+    private String imageBase64;
 
     public String getImageBase64() {
         return imageBase64;
@@ -14,6 +16,13 @@ public class Model_medication {
 
     public void setImageBase64(String imageBase64) {
         this.imageBase64 = imageBase64;
+    }
+
+    public String getDosage() {
+        return dosage;
+    }
+    public void setDosage(String dosage) {
+        this.dosage = dosage;
     }
 
     public String getUnit() {
@@ -56,18 +65,19 @@ public class Model_medication {
         this.id = id;
     }
 
-    private String imageBase64;
+
 
 
     public Model_medication() {
 
     }
 
-    public Model_medication(String id, String name, String date, String time, String unit, String imageBase64) {
+    public Model_medication(String id, String name, String date, String time, String dosage,String unit, String imageBase64) {
         this.id = id;
         this.name = name;
         this.date = date;
         this.time = time;
+        this.dosage = dosage;
         this.unit = unit;
         this.imageBase64 = imageBase64;
     }

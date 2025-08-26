@@ -44,6 +44,7 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
 
         holder.medName.setText(med.getName());
         holder.medTime.setText(med.getTime());
+        holder.medDosage.setText(med.getDosage());
         holder.medUnit.setText(med.getUnit());
 
         // Convert Base64 image if available
@@ -64,13 +65,14 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
     }
 
     public static class MedicationViewHolder extends RecyclerView.ViewHolder {
-        TextView medName, medTime, medUnit, btnEdit;
+        TextView medName, medTime,medDosage, medUnit, btnEdit;
         ImageView medImage;
 
         public MedicationViewHolder(@NonNull View itemView) {
             super(itemView);
             medName = itemView.findViewById(R.id.med_name);
             medTime = itemView.findViewById(R.id.med_time);
+            medDosage = itemView.findViewById(R.id.med_dosage);
             medUnit = itemView.findViewById(R.id.med_unit);
             medImage = itemView.findViewById(R.id.med_image);
             btnEdit = itemView.findViewById(R.id.btnEdit);

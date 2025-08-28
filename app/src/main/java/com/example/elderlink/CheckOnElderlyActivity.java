@@ -26,6 +26,8 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.check_on_elderly_page);
 
+        DrawerMenu.setupMenu(this); // Add the Left side menu
+
         TextView nameText = findViewById(R.id.personName);
         ImageView imageView = findViewById(R.id.personImage);
 
@@ -64,7 +66,7 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
 
         // When clicking the button, open the drawer
         navMenu.setOnClickListener(v -> {
-            drawerLayout.openDrawer(GravityCompat.START); // START is opens from left
+            drawerLayout.openDrawer(GravityCompat.START); // START is opens from left; END opens from right
         });
 
 

@@ -1,5 +1,6 @@
 package com.example.elderlink;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -11,11 +12,15 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.Fragment;
 
 import com.example.elderlink.view_medication.ViewMedicationActivity;
 
 public class CheckOnElderlyActivity extends AppCompatActivity {
 
+    @SuppressLint("ResourceType")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -52,8 +57,21 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
         });
 
 
+
+        //Open Left navigation menu------------------------------------------------
+        DrawerLayout drawerLayout = findViewById(R.id.drawerLayout);
+        ImageButton navMenu = findViewById(R.id.navMenu);
+
+        // When clicking the button, open the drawer
+        navMenu.setOnClickListener(v -> {
+            drawerLayout.openDrawer(GravityCompat.START); // START is opens from left
+        });
+
+
+
+
         //View Medication Button (to Medication)------------------------------------------------
-        //View Medication Button (to Medication)------------------------------------------------
+
         ImageButton btnMedication = findViewById(R.id.btnMedication);
 
         btnMedication.setOnClickListener(new View.OnClickListener() {

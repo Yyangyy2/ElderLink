@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/left_side_menu">
+
+
+    <LinearLayout
+        android:layout_width="250dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:orientation="vertical"
+        android:background="@android:color/white"
+        android:padding="16dp"
+        tools:ignore="MissingConstraints">
+
+        <!-- Logo -->
+        <ImageView
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:src="@drawable/logofyp_black"
+            android:layout_gravity="center"
+            android:contentDescription="Logo"/>
+
+        <!-- Home Button -->
+        <LinearLayout
+            android:id="@+id/btnHome"
+            android:layout_width="225dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="8dp"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/nav_home"
+                android:contentDescription="Home Icon"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="Home                               >"
+                android:textSize="16sp"/>
+        </LinearLayout>
+
+        <!-- Quick Access Title -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Quick Access"
+            android:textStyle="bold"
+            android:textSize="16dp"
+            android:paddingTop="20dp"/>
+
+
+
+        <!-- Notification -->
+        <LinearLayout
+            android:id="@+id/btnNotification"
+            android:layout_width="225dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="8dp"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/nav_notification"
+                android:contentDescription="Medication Icon"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="Notification                     >"
+                android:textSize="16sp"/>
+        </LinearLayout>
+
+
+        <!-- Medication -->
+        <LinearLayout
+            android:id="@+id/btnMedication"
+            android:layout_width="225dp"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="8dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:contentDescription="Medication Icon"
+                android:src="@drawable/view_medication_logo" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="Medication                      >"
+                android:textSize="16sp" />
+        </LinearLayout>
+
+
+
+        <!-- Doctor Appointment -->
+        <LinearLayout
+            android:id="@+id/btnDoctorAppointment"
+            android:layout_width="225dp"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="8dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:contentDescription="Dashboard Icon"
+                android:src="@drawable/view_dashboard" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="Doctor's Appointment  >"
+                android:textSize="16sp" />
+        </LinearLayout>
+
+        <!-- View Essentials -->
+        <LinearLayout
+            android:id="@+id/btnEssentials"
+            android:layout_width="225dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="8dp"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/view_essentials"
+                android:contentDescription="Dashboard Icon"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="Essentials                       >"
+                android:textSize="16sp"/>
+        </LinearLayout>
+
+        <!-- Dashboard -->
+        <LinearLayout
+            android:id="@+id/btnDashboard"
+            android:layout_width="225dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="8dp"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/view_dashboard"
+                android:contentDescription="Dashboard Icon"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="Dashboard                      >"
+                android:textSize="16sp"/>
+        </LinearLayout>
+
+
+
+        <!-- Collaborators -->
+        <LinearLayout
+            android:id="@+id/btnCollaborators"
+            android:layout_width="225dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="8dp"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/view_collaborators"
+                android:contentDescription="Dashboard Icon"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="Collaborators                 >"
+                android:textSize="16sp"/>
+        </LinearLayout>
+
+
+
+        <!-- Log/View Health -->
+        <LinearLayout
+            android:id="@+id/btnHealth"
+            android:layout_width="225dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="8dp"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/view_health_symptoms"
+                android:contentDescription="Dashboard Icon"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="Log/View Health           >"
+                android:textSize="16sp"/>
+        </LinearLayout>
+
+        <!-- Settings Title -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Settings"
+            android:textStyle="bold"
+            android:textSize="16dp"
+            android:paddingTop="20dp"/>
+
+        <!-- My Account -->
+        <LinearLayout
+            android:id="@+id/btnMyAccount"
+            android:layout_width="225dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="8dp"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/profile_placeholder"
+                android:contentDescription="Account Icon"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="My Account                    >"
+                android:textSize="16sp"/>
+        </LinearLayout>
+
+        <!-- Logout -->
+        <LinearLayout
+            android:id="@+id/btnLogout"
+            android:layout_width="225dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="8dp"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/nav_logout"
+                android:contentDescription="Logout Icon"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="Logout                             >"
+                android:textSize="16sp"/>
+        </LinearLayout>
+
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

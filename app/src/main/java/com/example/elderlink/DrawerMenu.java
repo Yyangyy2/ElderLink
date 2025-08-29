@@ -1,5 +1,6 @@
 package com.example.elderlink;
 
+
 import android.app.Activity;
 import android.content.Intent;
 import android.widget.LinearLayout;
@@ -21,7 +22,14 @@ public class DrawerMenu {
 
         btnleftMedication.setOnClickListener(v -> {
             Intent intent = new Intent(activity, ViewMedicationActivity.class);
-            activity.startActivity(intent);
+
+
+            // Pass along personUid using this current activity holding it (that's why use activity.getIntent), so next activity knows which elderly
+            String personUid = activity.getIntent().getStringExtra("personUid");
+            intent.putExtra("personUid", personUid);
+
+            activity.startActivity(intent);  //Just start new activity
+            activity.finish();
         });
 
         btnLogout.setOnClickListener(v -> {

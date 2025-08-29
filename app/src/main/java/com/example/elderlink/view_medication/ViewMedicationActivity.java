@@ -1,4 +1,5 @@
 package com.example.elderlink.view_medication;
+import com.example.elderlink.DrawerMenu;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -9,6 +10,8 @@ import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -25,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+
 
 public class ViewMedicationActivity extends AppCompatActivity {
 
@@ -46,6 +50,8 @@ public class ViewMedicationActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.medication_view_page);
+
+        DrawerMenu.setupMenu(this); // Add the Left side menu
 
 
         db = FirebaseFirestore.getInstance();
@@ -106,6 +112,18 @@ public class ViewMedicationActivity extends AppCompatActivity {
                 startActivity(intent);
                 finish();
             }
+        });
+
+
+
+        //Open Left navigation menu------------------------------------------------ rmb add DrawerMenu.setupMenu(this); on top
+        DrawerLayout drawerLayout = findViewById(R.id.drawerLayout);
+        ImageButton navMenu = findViewById(R.id.navMenu);
+
+
+        // When clicking the button, open the drawer
+        navMenu.setOnClickListener(v -> {
+            drawerLayout.openDrawer(GravityCompat.START); // START is opens from left; END opens from right
         });
 
 

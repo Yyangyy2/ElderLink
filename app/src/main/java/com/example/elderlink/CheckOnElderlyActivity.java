@@ -60,7 +60,7 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
 
 
 
-        //Open Left navigation menu------------------------------------------------
+        //Open Left navigation menu------------------------------------------------ rmb add DrawerMenu.setupMenu(this); on top
         DrawerLayout drawerLayout = findViewById(R.id.drawerLayout);
         ImageButton navMenu = findViewById(R.id.navMenu);
 

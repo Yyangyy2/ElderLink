@@ -146,6 +146,8 @@ public class MainActivity extends AppCompatActivity {
         adapter.notifyDataSetChanged();
     }
 
+
+    //Add person dialog----------------------------------------------------------------------------
     private void showAddPersonDialog() {
         selectedImageBase64 = ""; // Reset image every time
 
@@ -157,16 +159,28 @@ public class MainActivity extends AppCompatActivity {
 
         EditText editName = dialogView.findViewById(R.id.editPersonName);
         ImageView selectedImage = dialogView.findViewById(R.id.selectedImage);
+        EditText editPIN = dialogView.findViewById(R.id.editPIN);
         dialogView.findViewById(R.id.selectImageBtn).setOnClickListener(v -> pickImage(selectedImage));
 
         builder.setPositiveButton("Save", (dialog, which) -> {
             String name = editName.getText().toString().trim();
+            String pin = editPIN.getText().toString().trim();
             if (name.isEmpty()) {
                 Toast.makeText(this, "Name required", Toast.LENGTH_SHORT).show();
                 return;
             }
+            if (pin.length() != 6 || !pin.matches("\\d{6}")) {
+                Toast.makeText(this, "PIN must be 6 digits", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            // Hash the PIN
+            String hashedPin = HashPIN.hashPin(pin);
 
-            Person newPerson = new Person(name, selectedImageBase64);
+
+
+
+            // Save the attributes to Firestore
+            Person newPerson = new Person(name, selectedImageBase64, hashedPin);
 
             firestore.collection("users")
                     .document(uid)

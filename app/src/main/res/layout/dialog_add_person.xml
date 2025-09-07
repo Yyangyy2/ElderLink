@@ -27,4 +27,12 @@
         android:layout_gravity="center"
         android:layout_marginTop="5dp" />
 
+    <EditText
+        android:id="@+id/editPIN"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter PIN"
+        android:inputType="number"
+        android:maxLength="6" />
+
 </LinearLayout>

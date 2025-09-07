@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
 
@@ -57,10 +58,10 @@ public class SignupActivity extends AppCompatActivity {
                             userData.put("email", email);
                             userData.put("username", username);
 
-                            FirebaseDatabase.getInstance("https://elderlink-5bc8e-default-rtdb.asia-southeast1.firebasedatabase.app")
-                                    .getReference("users")
-                                    .child(uid)
-                                    .setValue(userData)
+                            FirebaseFirestore.getInstance()
+                                    .collection("users")
+                                    .document(uid)
+                                    .set(userData)
                                     .addOnCompleteListener(dbTask -> {
                                         if (dbTask.isSuccessful()) {
                                             Toast.makeText(SignupActivity.this, "Signup successful!", Toast.LENGTH_SHORT).show();
@@ -70,6 +71,7 @@ public class SignupActivity extends AppCompatActivity {
                                             Toast.makeText(SignupActivity.this, "Database write failed.", Toast.LENGTH_SHORT).show();
                                         }
                                     });
+
                         } else {
                             Toast.makeText(SignupActivity.this, "Signup failed: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
                         }

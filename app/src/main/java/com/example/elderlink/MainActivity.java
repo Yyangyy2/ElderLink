@@ -87,22 +87,23 @@ public class MainActivity extends AppCompatActivity {
 
 
         //Caregiver username-----------------------------------------------------------------------------
-        DatabaseReference userRef = FirebaseDatabase.getInstance()
-                .getReference("users")
-                .child(uid)
-                .child("username"); // adjust path according to your database
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
 
+        db.collection("users")
+                .document(uid)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        String username = documentSnapshot.getString("username");
+                        userNameTextView.setText(username != null ? username : "No Name");
+                    } else {
+                        userNameTextView.setText("No Name");
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    userNameTextView.setText("No Name");
+                });
 
-        userRef.get().addOnSuccessListener(snapshot -> {
-            if (snapshot.exists()) {
-                String username = snapshot.getValue(String.class);
-                userNameTextView.setText(username);
-            } else {
-                userNameTextView.setText("No Name");
-            }
-        }).addOnFailureListener(e -> {
-            userNameTextView.setText("No Name");
-        });
 
 
         //Log out Caregiver----------------------------------------------------------------------------

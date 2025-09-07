@@ -46,38 +46,53 @@ public class SignupActivity extends AppCompatActivity {
                 return;
             }
 
-            // Register user with FirebaseAuth
-            auth.createUserWithEmailAndPassword(email, password)
-                    .addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                            FirebaseUser user = auth.getCurrentUser();
-                            String uid = user.getUid();
 
-                            // Save additional user data in Realtime DB under /users/<uid>
-                            HashMap<String, String> userData = new HashMap<>();
-                            userData.put("email", email);
-                            userData.put("username", username);
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-                            FirebaseFirestore.getInstance()
-                                    .collection("users")
-                                    .document(uid)
-                                    .set(userData)
-                                    .addOnCompleteListener(dbTask -> {
-                                        if (dbTask.isSuccessful()) {
-                                            Toast.makeText(SignupActivity.this, "Signup successful!", Toast.LENGTH_SHORT).show();
-                                            startActivity(new Intent(SignupActivity.this, LoginActivity.class));
-                                            finish();
+            //Check if username already exists to avoid duplication
+            db.collection("users")
+                    .whereEqualTo("username", username)
+                    .get()
+                    .addOnCompleteListener(checkTask -> {
+                        if (checkTask.isSuccessful() && !checkTask.getResult().isEmpty()) {
+                            // Username already taken
+                            Toast.makeText(SignupActivity.this, "Username already exists. Choose another.", Toast.LENGTH_SHORT).show();
+                        } else {
+
+                            // Register user with FirebaseAuth
+                            auth.createUserWithEmailAndPassword(email, password)
+                                    .addOnCompleteListener(task -> {
+                                        if (task.isSuccessful()) {
+                                            FirebaseUser user = auth.getCurrentUser();
+                                            String uid = user.getUid();
+
+                                            // Save additional user data in Realtime DB under /users/<uid>
+                                            HashMap<String, String> userData = new HashMap<>();
+                                            userData.put("email", email);
+                                            userData.put("username", username);
+
+                                            FirebaseFirestore.getInstance()
+                                                    .collection("users")
+                                                    .document(uid)
+                                                    .set(userData)
+                                                    .addOnCompleteListener(dbTask -> {
+                                                        if (dbTask.isSuccessful()) {
+                                                            Toast.makeText(SignupActivity.this, "Signup successful!", Toast.LENGTH_SHORT).show();
+                                                            startActivity(new Intent(SignupActivity.this, LoginActivity.class));
+                                                            finish();
+                                                        } else {
+                                                            Toast.makeText(SignupActivity.this, "Database write failed.", Toast.LENGTH_SHORT).show();
+                                                        }
+                                                    });
+
                                         } else {
-                                            Toast.makeText(SignupActivity.this, "Database write failed.", Toast.LENGTH_SHORT).show();
+                                            Toast.makeText(SignupActivity.this, "Signup failed: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
                                         }
                                     });
-
-                        } else {
-                            Toast.makeText(SignupActivity.this, "Signup failed: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
                         }
                     });
         });
-
         loginRedirectText.setOnClickListener(v -> startActivity(new Intent(SignupActivity.this, LoginActivity.class)));
     }
 }
+

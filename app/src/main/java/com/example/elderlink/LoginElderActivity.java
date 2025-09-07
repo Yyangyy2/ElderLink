@@ -73,9 +73,9 @@ public class LoginElderActivity extends AppCompatActivity {
                             if (result != null && !result.isEmpty()) {
                                 // Caregiver exists → Go to Main Activity
                                 Toast.makeText(this, "Caregiver found!", Toast.LENGTH_SHORT).show();
-                                Intent intent = new Intent(LoginElderActivity.this, MainActivity.class);
-                                startActivity(intent);
-                                finish();
+                                //Intent intent = new Intent(LoginElderActivity.this, MainActivity.class);
+//                                startActivity(intent);
+//                                finish();
                             } else {
                                 // Caregiver not found
                                 Toast.makeText(this, "Caregiver does not exist", Toast.LENGTH_SHORT).show();

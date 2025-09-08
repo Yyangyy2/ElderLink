@@ -1,6 +1,8 @@
 //This file controls the display of person_item and person_item_loginelder
 package com.example.elderlink;
 
+import android.app.Activity;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -13,6 +15,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -108,6 +111,40 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
             // Elder mode = hide caregiver-only buttons
             if (holder.checkBtn != null) holder.checkBtn.setVisibility(View.GONE);
             if (holder.moreBtn != null) holder.moreBtn.setVisibility(View.GONE);
+
+
+
+
+
+            holder.itemView.setOnClickListener(v -> {
+                Dialog dialog = new Dialog(context);
+                dialog.setContentView(R.layout.activity_login_elder_pin);
+                dialog.getWindow().setLayout(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT
+                );
+
+                EditText pinInput = dialog.findViewById(R.id.pinEditText);
+                Button confirmBtn = dialog.findViewById(R.id.confirmPinButton);
+                Button cancelBtn = dialog.findViewById(R.id.closePopupButton);
+
+                confirmBtn.setOnClickListener(view -> {
+                    String pin = pinInput.getText().toString().trim();
+                    if (pin.equals("123456")) {
+                        Toast.makeText(context, "PIN correct for " + person.getName(), Toast.LENGTH_SHORT).show();
+                        dialog.dismiss();
+                    } else {
+                        Toast.makeText(context, "Wrong PIN!", Toast.LENGTH_SHORT).show();
+                    }
+                });
+
+                cancelBtn.setOnClickListener(view -> dialog.dismiss());
+                dialog.show();
+            });
+
+
+
+
         }
     }
 

@@ -10,10 +10,11 @@ public class Person {
 
     }
 
-    public Person(String name, String imageBase64,String pin) {
+    public Person(String name, String imageBase64,String pin, String id) {
         this.name = name;
         this.imageBase64 = imageBase64;
         this.pin = pin;
+        this.id = id;
 
     }
 

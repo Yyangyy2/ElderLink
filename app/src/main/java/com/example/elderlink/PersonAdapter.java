@@ -1,5 +1,8 @@
 //This file controls the display of person_item and person_item_loginelder
+//Due to having both Elder interface and Caregiver sharing same Person model and PersonAdapter, that is why have 2 views (of the code) sharing here
 package com.example.elderlink;
+
+import static com.example.elderlink.HashPIN.hashPin;
 
 import android.app.Activity;
 import android.app.Dialog;
@@ -34,11 +37,13 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
     private Context context;
     private List<Person> personList;
     private boolean isLoginElder; // true = elder view, false = caregiver view
+    private String uid;
 
-    public PersonAdapter(Context context, List<Person> personList, boolean isLoginElder) {
+    public PersonAdapter(Context context, List<Person> personList, boolean isLoginElder, String uid) {
         this.context = context;
         this.personList = personList;
         this.isLoginElder = isLoginElder;
+        this.uid = uid;
     }
 
     @Override
@@ -59,6 +64,7 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
         Person person = personList.get(position);
         holder.personName.setText(person.getName());
         String personUid = person.getId();
+
 
         // Decode Base64 image if available, otherwise use profile_placeholder from drawable
         if (person.getImageBase64() != null && !person.getImageBase64().isEmpty()) {
@@ -115,7 +121,7 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
 
 
 
-
+            //--------------PIN Section-----------------------------------------------------------
             holder.itemView.setOnClickListener(v -> {
                 Dialog dialog = new Dialog(context);
                 dialog.setContentView(R.layout.activity_login_elder_pin);
@@ -129,18 +135,44 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
                 Button cancelBtn = dialog.findViewById(R.id.closePopupButton);
 
                 confirmBtn.setOnClickListener(view -> {
-                    String pin = pinInput.getText().toString().trim();
-                    if (pin.equals("123456")) {
-                        Toast.makeText(context, "PIN correct for " + person.getName(), Toast.LENGTH_SHORT).show();
-                        dialog.dismiss();
-                    } else {
-                        Toast.makeText(context, "Wrong PIN!", Toast.LENGTH_SHORT).show();
+                    String enteredPin = pinInput.getText().toString().trim();
+                    if (enteredPin.length() != 6) {
+                        Toast.makeText(context, "Enter a 6-digit PIN", Toast.LENGTH_SHORT).show();
+                        return;
                     }
+
+                    //Hash entered PIN
+                    String enteredHash = hashPin(enteredPin);
+
+                    //Fetch stored hashed PIN from Firestore
+                    FirebaseFirestore.getInstance()
+                            .collection("users")
+                            .document(uid)
+                            .collection("people")
+                            .document(person.getId())
+                            .get()
+                            .addOnSuccessListener(doc -> {
+                                if (doc.exists()) {
+                                    String storedHash = doc.getString("pin"); // hashed pin in Firestore
+                                    if (storedHash != null && storedHash.equals(enteredHash)) {
+                                        Toast.makeText(context, "PIN correct for " + person.getName(), Toast.LENGTH_SHORT).show();
+                                        dialog.dismiss();
+                                    } else {
+                                        Toast.makeText(context, "Wrong PIN!", Toast.LENGTH_SHORT).show();
+                                    }
+                                } else {
+                                    Toast.makeText(context, "Person not found!", Toast.LENGTH_SHORT).show();
+                                }
+                            })
+                            .addOnFailureListener(e ->
+                                    Toast.makeText(context, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show()
+                            );
                 });
 
                 cancelBtn.setOnClickListener(view -> dialog.dismiss());
                 dialog.show();
             });
+
 
 
 

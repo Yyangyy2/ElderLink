@@ -27,6 +27,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
@@ -62,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         personList = new ArrayList<>();
-        adapter = new PersonAdapter(this, personList,false);
+        adapter = new PersonAdapter(this, personList,false, uid);
         recyclerView.setAdapter(adapter);
 
         if (FirebaseAuth.getInstance().getCurrentUser() == null) {
@@ -158,6 +159,7 @@ public class MainActivity extends AppCompatActivity {
         final android.view.View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_person, null);
         builder.setView(dialogView);
 
+
         EditText editName = dialogView.findViewById(R.id.editPersonName);
         ImageView selectedImage = dialogView.findViewById(R.id.selectedImage);
         EditText editPIN = dialogView.findViewById(R.id.editPIN);
@@ -180,17 +182,24 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-            // Save the attributes to Firestore
-            Person newPerson = new Person(name, selectedImageBase64, hashedPin);
-
-            firestore.collection("users")
+            // Generate a new document reference with an auto ID
+            DocumentReference newPersonRef = firestore.collection("users")
                     .document(uid)
                     .collection("people")
-                    .add(newPerson)
-                    .addOnSuccessListener(docRef -> {
-                        Log.d("FirestoreAdd", "Saved person with ID: " + docRef.getId());
+                    .document(); // <-- generates a unique ID
+
+            // Get the generated ID
+            String generatedId = newPersonRef.getId();
+
+            // Create Person object with the ID
+            Person newPerson = new Person(name, selectedImageBase64, hashedPin, generatedId);
+
+            // Save to Firestore at that document path
+            newPersonRef.set(newPerson)
+                    .addOnSuccessListener(aVoid -> {
+                        Log.d("FirestoreAdd", "Saved person with ID: " + generatedId);
                         Toast.makeText(this, "Saved successfully", Toast.LENGTH_SHORT).show();
-                        // No need to manually update personList; snapshot listener will handle it
+                        // Snapshot listener will update personList
                     })
                     .addOnFailureListener(err -> {
                         Log.e("FirestoreAdd", "Failed to save person", err);

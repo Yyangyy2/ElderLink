@@ -109,11 +109,11 @@ public class LoginElderActivity extends AppCompatActivity {
                                                         String name = doc.getString("name");
                                                         String imageBase64 = doc.getString("imageBase64");
                                                         String pin = doc.getString("pin");
-                                                        personList.add(new Person(name == null ? "" : name, imageBase64, pin == null ? "" : imageBase64));
+                                                        personList.add(new Person(name == null ? "" : name, imageBase64, pin == null ? "" : pin, id)); //Ai told me to change the last imageBase64 to pin
                                                     }
 
                                                     // Attach adapter - pass context + list (PersonAdapter constructor in your code expects Context + List<Person>)
-                                                    PersonAdapter adapter = new PersonAdapter(LoginElderActivity.this, personList, true);
+                                                    PersonAdapter adapter = new PersonAdapter(LoginElderActivity.this, personList, true, caregiverUid);
                                                     recyclerView.setAdapter(adapter);
 
                                                     // Build AlertDialog popup

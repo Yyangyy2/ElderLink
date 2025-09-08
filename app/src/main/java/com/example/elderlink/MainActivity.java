@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         personList = new ArrayList<>();
-        adapter = new PersonAdapter(this, personList);
+        adapter = new PersonAdapter(this, personList,false);
         recyclerView.setAdapter(adapter);
 
         if (FirebaseAuth.getInstance().getCurrentUser() == null) {

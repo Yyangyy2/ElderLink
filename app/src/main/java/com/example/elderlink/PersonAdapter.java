@@ -1,4 +1,4 @@
-// This java file is to tell what to display in the Person RecyclerView.
+//This file controls the display of person_item and person_item_loginelder
 package com.example.elderlink;
 
 import android.content.Context;
@@ -30,16 +30,24 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
 
     private Context context;
     private List<Person> personList;
+    private boolean isLoginElder; // true = elder view, false = caregiver view
 
-    public PersonAdapter(Context context, List<Person> personList) {
+    public PersonAdapter(Context context, List<Person> personList, boolean isLoginElder) {
         this.context = context;
         this.personList = personList;
+        this.isLoginElder = isLoginElder;
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        return isLoginElder ? 1 : 0; // 1 = elder layout, 0 = caregiver layout
     }
 
     @NonNull
     @Override
     public PersonViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context).inflate(R.layout.person_item, parent, false);
+        int layout = (viewType == 1) ? R.layout.person_item_loginelder : R.layout.person_item;
+        View view = LayoutInflater.from(context).inflate(layout, parent, false);
         return new PersonViewHolder(view);
     }
 
@@ -49,48 +57,60 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
         holder.personName.setText(person.getName());
         String personUid = person.getId();
 
-        // Decode Base64 image if available
+        // Decode Base64 image if available, otherwise use profile_placeholder from drawable
         if (person.getImageBase64() != null && !person.getImageBase64().isEmpty()) {
-            byte[] decodedBytes = Base64.decode(person.getImageBase64(), Base64.DEFAULT);
-            Bitmap decodedBitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
-            holder.personImage.setImageBitmap(decodedBitmap);
+            try {
+                byte[] decodedBytes = Base64.decode(person.getImageBase64(), Base64.DEFAULT);
+                Bitmap decodedBitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
+                holder.personImage.setImageBitmap(decodedBitmap);
+            } catch (IllegalArgumentException e) {
+                // If decoding fails, use placeholder instead of crashing
+                holder.personImage.setImageResource(R.drawable.profile_placeholder);
+            }
         } else {
             holder.personImage.setImageResource(R.drawable.profile_placeholder); // fallback image
         }
 
+        if (!isLoginElder) {
+            // Caregiver mode contains= check button + 3-dot menu button
+            holder.checkBtn.setVisibility(View.VISIBLE);
+            holder.moreBtn.setVisibility(View.VISIBLE);
 
-        holder.checkBtn.setOnClickListener(v ->{
+            holder.checkBtn.setOnClickListener(v -> {
                 Toast.makeText(context, "Checked " + person.getName(), Toast.LENGTH_SHORT).show();
                 Intent intent = new Intent(context, CheckOnElderlyActivity.class);
 
+                // Pass data so the new page knows which person it is
+                intent.putExtra("personName", person.getName());
+                intent.putExtra("personImageBase64", person.getImageBase64());
+                intent.putExtra("personUid", personUid);
 
-            // Pass data so the new page knows which person it is
-            intent.putExtra("personName", person.getName());
-            intent.putExtra("personImageBase64", person.getImageBase64());
-            intent.putExtra("personUid", personUid);
-
-            context.startActivity(intent);
-        });
-
-
-        // Handle 3-dot menu
-        holder.moreBtn.setOnClickListener(v -> {
-            PopupMenu popup = new PopupMenu(v.getContext(), holder.moreBtn);
-            popup.inflate(R.menu.person_menu);
-            popup.setOnMenuItemClickListener(item -> {
-                int id = item.getItemId();
-                if (id == R.id.edit) {
-                    showEditDialog(person, holder.getAdapterPosition());
-                    return true;
-                } else if (id == R.id.delete) {
-                    deletePerson(person, holder.getAdapterPosition());
-                    return true;
-                }
-                return false;
+                context.startActivity(intent);
             });
-            popup.show();
-        });
+
+            holder.moreBtn.setOnClickListener(v -> {
+                PopupMenu popup = new PopupMenu(v.getContext(), holder.moreBtn);
+                popup.inflate(R.menu.person_menu);
+                popup.setOnMenuItemClickListener(item -> {
+                    int id = item.getItemId();
+                    if (id == R.id.edit) {
+                        showEditDialog(person, holder.getAdapterPosition());
+                        return true;
+                    } else if (id == R.id.delete) {
+                        deletePerson(person, holder.getAdapterPosition());
+                        return true;
+                    }
+                    return false;
+                });
+                popup.show();
+            });
+        } else {
+            // Elder mode = hide caregiver-only buttons
+            if (holder.checkBtn != null) holder.checkBtn.setVisibility(View.GONE);
+            if (holder.moreBtn != null) holder.moreBtn.setVisibility(View.GONE);
+        }
     }
+
 
     private void showEditDialog(Person person, int position) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
@@ -138,7 +158,7 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
                 .delete()
                 .addOnSuccessListener(aVoid -> {
                     int index = personList.indexOf(person);
-                    if (index != -1) {                //this person the removal of another item, int index of each array
+                    if (index != -1) {
                         personList.remove(position);
                         notifyItemRemoved(position);
                     }
@@ -148,9 +168,6 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
                     Toast.makeText(context, "Delete failed", Toast.LENGTH_SHORT).show();
                 });
     }
-
-
-
 
     @Override
     public int getItemCount() {
@@ -168,8 +185,8 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
             super(itemView);
             personImage = itemView.findViewById(R.id.personImage);
             personName = itemView.findViewById(R.id.personName);
-            checkBtn = itemView.findViewById(R.id.checkBtn);
-            moreBtn = itemView.findViewById(R.id.moreBtn);
+            checkBtn = itemView.findViewById(R.id.checkBtn); // may not exist in elder layout
+            moreBtn = itemView.findViewById(R.id.moreBtn);   // may not exist in elder layout
         }
     }
 }

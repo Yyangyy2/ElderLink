@@ -2,8 +2,10 @@ package com.example.elderlink;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -93,6 +95,22 @@ public class SignupActivity extends AppCompatActivity {
                     });
         });
         loginRedirectText.setOnClickListener(v -> startActivity(new Intent(SignupActivity.this, LoginActivity.class)));
+
+
+        //Back Button (to LoginElderActivityPage)------------------------------------------------
+        ImageButton backButton = findViewById(R.id.backButton);
+
+        backButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(SignupActivity.this, LoginElderActivity.class);
+                startActivity(intent);
+                finish();
+            }
+        });
+
+
+
     }
 }
 

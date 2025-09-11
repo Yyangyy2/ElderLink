@@ -145,7 +145,7 @@ public class AddMedicationActivity extends AppCompatActivity {
         saveMedicationBtn.setOnClickListener(v -> saveMedication());
         deleteMedicationBtn.setOnClickListener(v -> deleteMedication());
 
-        // If editing, load existing data
+        // If editing, load existing data------------------------------------------------------------------------
         if (isEditMode) {
             loadMedicationForEdit();
             setTitle("Edit Medication");

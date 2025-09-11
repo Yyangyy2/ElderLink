@@ -60,6 +60,21 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
 
 
 
+
+        //Bottom Navigation Bar-----------------------------------------------------------------------------------------
+        ImageButton navHome = findViewById(R.id.navHome);
+
+        navHome.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(CheckOnElderlyActivity.this, MainActivity.class);
+                startActivity(intent);
+                finish();
+            }
+        });
+
+
+
         //Open Left navigation menu------------------------------------------------ rmb add DrawerMenu.setupMenu(this); on top
         DrawerLayout drawerLayout = findViewById(R.id.drawerLayout);
         ImageButton navMenu = findViewById(R.id.navMenu);

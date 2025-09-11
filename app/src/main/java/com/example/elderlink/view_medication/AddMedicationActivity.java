@@ -28,6 +28,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -240,7 +241,6 @@ public class AddMedicationActivity extends AppCompatActivity {
     }
 
     private void saveMedication() {
-        //trim() remove whitespace
         String med_name = editMedicationName.getText().toString().trim();
         String med_date = editMedicationDate.getText().toString().trim();
         String med_endDate = editMedicationEndDate.getText().toString().trim();
@@ -249,24 +249,61 @@ public class AddMedicationActivity extends AppCompatActivity {
         String med_unit = (String) spinnerMedicationUnit.getSelectedItem();
         String med_repeatType = (String) spinnerMedicationRepeatType.getSelectedItem();
 
-        if (med_name.isEmpty() || med_date.isEmpty() || med_time.isEmpty()) {
+        if (med_name.isEmpty() || med_date.isEmpty() || med_time.isEmpty() || med_endDate.isEmpty()) {
             Toast.makeText(this, "All fields required", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        String docId = isEditMode ? medId : UUID.randomUUID().toString();
+        // handle repeat types-----------------------------------------------------------------
+        if ("Daily".equals(med_repeatType) || "Weekly".equals(med_repeatType)) {
+            try {
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+                Calendar cal = Calendar.getInstance();
+                cal.setTime(sdf.parse(med_date));
+                Calendar end = Calendar.getInstance();
+                end.setTime(sdf.parse(med_endDate));
+
+                int step = "Daily".equals(med_repeatType) ? 1 : 7; // 1 day for daily, 7 days for weekly
+
+                while (!cal.getTime().after(end.getTime())) {
+                    String currentDate = sdf.format(cal.getTime());
+                    saveSingleMedication(
+                            med_name, currentDate, med_endDate, med_time, med_dosage,
+                            med_unit, med_repeatType, selectedImageBase64
+                    );
+                    cal.add(Calendar.DAY_OF_MONTH, step); // add 1 or 7 days
+                }
+
+                Toast.makeText(this, med_repeatType + " medications saved", Toast.LENGTH_SHORT).show();
+                finish();
+            } catch (Exception e) {
+                Toast.makeText(this, "Invalid date format", Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            // Only as needed----------------------------------------------------------
+            saveSingleMedication(
+                    med_name, med_date, med_endDate, med_time, med_dosage,
+                    med_unit, med_repeatType, selectedImageBase64
+            );
+            Toast.makeText(this, "Medication saved", Toast.LENGTH_SHORT).show();
+            finish();
+        }
+    }
+
+    private void saveSingleMedication(String name, String date, String endDate, String time,
+                                      String dosage, String unit, String repeatType, String imageBase64) {
+        String docId = UUID.randomUUID().toString();
 
         Model_medication medication = new Model_medication(
                 docId,
-                med_name,
-                med_date,
-                med_endDate,
-                med_time,
-                med_dosage,
-                med_unit,
-                selectedImageBase64 == null ? "" : selectedImageBase64,
-                med_repeatType
-
+                name,
+                date,
+                endDate,
+                time,
+                dosage,
+                unit,
+                imageBase64 == null ? "" : imageBase64,
+                repeatType
         );
 
         firestore.collection("users")
@@ -276,17 +313,10 @@ public class AddMedicationActivity extends AppCompatActivity {
                 .collection("medications")
                 .document(docId)
                 .set(medication)
-                .addOnSuccessListener(aVoid -> {
-                    Toast.makeText(this,
-                            isEditMode ? "Medication updated" : "Medication saved",
-                            Toast.LENGTH_SHORT).show();
-                    finish();
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Save failed", e);
-                    Toast.makeText(this, "Failed to save: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                });
+                .addOnSuccessListener(aVoid -> Log.d(TAG, "Saved successfully " + date))
+                .addOnFailureListener(e -> Log.e(TAG, "Save failed", e));
     }
+
 
     private void deleteMedication() {
         if (!isEditMode || medId == null) {

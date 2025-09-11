@@ -1,3 +1,5 @@
+//This java file controls what to display in medication_item.xml
+
 package com.example.elderlink.view_medication;
 
 import android.content.Context;

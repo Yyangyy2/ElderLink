@@ -5,10 +5,12 @@ public class Model_medication {
     private String id;
     private String name;
     private String date;
+    private String endDate;
     private String time;
     private String dosage;
     private String unit;
     private String imageBase64;
+    private String repeatType;
 
     public String getImageBase64() {
         return imageBase64;
@@ -44,9 +46,15 @@ public class Model_medication {
     public String getDate() {
         return date;
     }
-
     public void setDate(String date) {
         this.date = date;
+    }
+
+    public String getEndDate() {
+        return endDate;
+    }
+    public void setEndDate(String endDate) {
+        this.endDate = endDate;
     }
 
     public String getName() {
@@ -65,6 +73,11 @@ public class Model_medication {
         this.id = id;
     }
 
+    public String getRepeatType() {return repeatType;}
+    public void setRepeatType(String repeatType) {
+        this.repeatType = repeatType;
+    }
+
 
 
 
@@ -72,14 +85,16 @@ public class Model_medication {
 
     }
 
-    public Model_medication(String id, String name, String date, String time, String dosage,String unit, String imageBase64) {
+    public Model_medication(String id, String name, String date, String endDate, String time, String dosage,String unit, String imageBase64, String repeatType) {
         this.id = id;
         this.name = name;
         this.date = date;
+        this.endDate = endDate;
         this.time = time;
         this.dosage = dosage;
         this.unit = unit;
         this.imageBase64 = imageBase64;
+        this.repeatType = repeatType;
     }
 
 

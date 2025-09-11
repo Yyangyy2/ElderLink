@@ -34,10 +34,10 @@ import java.util.UUID;
 public class AddMedicationActivity extends AppCompatActivity {
     private static final String TAG = "AddMedicationActivity";
 
-    private EditText editMedicationName, editMedicationDate, editMedicationTime,editMedicationDosage;
+    private EditText editMedicationName, editMedicationDate,editMedicationEndDate, editMedicationTime,editMedicationDosage;
     private ImageView selectedMedicationImage;
     private Button selectMedicationImageBtn, saveMedicationBtn, deleteMedicationBtn;
-    private Spinner spinnerMedicationUnit;
+    private Spinner spinnerMedicationUnit,spinnerMedicationRepeatType;
 
     private String selectedImageBase64 = "";
     private ActivityResultLauncher<String> imagePickerLauncher;
@@ -62,15 +62,17 @@ public class AddMedicationActivity extends AppCompatActivity {
         // Views
         editMedicationName = findViewById(R.id.editMedicationName);
         editMedicationDate = findViewById(R.id.editMedicationDate);
+        editMedicationEndDate = findViewById(R.id.editMedicationEndDate);
         editMedicationTime = findViewById(R.id.editMedicationTime);
         editMedicationDosage = findViewById(R.id.editMedicationDosage);
         selectedMedicationImage = findViewById(R.id.selectedMedicationImage);
         selectMedicationImageBtn = findViewById(R.id.selectMedicationImageBtn);
         saveMedicationBtn = findViewById(R.id.saveMedicationBtn);
         spinnerMedicationUnit = findViewById(R.id.spinnerMedicationUnit);
+        spinnerMedicationRepeatType = findViewById(R.id.spinnerMedicationRepeatType);
         deleteMedicationBtn = findViewById(R.id.deleteMedicationBtn);
 
-        // Spinner setup
+        // Spinner Unit setup--------------------------------------------------------------------------
         ArrayAdapter<String> unitsAdapter = new ArrayAdapter<>(
                 this,
                 android.R.layout.simple_spinner_item,
@@ -78,6 +80,17 @@ public class AddMedicationActivity extends AppCompatActivity {
         );
         unitsAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerMedicationUnit.setAdapter(unitsAdapter);
+
+        // Spinner Repeat Type setup--------------------------------------------------------------------------
+        ArrayAdapter<String> repeatTypeAdapter = new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_spinner_item,
+                new String[]{"Only as needed", "Daily", "Weekly"}
+        );
+        unitsAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerMedicationRepeatType.setAdapter(repeatTypeAdapter);
+
+
 
         // Firestore
         firestore = FirebaseFirestore.getInstance();
@@ -108,6 +121,7 @@ public class AddMedicationActivity extends AppCompatActivity {
 
         // Date/time pickers
         editMedicationDate.setOnClickListener(v -> showDatePicker());
+        editMedicationEndDate.setOnClickListener(v -> showEndDatePicker());
         editMedicationTime.setOnClickListener(v -> showTimePicker());
 
         // Image picker
@@ -149,6 +163,16 @@ public class AddMedicationActivity extends AppCompatActivity {
         }, y, m, d).show();
     }
 
+    private void showEndDatePicker() {
+        int y = calendar.get(Calendar.YEAR);
+        int m = calendar.get(Calendar.MONTH);
+        int d = calendar.get(Calendar.DAY_OF_MONTH);
+        new DatePickerDialog(this, (view, year, month, dayOfMonth) -> {
+            calendar.set(year, month, dayOfMonth);
+            editMedicationEndDate.setText(sdfDate.format(calendar.getTime()));
+        }, y, m, d).show();
+    }
+
     private void showTimePicker() {
         int hour = calendar.get(Calendar.HOUR_OF_DAY);
         int minute = calendar.get(Calendar.MINUTE);
@@ -179,6 +203,7 @@ public class AddMedicationActivity extends AppCompatActivity {
 
                     editMedicationName.setText(med.getName());
                     editMedicationDate.setText(med.getDate());
+                    editMedicationEndDate.setText(med.getEndDate());
                     editMedicationTime.setText(med.getTime());
 
 
@@ -192,6 +217,14 @@ public class AddMedicationActivity extends AppCompatActivity {
                         int pos = adapter.getPosition(med.getUnit());
                         if (pos >= 0) spinnerMedicationUnit.setSelection(pos);
                     }
+
+
+                    if (med.getRepeatType() != null) {
+                        ArrayAdapter adapter = (ArrayAdapter) spinnerMedicationRepeatType.getAdapter();
+                        int pos = adapter.getPosition(med.getRepeatType());
+                        if (pos >= 0) spinnerMedicationRepeatType.setSelection(pos);
+                    }
+
 
                     selectedImageBase64 = med.getImageBase64();
                     if (selectedImageBase64 != null && !selectedImageBase64.isEmpty()) {
@@ -210,9 +243,11 @@ public class AddMedicationActivity extends AppCompatActivity {
         //trim() remove whitespace
         String med_name = editMedicationName.getText().toString().trim();
         String med_date = editMedicationDate.getText().toString().trim();
+        String med_endDate = editMedicationEndDate.getText().toString().trim();
         String med_time = editMedicationTime.getText().toString().trim();
         String med_dosage = editMedicationDosage.getText().toString().trim();
         String med_unit = (String) spinnerMedicationUnit.getSelectedItem();
+        String med_repeatType = (String) spinnerMedicationRepeatType.getSelectedItem();
 
         if (med_name.isEmpty() || med_date.isEmpty() || med_time.isEmpty()) {
             Toast.makeText(this, "All fields required", Toast.LENGTH_SHORT).show();
@@ -225,10 +260,13 @@ public class AddMedicationActivity extends AppCompatActivity {
                 docId,
                 med_name,
                 med_date,
+                med_endDate,
                 med_time,
                 med_dosage,
                 med_unit,
-                selectedImageBase64 == null ? "" : selectedImageBase64
+                selectedImageBase64 == null ? "" : selectedImageBase64,
+                med_repeatType
+
         );
 
         firestore.collection("users")

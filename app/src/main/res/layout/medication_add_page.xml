@@ -36,35 +36,35 @@
             android:layout_gravity="center"
             android:layout_marginTop="5dp" />
 
-        <!-- Date Picker -->
+        <!-- Start Date Picker -->
         <EditText
             android:id="@+id/editMedicationDate"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Select Date"
+            android:hint="Select Start Date"
             android:focusable="false"
             android:clickable="true"
             android:layout_marginTop="15dp"
             android:drawableEnd="@android:drawable/ic_menu_my_calendar" />
 
-        <!-- Time Picker -->
+        <!-- Start Time Picker -->
         <EditText
             android:id="@+id/editMedicationTime"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Select Time"
+            android:hint="Select Start Time"
             android:focusable="false"
             android:clickable="true"
             android:layout_marginTop="10dp"
             android:drawableEnd="@android:drawable/ic_menu_recent_history" />
 
+        <!-- Dosage Row -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:layout_marginTop="10dp">
 
-            <!-- Dosage Number Input -->
             <EditText
                 android:id="@+id/editMedicationDosage"
                 android:layout_width="0dp"
@@ -75,7 +75,6 @@
                 android:padding="8dp"
                 tools:ignore="TouchTargetSizeCheck" />
 
-            <!-- Dosage Unit Spinner -->
             <Spinner
                 android:id="@+id/spinnerMedicationUnit"
                 android:layout_width="wrap_content"
@@ -83,8 +82,52 @@
                 android:layout_marginStart="10dp"
                 android:minWidth="100dp"
                 tools:ignore="TouchTargetSizeCheck" />
-
         </LinearLayout>
+
+        <!-- Repeat Type Spinner -->
+        <Spinner
+            android:id="@+id/spinnerMedicationRepeatType"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp"
+            tools:ignore="TouchTargetSizeCheck" />
+
+
+        <!-- End Date Picker (optional) -->
+        <EditText
+            android:id="@+id/editMedicationEndDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Select End Date (optional)"
+            android:focusable="false"
+            android:clickable="true"
+            android:layout_marginTop="10dp"
+            android:drawableEnd="@android:drawable/ic_menu_my_calendar" />
+
+        <!-- Reminder Switch -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="10dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Enable Reminder"
+                android:textSize="16sp"
+                android:paddingEnd="10dp"/>
+
+            <Switch
+                android:id="@+id/switchReminder"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                tools:ignore="TouchTargetSizeCheck,UseSwitchCompatOrMaterialXml" />
+        </LinearLayout>
+
 
         <!-- Save Button -->
         <Button
@@ -94,6 +137,7 @@
             android:text="Save Medication"
             android:layout_marginTop="20dp" />
 
+        <!-- Delete Button -->
         <Button
             android:id="@+id/deleteMedicationBtn"
             android:layout_width="match_parent"
@@ -101,9 +145,7 @@
             android:text="Delete Medication"
             android:layout_marginTop="10dp"
             android:backgroundTint="@android:color/holo_red_dark"
-            android:textColor="@android:color/white"
-            />
-
+            android:textColor="@android:color/white" />
 
     </LinearLayout>
 </ScrollView>

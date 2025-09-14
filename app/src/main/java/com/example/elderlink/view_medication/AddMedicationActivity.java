@@ -1,10 +1,16 @@
 package com.example.elderlink.view_medication;
 
+import android.app.AlarmManager;
 import android.app.DatePickerDialog;
+import android.app.PendingIntent;
 import android.app.TimePickerDialog;
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.Base64;
 import android.util.Log;
 import android.widget.ArrayAdapter;
@@ -12,6 +18,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
+import android.widget.Switch;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -29,7 +36,9 @@ import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 
 public class AddMedicationActivity extends AppCompatActivity {
@@ -48,7 +57,7 @@ public class AddMedicationActivity extends AppCompatActivity {
     private String personUid;
     @Nullable
     private String medId;
-
+    private Switch switchReminder;
     private boolean isEditMode = false;
 
     private final Calendar calendar = Calendar.getInstance();
@@ -72,6 +81,9 @@ public class AddMedicationActivity extends AppCompatActivity {
         spinnerMedicationUnit = findViewById(R.id.spinnerMedicationUnit);
         spinnerMedicationRepeatType = findViewById(R.id.spinnerMedicationRepeatType);
         deleteMedicationBtn = findViewById(R.id.deleteMedicationBtn);
+        switchReminder = findViewById(R.id.switchReminder);
+
+
 
         // Spinner Unit setup--------------------------------------------------------------------------
         ArrayAdapter<String> unitsAdapter = new ArrayAdapter<>(
@@ -248,6 +260,7 @@ public class AddMedicationActivity extends AppCompatActivity {
         String med_dosage = editMedicationDosage.getText().toString().trim();
         String med_unit = (String) spinnerMedicationUnit.getSelectedItem();
         String med_repeatType = (String) spinnerMedicationRepeatType.getSelectedItem();
+        boolean med_switchReminder = switchReminder.isChecked();
 
         if (med_name.isEmpty() || med_date.isEmpty() || med_time.isEmpty() || med_endDate.isEmpty()) {
             Toast.makeText(this, "All fields required", Toast.LENGTH_SHORT).show();
@@ -269,7 +282,7 @@ public class AddMedicationActivity extends AppCompatActivity {
                     String currentDate = sdf.format(cal.getTime());
                     saveSingleMedication(
                             med_name, currentDate, med_endDate, med_time, med_dosage,
-                            med_unit, med_repeatType, selectedImageBase64
+                            med_unit, med_repeatType, selectedImageBase64, med_switchReminder
                     );
                     cal.add(Calendar.DAY_OF_MONTH, step); // add 1 or 7 days
                 }
@@ -283,7 +296,7 @@ public class AddMedicationActivity extends AppCompatActivity {
             // Only as needed----------------------------------------------------------
             saveSingleMedication(
                     med_name, med_date, med_endDate, med_time, med_dosage,
-                    med_unit, med_repeatType, selectedImageBase64
+                    med_unit, med_repeatType, selectedImageBase64, med_switchReminder
             );
             Toast.makeText(this, "Medication saved", Toast.LENGTH_SHORT).show();
             finish();
@@ -291,8 +304,9 @@ public class AddMedicationActivity extends AppCompatActivity {
     }
 
     private void saveSingleMedication(String name, String date, String endDate, String time,
-                                      String dosage, String unit, String repeatType, String imageBase64) {
-        String docId = UUID.randomUUID().toString();
+                                      String dosage, String unit, String repeatType, String imageBase64, boolean reminderEnabled) {
+
+        String docId = isEditMode && medId != null ? medId : UUID.randomUUID().toString();// Use existing medId if in edit mode, otherwise generate a new one
 
         Model_medication medication = new Model_medication(
                 docId,
@@ -303,7 +317,8 @@ public class AddMedicationActivity extends AppCompatActivity {
                 dosage,
                 unit,
                 imageBase64 == null ? "" : imageBase64,
-                repeatType
+                repeatType,
+                reminderEnabled
         );
 
         firestore.collection("users")
@@ -313,9 +328,84 @@ public class AddMedicationActivity extends AppCompatActivity {
                 .collection("medications")
                 .document(docId)
                 .set(medication)
-                .addOnSuccessListener(aVoid -> Log.d(TAG, "Saved successfully " + date))
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "Saved successfully " + date);
+
+                    if (reminderEnabled) {
+                        scheduleReminder(name, dosage,unit, date, time, docId);
+                    }
+                })
                 .addOnFailureListener(e -> Log.e(TAG, "Save failed", e));
     }
+
+
+
+    //Reminder------------------------------------------------------------------------------------
+    private static final Map<String, String> remindersMap = new HashMap<>();
+
+    private void scheduleReminder(String medName, String dosage, String unit, String date, String time, String docId) {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
+            Date reminderDate = sdf.parse(date + " " + time);
+            if (reminderDate == null) return;
+
+            long triggerTime = reminderDate.getTime();
+            int requestCode = (date + " " + time).hashCode();
+            String key = date + " " + time;
+
+            String newMedInfo = medName + " " + dosage + " " + unit;
+
+            // Merge with existing meds
+            String combinedMedInfo = remindersMap.containsKey(key)
+                    ? remindersMap.get(key) + "\n" + newMedInfo
+                    : newMedInfo;
+
+            // Update map
+            remindersMap.put(key, combinedMedInfo);
+
+            // Intent for ReminderReceiver
+            Intent reminderIntent = new Intent(this, ReminderReceiver.class);
+            reminderIntent.putExtra("date", date);
+            reminderIntent.putExtra("time", time);
+            reminderIntent.putExtra("medInfo", combinedMedInfo);
+
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                    this,
+                    requestCode,
+                    reminderIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+            );
+
+            AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (!alarmManager.canScheduleExactAlarms()) {
+                    Intent settingsIntent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+                    startActivity(settingsIntent);
+                    return;
+                }
+            }
+
+            alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerTime,
+                    pendingIntent
+            );
+
+            Log.d(TAG, "Reminder scheduled for: " + reminderDate + " with: " + combinedMedInfo);
+        } catch (Exception e) {
+            Log.e(TAG, "scheduleReminder failed", e);
+        }
+    }
+
+
+
+
+
+
+
+
+
 
 
     private void deleteMedication() {

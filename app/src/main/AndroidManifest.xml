@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+
+
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
 
 
 
@@ -17,8 +23,6 @@
         android:theme="@style/Theme.ElderLink"
         tools:targetApi="31">
 
-        <!-- This launches first -->
-
         <activity
             android:name=".LoginElderActivity"
             android:exported="true"
@@ -30,55 +34,40 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".SignupActivity"
+        <activity android:name=".SignupActivity"
             android:exported="false"
-            android:label="@string/app_name"
-            android:theme="@style/Theme.ElderLink"/>
-<!--        <activity-->
-<!--            android:name=".SignupActivity"-->
-<!--            android:exported="true"-->
-<!--            android:label="@string/title_activity_signup"-->
-<!--            android:theme="@style/Theme.ElderLink">-->
-<!--            <intent-filter>-->
-<!--                <action android:name="android.intent.action.MAIN" />-->
-<!--                <category android:name="android.intent.category.LAUNCHER" />-->
-<!--            </intent-filter>-->
-<!--        </activity>-->
-        <activity
-            android:name=".LoginElderPeopleList"
-            android:exported="false"
-            android:label="@string/app_name"
-            android:theme="@style/Theme.ElderLink" />
-        <activity
-            android:name=".MainActivity"
-            android:exported="false"
-            android:label="@string/app_name"
             android:theme="@style/Theme.ElderLink" />
 
-        <activity
-            android:name=".LoginActivity"
+        <activity android:name=".MainActivity"
             android:exported="false"
-            android:label="@string/app_name"
             android:theme="@style/Theme.ElderLink" />
 
-        <activity
-            android:name=".CheckOnElderlyActivity"
+        <activity android:name=".LoginActivity"
             android:exported="false"
-            android:label="@string/app_name"
+            android:theme="@style/Theme.ElderLink" />
+
+        <activity android:name=".CheckOnElderlyActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ElderLink" />
+
+        <activity android:name=".view_medication.ViewMedicationActivity"
+            android:exported="false"
             android:theme="@style/Theme.ElderLink"/>
 
-        <activity
-            android:name=".view_medication.ViewMedicationActivity"
-            android:exported="false"
-            android:label="@string/app_name"
-            android:theme="@style/Theme.ElderLink"/>
-        <activity
-            android:name=".view_medication.AddMedicationActivity"
+        <activity android:name=".view_medication.AddMedicationActivity"
             android:exported="false"
             android:theme="@style/Theme.ElderLink" />
 
+        <receiver android:name=".view_medication.ReminderReceiver"
+                  android:exported="true"/>
+
+        <receiver android:name=".view_medication.ReminderBootReceiver"
+            android:exported="true"
+            tools:ignore="MissingClass">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+            </intent-filter>
+        </receiver>
 
     </application>
-
 </manifest>

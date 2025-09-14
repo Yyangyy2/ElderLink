@@ -11,6 +11,7 @@ public class Model_medication {
     private String unit;
     private String imageBase64;
     private String repeatType;
+    private Boolean switchReminder;
 
     public String getImageBase64() {
         return imageBase64;
@@ -78,6 +79,10 @@ public class Model_medication {
         this.repeatType = repeatType;
     }
 
+    public Boolean getSwitchReminder() { return switchReminder;}
+
+    public void setSwitchReminder(Boolean switchReminder) { this.switchReminder = switchReminder; }
+
 
 
 
@@ -85,7 +90,7 @@ public class Model_medication {
 
     }
 
-    public Model_medication(String id, String name, String date, String endDate, String time, String dosage,String unit, String imageBase64, String repeatType) {
+    public Model_medication(String id, String name, String date, String endDate, String time, String dosage,String unit, String imageBase64, String repeatType, Boolean switchReminder) {
         this.id = id;
         this.name = name;
         this.date = date;
@@ -95,6 +100,7 @@ public class Model_medication {
         this.unit = unit;
         this.imageBase64 = imageBase64;
         this.repeatType = repeatType;
+        this.switchReminder = switchReminder;
     }
 
 

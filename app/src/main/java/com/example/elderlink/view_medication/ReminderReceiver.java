@@ -1,70 +1,137 @@
+//This java controls the  notification
+
 package com.example.elderlink.view_medication;
 
 import android.Manifest;
+import android.app.AlarmManager;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Build;
+import android.util.Log;
 
-import androidx.annotation.RequiresPermission;
+import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
-import com.example.elderlink.R;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-
 public class ReminderReceiver extends BroadcastReceiver {
-    // static in-memory storage for meds with the same time slot
-    private static final Map<String, ArrayList<String>> groupedMeds = new HashMap<>();
+    private static final String TAG = "ReminderReceiver";
+    private static final String CHANNEL_ID = "med_channel";
+    private static final long RETRY_DELAY_MS = 1 * 60 * 1000L; // 5 minutes (For testing purpose 1 min)
+    private static final int MAX_RETRIES = 3; //loop 3 times if ignored or Not Taken is pressed
 
-    @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     @Override
     public void onReceive(Context context, Intent intent) {
-        String date = intent.getStringExtra("date");
-        String time = intent.getStringExtra("time");
-        String medInfo = intent.getStringExtra("medInfo"); // already packed
+        try {
+            String medId = intent.getStringExtra("medId");
+            String medInfo = intent.getStringExtra("medInfo");
+            int retryCount = intent.getIntExtra("retryCount", 0);
 
-        if (medInfo == null || date == null || time == null) return;
+            Log.d(TAG, "onReceive medId=" + medId + " retry=" + retryCount + " medInfo=" + medInfo);
 
-        String key = date + " " + time;
+            if (medId == null || medInfo == null) {
+                Log.w(TAG, "Missing medId or medInfo");
+                return;
+            }
 
-        // group medications that share the same date+time
-        ArrayList<String> meds = groupedMeds.getOrDefault(key, new ArrayList<>());
-        meds.add(medInfo);
-        groupedMeds.put(key, meds);
+            int notifId = medId.hashCode();
+            ensureChannel(context);
 
-        // create notification channel if needed
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(
-                    "med_channel",
-                    "Medication Reminders",
-                    NotificationManager.IMPORTANCE_HIGH
+            // Action: Taken
+            Intent takenIntent = new Intent(context, ReminderActionReceiver.class);
+            takenIntent.setAction("ACTION_TAKEN");
+            takenIntent.putExtra("medId", medId);
+
+            PendingIntent takenPI = PendingIntent.getBroadcast(
+                    context,
+                    notifId, // unique request code for taken
+                    takenIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
             );
-            NotificationManager manager = context.getSystemService(NotificationManager.class);
-            if (manager != null) manager.createNotificationChannel(channel);
+
+            // Action: Not taken
+            Intent notTakenIntent = new Intent(context, ReminderActionReceiver.class);
+            notTakenIntent.setAction("ACTION_NOT_TAKEN");
+            notTakenIntent.putExtra("medId", medId);
+            notTakenIntent.putExtra("medInfo", medInfo);
+            notTakenIntent.putExtra("retryCount", retryCount);
+
+            PendingIntent notTakenPI = PendingIntent.getBroadcast(
+                    context,
+                    notifId + 1, // unique request code for not taken
+                    notTakenIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+            );
+
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
+                    .setSmallIcon(android.R.drawable.ic_dialog_info)
+                    .setContentTitle("Medication Reminder")
+                    .setContentText(medInfo)
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .addAction(android.R.drawable.ic_menu_my_calendar, "Taken", takenPI)
+                    .addAction(android.R.drawable.ic_menu_revert, "Not taken", notTakenPI)
+                    .setAutoCancel(true);
+
+            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                Log.w(TAG, "Notification permission not granted.");
+                return;
+            }
+
+            NotificationManagerCompat.from(context).notify(notifId, builder.build());
+
+        } catch (Exception e) {
+            Log.e(TAG, "onReceive error", e);
         }
+    }
 
-        // join all meds into one text
-        StringBuilder bigText = new StringBuilder();
-        for (String m : meds) {
-            bigText.append("• ").append(m).append("\n");
+    private void ensureChannel(Context context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm == null) return;
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "Medication Reminders", NotificationManager.IMPORTANCE_HIGH);
+            nm.createNotificationChannel(channel);
         }
+    }
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "med_channel")
-                .setSmallIcon(R.drawable.view_medication_logo)
-                .setContentTitle("Medication Reminder (" + time + ")")
-                .setContentText("You have " + meds.size() + " medications to take.")
-                .setStyle(new NotificationCompat.BigTextStyle().bigText(bigText.toString().trim()))
-                .setPriority(NotificationCompat.PRIORITY_HIGH);
+    // schedules a retry after 5 minutes (called from ReminderActionReceiver when user taps NOT TAKEN)-------------------------------------------------------------
+    public static void scheduleRetry(Context context, String medId, String medInfo, int currentRetry) {
+        try {
+            int nextRetry = currentRetry + 1;
+            if (nextRetry > MAX_RETRIES) {
+                Log.d(TAG, "Max retries reached for " + medId);
+                return;
+            }
 
-        NotificationManagerCompat manager = NotificationManagerCompat.from(context);
+            AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+            if (am == null) {
+                Log.w(TAG, "AlarmManager null");
+                return;
+            }
 
-        // use the same notification ID for the same date+time so they merge
-        manager.notify(key.hashCode(), builder.build());
+            Intent i = new Intent(context, ReminderReceiver.class);
+            i.putExtra("medId", medId);
+            i.putExtra("medInfo", medInfo);
+            i.putExtra("retryCount", nextRetry);
+
+            // Unique requestCode per med+retry to avoid collisions
+            int requestCode = medId.hashCode() ^ (nextRetry * 7919);
+            PendingIntent pi = PendingIntent.getBroadcast(
+                    context,
+                    requestCode,
+                    i,
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+            );
+
+            long triggerAt = System.currentTimeMillis() + RETRY_DELAY_MS;
+            Log.d(TAG, "scheduleRetry medId=" + medId + " nextRetry=" + nextRetry + " at=" + triggerAt + " req=" + requestCode);
+            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi);
+        } catch (Exception e) {
+            Log.e(TAG, "scheduleRetry error", e);
+        }
     }
 }

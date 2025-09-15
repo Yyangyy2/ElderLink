@@ -332,7 +332,9 @@ public class AddMedicationActivity extends AppCompatActivity {
                     Log.d(TAG, "Saved successfully " + date);
 
                     if (reminderEnabled) {
-                        scheduleReminder(name, dosage,unit, date, time, docId);
+                        String medInfo = name + " " + dosage + " " + unit;
+                        scheduleReminder(docId, medInfo, date, time);
+
                     }
                 })
                 .addOnFailureListener(e -> Log.e(TAG, "Save failed", e));
@@ -341,62 +343,34 @@ public class AddMedicationActivity extends AppCompatActivity {
 
 
     //Reminder------------------------------------------------------------------------------------
-    private static final Map<String, String> remindersMap = new HashMap<>();
-
-    private void scheduleReminder(String medName, String dosage, String unit, String date, String time, String docId) {
+    private void scheduleReminder(String medId, String medInfo, String date, String time) {
         try {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
-            Date reminderDate = sdf.parse(date + " " + time);
-            if (reminderDate == null) return;
+            Date d = sdf.parse(date + " " + time);
+            if (d == null) return;
+            long trigger = d.getTime();
 
-            long triggerTime = reminderDate.getTime();
-            int requestCode = (date + " " + time).hashCode();
-            String key = date + " " + time;
+            AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+            Intent intent = new Intent(this, ReminderReceiver.class);
+            intent.putExtra("medId", medId);
+            intent.putExtra("medInfo", medInfo);
+            intent.putExtra("retryCount", 0);
 
-            String newMedInfo = medName + " " + dosage + " " + unit;
+            int requestCode = medId.hashCode() ^ 12345; // stable unique code for initial alarm
+            PendingIntent pi = PendingIntent.getBroadcast(this, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
-            // Merge with existing meds
-            String combinedMedInfo = remindersMap.containsKey(key)
-                    ? remindersMap.get(key) + "\n" + newMedInfo
-                    : newMedInfo;
-
-            // Update map
-            remindersMap.put(key, combinedMedInfo);
-
-            // Intent for ReminderReceiver
-            Intent reminderIntent = new Intent(this, ReminderReceiver.class);
-            reminderIntent.putExtra("date", date);
-            reminderIntent.putExtra("time", time);
-            reminderIntent.putExtra("medInfo", combinedMedInfo);
-
-            PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                    this,
-                    requestCode,
-                    reminderIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-            );
-
-            AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                if (!alarmManager.canScheduleExactAlarms()) {
-                    Intent settingsIntent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
-                    startActivity(settingsIntent);
-                    return;
-                }
+            if (am != null) {
+                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger, pi);
+                Log.d("AddMedication", "Scheduled initial alarm medId=" + medId + " at " + trigger + " req=" + requestCode);
             }
-
-            alarmManager.setExactAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP,
-                    triggerTime,
-                    pendingIntent
-            );
-
-            Log.d(TAG, "Reminder scheduled for: " + reminderDate + " with: " + combinedMedInfo);
         } catch (Exception e) {
-            Log.e(TAG, "scheduleReminder failed", e);
+            Log.e("AddMedication", "scheduleReminder parse error", e);
         }
     }
+
+
+
+
 
 
 

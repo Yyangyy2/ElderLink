@@ -58,16 +58,23 @@
             android:exported="false"
             android:theme="@style/Theme.ElderLink" />
 
-        <receiver android:name=".view_medication.ReminderReceiver"
-                  android:exported="true"/>
 
-        <receiver android:name=".view_medication.ReminderBootReceiver"
+        <receiver
+            android:name=".view_medication.ReminderReceiver"
             android:exported="true"
-            tools:ignore="MissingClass">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED"/>
-            </intent-filter>
-        </receiver>
+            android:enabled="true" />
+
+        <receiver
+            android:name=".view_medication.ReminderActionReceiver"
+            android:exported="true"
+            android:enabled="true" />
+
+
+
+
+
+
+
 
     </application>
 </manifest>

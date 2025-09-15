@@ -4,6 +4,8 @@ import static androidx.core.content.ContextCompat.startActivity;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
@@ -11,9 +13,13 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
+import android.Manifest;
+
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -24,6 +30,8 @@ public class LoginActivity extends AppCompatActivity {
     private Button btnLogin;
 
     private FirebaseAuth mAuth;
+
+    private static final int REQ_POST_NOTIF = 1; // request code for permission
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -44,6 +52,16 @@ public class LoginActivity extends AppCompatActivity {
                 loginUser();
             }
         });
+
+
+        // Ask for notification permission (Android 13+ only)-----------[For Reminder function to work]---------------
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQ_POST_NOTIF);
+            }
+        }
 
 
         //Back Button (to LoginElderActivityPage)------------------------------------------------
@@ -88,4 +106,23 @@ public class LoginActivity extends AppCompatActivity {
                     }
                 });
     }
+
+
+    // Handle permission result-----------[For Reminder function to work]-----------------------------
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == REQ_POST_NOTIF) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Notification permission granted", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Notification permission denied", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+
 }

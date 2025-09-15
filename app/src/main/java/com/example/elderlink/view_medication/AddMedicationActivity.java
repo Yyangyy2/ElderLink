@@ -342,7 +342,7 @@ public class AddMedicationActivity extends AppCompatActivity {
 
 
 
-    //Reminder------------------------------------------------------------------------------------
+    //Reminder (Initial start the reminder to fire to ReminderReceiver.java)------------------------------------------------------------------------------------------------------------------------------------
     private void scheduleReminder(String medId, String medInfo, String date, String time) {
         try {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
@@ -350,38 +350,28 @@ public class AddMedicationActivity extends AppCompatActivity {
             if (d == null) return;
             long trigger = d.getTime();
 
-            AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-            Intent intent = new Intent(this, ReminderReceiver.class);
+            AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);   //Without AlarmManager, reminders won’t survive when the app closes.
+            Intent intent = new Intent(this, ReminderReceiver.class);     //Pass the below data to ReminderReceiver.java
             intent.putExtra("medId", medId);
             intent.putExtra("medInfo", medInfo);
             intent.putExtra("retryCount", 0);
 
-            int requestCode = medId.hashCode() ^ 12345; // stable unique code for initial alarm
+            int requestCode = medId.hashCode() ^ 12345;                                 // medId.hashCode() with 12345, make sure alarm has a different requestCode from retries, so no collision
             PendingIntent pi = PendingIntent.getBroadcast(this, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
-            if (am != null) {
-                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger, pi);
+            if (am != null) {                                                           // If AlarmManager am is not null, schedules the alarm in the Android system
+                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger, pi);     //RTC_WAKEUP Uses real-world clock time
                 Log.d("AddMedication", "Scheduled initial alarm medId=" + medId + " at " + trigger + " req=" + requestCode);
             }
         } catch (Exception e) {
             Log.e("AddMedication", "scheduleReminder parse error", e);
         }
+
     }
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+    //Delete medication---------------------------------------------------------------------------------------------------------------------------------
     private void deleteMedication() {
         if (!isEditMode || medId == null) {
             Toast.makeText(this, "No medication to delete", Toast.LENGTH_SHORT).show();

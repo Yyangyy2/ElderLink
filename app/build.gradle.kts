@@ -66,6 +66,11 @@ dependencies {
     implementation(libs.firebase.storage)
     implementation(libs.firebase.firestore)
     annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
+    //implementation ("com.google.ai.client:generativelanguage:0.7.0")
+    implementation ("com.squareup.okhttp3:okhttp:4.11.0")
+    implementation ("com.google.code.gson:gson:2.10.1")
+
+
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

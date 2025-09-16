@@ -34,6 +34,7 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
         // Get data from intent
         String name = getIntent().getStringExtra("personName");
         String imageBase64 = getIntent().getStringExtra("personImageBase64");
+        String personUid = getIntent().getStringExtra("personUid");
 
         nameText.setText(name);
 
@@ -68,6 +69,19 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(CheckOnElderlyActivity.this, MainActivity.class);
+                startActivity(intent);
+                finish();
+            }
+        });
+
+        //Bottom Navigation Bar-----------------------------------------------------------------------------------------
+        ImageButton navNotifications = findViewById(R.id.navNotifications);
+
+        navNotifications.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(CheckOnElderlyActivity.this, ChatActivity.class);
+                intent.putExtra("personUid", personUid);
                 startActivity(intent);
                 finish();
             }

@@ -50,6 +50,10 @@
             android:exported="false"
             android:theme="@style/Theme.ElderLink" />
 
+        <activity android:name=".ChatActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ElderLink" />
+
         <activity android:name=".view_medication.ViewMedicationActivity"
             android:exported="false"
             android:theme="@style/Theme.ElderLink"/>

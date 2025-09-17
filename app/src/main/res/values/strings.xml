@@ -2,5 +2,6 @@
     <string name="app_name">ElderLink</string>
     <string name="title_activity_signup">SignupActivity</string>
     <string name="title_activity_main2">MainActivity2</string>
-    <string name="title_activity_login_elder">LoginElderActivity</string>
+<!--    this line somehow controls the app icon-->
+    <string name="title_activity_login_elder">ElderLink</string>
 </resources>

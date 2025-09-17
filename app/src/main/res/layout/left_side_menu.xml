@@ -19,7 +19,7 @@
         <ImageView
             android:layout_width="150dp"
             android:layout_height="150dp"
-            android:src="@drawable/logofyp_black"
+            android:src="@drawable/logoelderlink_new"
             android:layout_gravity="center"
             android:contentDescription="Logo"/>
 
@@ -42,7 +42,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
-                android:text="Home                                        >"
+                android:text="Home                              >"
                 android:textSize="13sp"/>
         </LinearLayout>
 

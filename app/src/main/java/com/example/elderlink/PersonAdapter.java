@@ -121,7 +121,7 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
 
 
 
-            //--------------PIN Section-----------------------------------------------------------
+            //--------------PIN Section------------------[within Elder mode]---------------------------------------------------------
             holder.itemView.setOnClickListener(v -> {
                 Dialog dialog = new Dialog(context);
                 dialog.setContentView(R.layout.activity_login_elder_pin);
@@ -157,6 +157,22 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
                                     if (storedHash != null && storedHash.equals(enteredHash)) {
                                         Toast.makeText(context, "PIN correct for " + person.getName(), Toast.LENGTH_SHORT).show();
                                         dialog.dismiss();
+
+                                        Intent intent = new Intent(context, MainActivityElder.class);
+
+                                        // Pass data ( elder name,elder uid, caregiver uid)
+                                        intent.putExtra("personName", person.getName());
+                                        intent.putExtra("personUid", person.getId());
+                                        intent.putExtra("personImageBase64", person.getImageBase64());
+                                        intent.putExtra("caregiverUid", uid);
+
+                                        context.startActivity(intent);
+
+                                        if (context instanceof Activity) {
+                                            ((Activity) context).finish(); //close current screen
+                                        }
+
+
                                     } else {
                                         Toast.makeText(context, "Wrong PIN!", Toast.LENGTH_SHORT).show();
                                     }

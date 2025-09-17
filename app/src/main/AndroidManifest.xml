@@ -42,6 +42,10 @@
             android:exported="false"
             android:theme="@style/Theme.ElderLink" />
 
+        <activity android:name=".MainActivityElder"
+            android:exported="false"
+            android:theme="@style/Theme.ElderLink" />
+
         <activity android:name=".LoginActivity"
             android:exported="false"
             android:theme="@style/Theme.ElderLink" />

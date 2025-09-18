@@ -62,6 +62,10 @@
             android:exported="false"
             android:theme="@style/Theme.ElderLink"/>
 
+        <activity android:name=".view_medication.ViewMedicationActivityElderSide"
+            android:exported="false"
+            android:theme="@style/Theme.ElderLink"/>
+
         <activity android:name=".view_medication.AddMedicationActivity"
             android:exported="false"
             android:theme="@style/Theme.ElderLink" />

@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.elderlink.MainActivity;
+import com.example.elderlink.MainActivityElder;
 import com.example.elderlink.R;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -30,7 +31,7 @@ import java.util.List;
 import java.util.Locale;
 
 
-public class ViewMedicationActivity extends AppCompatActivity {
+public class ViewMedicationActivityElderSide extends AppCompatActivity {
 
 
     private RecyclerView recyclerView;
@@ -55,7 +56,12 @@ public class ViewMedicationActivity extends AppCompatActivity {
 
 
         db = FirebaseFirestore.getInstance();
+
+        // Get data from intent
+        String name = getIntent().getStringExtra("personName");
+        String imageBase64 = getIntent().getStringExtra("personImageBase64");
         personUid = getIntent().getStringExtra("personUid");
+        String uid = getIntent().getStringExtra("caregiverUid");
 
 
         recyclerView = findViewById(R.id.medicationRecyclerView);
@@ -66,7 +72,7 @@ public class ViewMedicationActivity extends AppCompatActivity {
 
         adapter = new MedicationAdapter(this, medicationList, medication -> {
             // handle edit click → open AddMedicationActivity in edit mode
-            Intent intent = new Intent(ViewMedicationActivity.this, AddMedicationActivity.class);
+            Intent intent = new Intent(ViewMedicationActivityElderSide.this, AddMedicationActivity.class);
             intent.putExtra("personUid", personUid);
             intent.putExtra("medId", medication.getId());
             startActivity(intent);
@@ -87,11 +93,11 @@ public class ViewMedicationActivity extends AppCompatActivity {
         FloatingActionButton fab = findViewById(R.id.addMedicationFab);
         fab.setOnClickListener(v -> {
             // start AddMedicationActivity
-            Intent intent = new Intent(ViewMedicationActivity.this,
+            Intent intent = new Intent(ViewMedicationActivityElderSide.this,
                     com.example.elderlink.view_medication.AddMedicationActivity.class);
 
             // Forward the personUid from intent
-            String personUid = getIntent().getStringExtra("personUid");
+            //String personUid = getIntent().getStringExtra("personUid");
             intent.putExtra("personUid", personUid);
 
             startActivity(intent);
@@ -108,7 +114,10 @@ public class ViewMedicationActivity extends AppCompatActivity {
         navHome.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(ViewMedicationActivity.this, MainActivity.class);
+                Intent intent = new Intent(ViewMedicationActivityElderSide.this, MainActivityElder.class);
+                intent.putExtra("personUid", personUid);
+                intent.putExtra("personName", name);
+                intent.putExtra("caregiverUid", uid);
                 startActivity(intent);
                 finish();
             }
@@ -139,9 +148,7 @@ public class ViewMedicationActivity extends AppCompatActivity {
             return;
         }
 
-        String userUid = com.google.firebase.auth.FirebaseAuth.getInstance()         //Check caregiver authentication, go through users then to people
-                .getCurrentUser()
-                .getUid();
+        String userUid = getIntent().getStringExtra("caregiverUid");
 
         db.collection("users")
                 .document(userUid)

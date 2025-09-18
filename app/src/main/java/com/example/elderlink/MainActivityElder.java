@@ -15,7 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
-import com.example.elderlink.view_medication.ViewMedicationActivity;
+import com.example.elderlink.view_medication.ViewMedicationActivityElderSide;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class MainActivityElder extends AppCompatActivity {
@@ -56,7 +56,9 @@ public class MainActivityElder extends AppCompatActivity {
         navHome.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MainActivityElder.this, MainActivity.class);
+                Intent intent = new Intent(MainActivityElder.this, MainActivityElder.class);
+                intent.putExtra("personUid", personUid);
+                intent.putExtra("personName", name);
                 startActivity(intent);
                 finish();
             }
@@ -96,11 +98,14 @@ public class MainActivityElder extends AppCompatActivity {
         btnMedication.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MainActivityElder.this, ViewMedicationActivity.class);
+                Intent intent = new Intent(MainActivityElder.this, ViewMedicationActivityElderSide.class);
 
                 // Pass along personUid so next activity knows which elderly
                 String personUid = getIntent().getStringExtra("personUid");
                 intent.putExtra("personUid", personUid);
+                intent.putExtra("personName", name);
+                String uid = getIntent().getStringExtra("caregiverUid");
+                intent.putExtra("caregiverUid", uid);
 
                 startActivity(intent);
                 finish();

@@ -14,8 +14,8 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.fragment.app.Fragment;
 
+import com.example.elderlink.view_Ask_Ai.ChatActivity;
 import com.example.elderlink.view_medication.ViewMedicationActivity;
 
 public class CheckOnElderlyActivity extends AppCompatActivity {

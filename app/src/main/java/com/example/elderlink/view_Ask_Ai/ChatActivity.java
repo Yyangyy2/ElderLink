@@ -1,4 +1,4 @@
-package com.example.elderlink;
+package com.example.elderlink.view_Ask_Ai;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -12,14 +12,12 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.elderlink.CheckOnElderlyActivity;
+import com.example.elderlink.R;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -27,7 +25,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-public class ChatActivityElder extends AppCompatActivity {
+public class ChatActivity extends AppCompatActivity {
 
     FirebaseFirestore db;
     JsonArray medicationArray = new JsonArray();
@@ -46,7 +44,7 @@ public class ChatActivityElder extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_chat_elder);
+        setContentView(R.layout.activity_chat);
 
         db = FirebaseFirestore.getInstance();
 
@@ -66,9 +64,11 @@ public class ChatActivityElder extends AppCompatActivity {
             String userQuestion = inputMessage.getText().toString();
             if (userQuestion.isEmpty()) return;
 
+
             // Get today's date to help Ai know
             String today = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
                     .format(new java.util.Date());
+
 
             appendChat("You: " + userQuestion);
 
@@ -114,7 +114,7 @@ public class ChatActivityElder extends AppCompatActivity {
         btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(ChatActivityElder.this, MainActivityElder.class);
+                Intent intent = new Intent(ChatActivity.this, CheckOnElderlyActivity.class);
                 intent.putExtra("personUid", personUid);
                 intent.putExtra("personName", name);
                 intent.putExtra("caregiverUid", uid);
@@ -131,7 +131,9 @@ public class ChatActivityElder extends AppCompatActivity {
             return;
         }
 
-        String userUid = getIntent().getStringExtra("caregiverUid");   //convert caregiverUid to userUid, because must follow database structure
+        String userUid = com.google.firebase.auth.FirebaseAuth.getInstance()
+                .getCurrentUser()
+                .getUid();
 
         db.collection("users")
                 .document(userUid)

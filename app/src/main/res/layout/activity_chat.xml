@@ -5,6 +5,45 @@
     android:layout_height="match_parent"
     android:padding="12dp">
 
+    <!-- Top Blue Bar -->
+    <LinearLayout
+        android:id="@+id/topBar"
+        android:layout_width="match_parent"
+        android:layout_height="90dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="#0066FF">
+
+        <!-- Back Button -->
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="40dp"
+            android:layout_height="60dp"
+            android:layout_marginStart="8dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="Back"
+            android:src="@drawable/back_arrow" />
+
+        <TextView
+            android:id="@+id/titleText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingStart="16dp"
+            android:text="Ask Ai"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <!-- Picture right beside the text -->
+        <ImageView
+            android:id="@+id/titleIcon"
+            android:layout_width="93dp"
+            android:layout_height="70dp"
+            android:layout_marginStart="8dp"
+            android:contentDescription="Title Icon"
+            android:src="@drawable/view_aibot" />
+    </LinearLayout>
+
     <!-- Chat history -->
     <ScrollView
         android:layout_width="match_parent"
@@ -31,10 +70,11 @@
         <EditText
             android:id="@+id/inputMessage"
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:hint="Type your message"
-            android:padding="10dp"/>
+            android:minHeight="48dp"
+            android:padding="10dp" />
 
         <Button
             android:id="@+id/btnSend"

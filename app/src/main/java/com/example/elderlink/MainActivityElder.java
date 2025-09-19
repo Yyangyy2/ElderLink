@@ -120,7 +120,7 @@ public class MainActivityElder extends AppCompatActivity {
         btnAibot.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MainActivityElder.this, ChatActivity.class);
+                Intent intent = new Intent(MainActivityElder.this, ChatActivityElder.class);
                 intent.putExtra("personUid", personUid);
                 startActivity(intent);
                 finish();

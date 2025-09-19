@@ -121,12 +121,12 @@
 
                 <ImageButton
                     android:id="@+id/btnMedication"
-                    android:layout_width="60dp"
-                    android:layout_height="60dp"
-                    android:src="@drawable/view_medication_logo"
-                    android:scaleType="centerInside"
+                    android:layout_width="110dp"
+                    android:layout_height="57dp"
                     android:background="@android:color/transparent"
-                    android:contentDescription="Medication" />
+                    android:contentDescription="Medication"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/view_medication_logo_new" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -179,12 +179,12 @@
 
                 <ImageButton
                     android:id="@+id/btnAibot"
-                    android:layout_width="60dp"
-                    android:layout_height="60dp"
-                    android:src="@drawable/view_aibot"
-                    android:scaleType="centerInside"
+                    android:layout_width="82dp"
+                    android:layout_height="75dp"
                     android:background="@android:color/transparent"
-                    android:contentDescription="Ai chatbot" />
+                    android:contentDescription="Ai chatbot"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/view_aibot" />
 
                 <TextView
                     android:layout_width="wrap_content"

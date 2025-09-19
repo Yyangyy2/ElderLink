@@ -27,7 +27,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-public class ChatActivity extends AppCompatActivity {
+public class ChatActivityElder extends AppCompatActivity {
 
     FirebaseFirestore db;
     JsonArray medicationArray = new JsonArray();
@@ -100,7 +100,7 @@ public class ChatActivity extends AppCompatActivity {
         btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(ChatActivity.this, CheckOnElderlyActivity.class);
+                Intent intent = new Intent(ChatActivityElder.this, MainActivityElder.class);
                 intent.putExtra("personUid", personUid);
                 intent.putExtra("personName", name);
                 intent.putExtra("caregiverUid", uid);

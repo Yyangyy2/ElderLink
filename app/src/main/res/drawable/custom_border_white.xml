@@ -6,9 +6,6 @@
     <!-- Rounded corners -->
     <corners android:radius="10dp" />
 
-    <!-- Background color -->
-    <solid android:color="#f2d7ac" />
-
     <!-- Padding inside the shape -->
     <padding
         android:left="10dp"

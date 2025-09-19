@@ -65,17 +65,17 @@ public class MainActivityElder extends AppCompatActivity {
         });
 
         //Bottom Navigation Bar-----------------------------------------------------------------------------------------
-        ImageButton navNotifications = findViewById(R.id.navNotifications);
-
-        navNotifications.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(MainActivityElder.this, ChatActivity.class);
-                intent.putExtra("personUid", personUid);
-                startActivity(intent);
-                finish();
-            }
-        });
+//        ImageButton navNotifications = findViewById(R.id.navNotifications);
+//
+//        navNotifications.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                Intent intent = new Intent(MainActivityElder.this, ChatActivity.class);
+//                intent.putExtra("personUid", personUid);
+//                startActivity(intent);
+//                finish();
+//            }
+//        });
 
 
 
@@ -107,6 +107,21 @@ public class MainActivityElder extends AppCompatActivity {
                 String uid = getIntent().getStringExtra("caregiverUid");
                 intent.putExtra("caregiverUid", uid);
 
+                startActivity(intent);
+                finish();
+            }
+        });
+
+
+        //View Ask Ai Button (to Ai chatbot)------------------------------------------------
+
+        ImageButton btnAibot = findViewById(R.id.btnAibot);
+
+        btnAibot.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivityElder.this, ChatActivity.class);
+                intent.putExtra("personUid", personUid);
                 startActivity(intent);
                 finish();
             }

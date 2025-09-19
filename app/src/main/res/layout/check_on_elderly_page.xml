@@ -164,7 +164,6 @@
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/btnEssentials"
                 android:layout_width="0dp"
                 android:layout_height="120dp"
                 android:layout_columnWeight="1"
@@ -175,17 +174,18 @@
                 >
 
                 <ImageButton
+                    android:id="@+id/btnAibot"
                     android:layout_width="60dp"
                     android:layout_height="60dp"
-                    android:src="@drawable/view_essentials"
+                    android:src="@drawable/view_aibot"
                     android:scaleType="centerInside"
                     android:background="@android:color/transparent"
-                    android:contentDescription="Essentials" />
+                    android:contentDescription="View Ai Bot" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="View Essentials"
+                    android:text="Ask AI"
                     android:textSize="12sp"
                     android:textStyle="bold"
                     android:gravity="center"

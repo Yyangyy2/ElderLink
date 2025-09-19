@@ -115,6 +115,7 @@ public class ChatActivityElder extends AppCompatActivity {
                 Intent intent = new Intent(ChatActivityElder.this, MainActivityElder.class);
                 intent.putExtra("personUid", personUid);
                 intent.putExtra("personName", name);
+                intent.putExtra("personImageBase64", imageBase64);
                 intent.putExtra("caregiverUid", uid);
                 startActivity(intent);
                 finish();

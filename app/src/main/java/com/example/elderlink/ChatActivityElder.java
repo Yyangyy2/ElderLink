@@ -66,24 +66,38 @@ public class ChatActivityElder extends AppCompatActivity {
             String userQuestion = inputMessage.getText().toString();
             if (userQuestion.isEmpty()) return;
 
+            // Get today's date to help Ai know
+            String today = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                    .format(new java.util.Date());
+
             appendChat("You: " + userQuestion);
 
             // Join all Firestore data into one string
             String firestoreData = medicationArray.toString();
 
             String prompt =
-                    "You are a helpful medical assistant. "
+                    "You are a helpful and friendly medical assistant. "
+                            + "Today’s date is " + today + ". "
                             + "You are given a list of medications in JSON format. "
-                            + "Each record has these fields: name, dosage, unit, time, date, endDate, repeatType, switchReminder. "
-                            + "Answer the user’s question ONLY using the JSON data.\n\n"
+                            + "Each record may include: name, dosage, unit, time (24-hour format), date, endDate, repeatType, and switchReminder. "
+                            + "Answer the user’s question in a short, clear, and polite way.\n\n"
+
                             + "JSON Data:\n" + firestoreData + "\n\n"
+
                             + "User Question: " + userQuestion + "\n\n"
-                            + "Rules:\n"
-                            + "- If the question matches a medication name, use its details.\n"
-                            + "- For 'when' questions, look at the 'time', 'date', 'endDate', and 'repeatType'.\n"
-                            + "- For 'how much' questions, use 'dosage' and 'unit'.\n"
-                            + "- If you cannot find the answer, say exactly: 'I don’t know based on the data.'\n"
+
+                            + "Guidelines:\n"
+                            + "- Keep answers 1–3 sentences max.\n"
+                            + "- Be direct, but warm and supportive.\n"
+                            + "- If multiple medications apply, show them as a simple bullet list.\n"
+                            + "- For 'when' questions, always show both formats like: '14:00 (2:00 PM)'.\n"
+                            + "- For 'when' questions, use time/date/repeat info.\n"
+                            + "- For 'how much' questions, use dosage + unit.\n"
+                            + "- If the info isn’t in the data, say: 'I don’t know based on the data.'\n"
+                            + "- Never invent details not in the JSON.\n\n"
+
                             + "Answer:";
+
 
 
 

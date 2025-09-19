@@ -46,7 +46,7 @@ public class ChatActivityElder extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_chat);
+        setContentView(R.layout.activity_chat_elder);
 
         db = FirebaseFirestore.getInstance();
 
@@ -117,9 +117,7 @@ public class ChatActivityElder extends AppCompatActivity {
             return;
         }
 
-        String userUid = com.google.firebase.auth.FirebaseAuth.getInstance()
-                .getCurrentUser()
-                .getUid();
+        String userUid = getIntent().getStringExtra("caregiverUid");   //convert caregiverUid to userUid, because must follow database structure
 
         db.collection("users")
                 .document(userUid)

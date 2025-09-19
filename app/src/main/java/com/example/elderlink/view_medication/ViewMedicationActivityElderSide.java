@@ -148,7 +148,7 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
             return;
         }
 
-        String userUid = getIntent().getStringExtra("caregiverUid");
+        String userUid = getIntent().getStringExtra("caregiverUid");   //convert caregiverUid to userUid, because must follow database structure
 
         db.collection("users")
                 .document(userUid)

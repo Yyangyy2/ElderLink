@@ -129,6 +129,7 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
             public void onClick(View v) {
                 Intent intent = new Intent(CheckOnElderlyActivity.this, ChatActivity.class);
                 intent.putExtra("personUid", personUid);
+                intent.putExtra("personName", name);
                 startActivity(intent);
                 finish();
             }

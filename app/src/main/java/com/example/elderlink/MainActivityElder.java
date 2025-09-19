@@ -122,6 +122,9 @@ public class MainActivityElder extends AppCompatActivity {
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivityElder.this, ChatActivityElder.class);
                 intent.putExtra("personUid", personUid);
+                intent.putExtra("personName", name);
+                String uid = getIntent().getStringExtra("caregiverUid");
+                intent.putExtra("caregiverUid", uid);
                 startActivity(intent);
                 finish();
             }

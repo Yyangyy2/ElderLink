@@ -41,6 +41,7 @@ public class ViewMedicationActivity extends AppCompatActivity {
     private List<Model_medication> allMedications = new ArrayList<>();
     private FirebaseFirestore db;
     private String personUid;
+    private String personName;
 
 
     private RecyclerView calendarRecyclerView;
@@ -56,6 +57,7 @@ public class ViewMedicationActivity extends AppCompatActivity {
 
         db = FirebaseFirestore.getInstance();
         personUid = getIntent().getStringExtra("personUid");
+        personName = getIntent().getStringExtra("personName");
 
 
         recyclerView = findViewById(R.id.medicationRecyclerView);
@@ -68,6 +70,7 @@ public class ViewMedicationActivity extends AppCompatActivity {
             // handle edit click → open AddMedicationActivity in edit mode
             Intent intent = new Intent(ViewMedicationActivity.this, AddMedicationActivity.class);
             intent.putExtra("personUid", personUid);
+            intent.putExtra("personName", personName);
             intent.putExtra("medId", medication.getId());
             startActivity(intent);
         });

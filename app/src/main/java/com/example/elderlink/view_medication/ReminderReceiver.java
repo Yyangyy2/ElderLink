@@ -33,7 +33,9 @@ public class ReminderReceiver extends BroadcastReceiver {
         try {
             String medId = intent.getStringExtra("medId");
             String medInfo = intent.getStringExtra("medInfo");
+            String personName  = intent.getStringExtra("personName");
             int retryCount = intent.getIntExtra("retryCount", 0);
+            String role = intent.getStringExtra("role");  //(elder/caregiver)
 
             Log.d(TAG, "onReceive medId=" + medId + " retry=" + retryCount + " medInfo=" + medInfo);
 
@@ -45,63 +47,75 @@ public class ReminderReceiver extends BroadcastReceiver {
             int notifId = medId.hashCode();
             ensureChannel(context);
 
-            // Action: Taken------------------------------------------------------------------------------------
-            Intent takenIntent = new Intent(context, ReminderActionReceiver.class);
-            takenIntent.setAction("ACTION_TAKEN");
-            takenIntent.putExtra("medId", medId);
-
-            PendingIntent takenPI = PendingIntent.getBroadcast(
-                    context,
-                    notifId, // unique request code for taken
-                    takenIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-            );
-
-            // Action: Not taken------------------------------------------------------------------------------------
-            Intent notTakenIntent = new Intent(context, ReminderActionReceiver.class);
-            notTakenIntent.setAction("ACTION_NOT_TAKEN");
-            notTakenIntent.putExtra("medId", medId);
-            notTakenIntent.putExtra("medInfo", medInfo);
-            notTakenIntent.putExtra("retryCount", retryCount);
-
-            PendingIntent notTakenPI = PendingIntent.getBroadcast(
-                    context,
-                    notifId + 1, // unique request code for not taken. +1 is for counts of retries but until 3
-                    notTakenIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-            );
-
-            // No Action------------------------------------------------------------------------------------------------
-            // deleteIntent — fired when user dismisses / swipes the notification
-            Intent deleteIntent = new Intent(context, ReminderActionReceiver.class);
-            deleteIntent.setAction("ACTION_DISMISSED");
-            deleteIntent.putExtra("medId", medId);
-            deleteIntent.putExtra("medInfo", medInfo);
-            deleteIntent.putExtra("retryCount", retryCount);
-
-            PendingIntent deletePI = PendingIntent.getBroadcast(
-                    context,
-                    notifId + 2, // unique requestCode for delete
-                    deleteIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-            );
 
 
 
-
-
-            //Here, create the buttons which connects to the above PendingIntent above-----------------------------------
+            //Here, create the buttons which connects to the above PendingIntent below-----------------------------------
 
             NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                     .setSmallIcon(android.R.drawable.ic_dialog_info)
                     .setContentTitle("Medication Reminder")
                     .setContentText(medInfo)
+                    .setContentText(personName )
                     .setPriority(NotificationCompat.PRIORITY_HIGH)
-                    .addAction(android.R.drawable.ic_menu_my_calendar, "Taken", takenPI)
-                    .addAction(android.R.drawable.ic_menu_revert, "Not taken", notTakenPI)
-                    .setDeleteIntent(deletePI)
                     .setAutoCancel(true);
 
+
+            // Elder only sees this--------------------------------------------------------
+            if ("elder".equals(role)) {
+
+                // Action: Taken------------------------------------------------------------------------------------
+                Intent takenIntent = new Intent(context, ReminderActionReceiver.class);
+                takenIntent.setAction("ACTION_TAKEN");
+                takenIntent.putExtra("medId", medId);
+
+                PendingIntent takenPI = PendingIntent.getBroadcast(
+                        context,
+                        notifId, // unique request code for taken
+                        takenIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+                );
+
+                // Action: Not taken------------------------------------------------------------------------------------
+                Intent notTakenIntent = new Intent(context, ReminderActionReceiver.class);
+                notTakenIntent.setAction("ACTION_NOT_TAKEN");
+                notTakenIntent.putExtra("medId", medId);
+                notTakenIntent.putExtra("medInfo", medInfo);
+                notTakenIntent.putExtra("retryCount", retryCount);
+
+                PendingIntent notTakenPI = PendingIntent.getBroadcast(
+                        context,
+                        notifId + 1, // unique request code for not taken. +1 is for counts of retries but until 3
+                        notTakenIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+                );
+
+                // No Action------------------------------------------------------------------------------------------------
+                // deleteIntent — fired when user dismisses / swipes the notification
+                Intent deleteIntent = new Intent(context, ReminderActionReceiver.class);
+                deleteIntent.setAction("ACTION_DISMISSED");
+                deleteIntent.putExtra("medId", medId);
+                deleteIntent.putExtra("medInfo", medInfo);
+                deleteIntent.putExtra("retryCount", retryCount);
+
+                PendingIntent deletePI = PendingIntent.getBroadcast(
+                        context,
+                        notifId + 2, // unique requestCode for delete
+                        deleteIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+                );
+
+                // Actions(buttons) for elder's notification-----------------------------------------------------
+                builder.setContentText(medInfo)
+                        .addAction(android.R.drawable.ic_menu_my_calendar, "Taken", takenPI)
+                        .addAction(android.R.drawable.ic_menu_revert, "Not taken", notTakenPI)
+                        .setDeleteIntent(deletePI);
+
+            }else{
+                // Caregiver only sees info-------------------------------------------------------------------------
+                builder.setContentText("Reminder for "+ personName +" : " + medInfo);
+
+            }
 
             //Here, displays the notification out----------------------------------------------------------------------------
             if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
@@ -145,6 +159,8 @@ public class ReminderReceiver extends BroadcastReceiver {
             i.putExtra("medId", medId);
             i.putExtra("medInfo", medInfo);
             i.putExtra("retryCount", nextRetry);
+            i.putExtra("role", "elder"); // got retry code,therefore this is for elder
+
 
             // Unique requestCode per med+retry to avoid collisions, the 7919 is random, can be 12345
             int requestCode = medId.hashCode() ^ (nextRetry * 7919);

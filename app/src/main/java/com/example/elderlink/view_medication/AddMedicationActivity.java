@@ -55,6 +55,7 @@ public class AddMedicationActivity extends AppCompatActivity {
     private FirebaseFirestore firestore;
     private String caregiverUid;
     private String personUid;
+    private String personName;
     @Nullable
     private String medId;
     private Switch switchReminder;
@@ -82,6 +83,8 @@ public class AddMedicationActivity extends AppCompatActivity {
         spinnerMedicationRepeatType = findViewById(R.id.spinnerMedicationRepeatType);
         deleteMedicationBtn = findViewById(R.id.deleteMedicationBtn);
         switchReminder = findViewById(R.id.switchReminder);
+
+
 
 
 
@@ -116,6 +119,7 @@ public class AddMedicationActivity extends AppCompatActivity {
 
         // Intent extras
         personUid = getIntent().getStringExtra("personUid");
+        personName = getIntent().getStringExtra("personName");
         medId = getIntent().getStringExtra("medId");
         isEditMode = (medId != null && !medId.isEmpty());
 
@@ -333,7 +337,7 @@ public class AddMedicationActivity extends AppCompatActivity {
 
                     if (reminderEnabled) {
                         String medInfo = name + " " + dosage + " " + unit;
-                        scheduleReminder(docId, medInfo, date, time);
+                        scheduleReminder(docId, medInfo,personName, date, time);
 
                     }
                 })
@@ -343,7 +347,7 @@ public class AddMedicationActivity extends AppCompatActivity {
 
 
     //Reminder (Initial start the reminder to fire to ReminderReceiver.java)------------------------------------------------------------------------------------------------------------------------------------
-    private void scheduleReminder(String medId, String medInfo, String date, String time) {
+    private void scheduleReminder(String medId, String medInfo,String personName, String date, String time) {
         try {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
             Date d = sdf.parse(date + " " + time);
@@ -354,6 +358,7 @@ public class AddMedicationActivity extends AppCompatActivity {
             Intent intent = new Intent(this, ReminderReceiver.class);     //Pass the below data to ReminderReceiver.java
             intent.putExtra("medId", medId);
             intent.putExtra("medInfo", medInfo);
+            intent.putExtra("personName", personName);
             intent.putExtra("retryCount", 0);
 
             int requestCode = medId.hashCode() ^ 12345;                                 // medId.hashCode() with 12345, make sure alarm has a different requestCode from retries, so no collision

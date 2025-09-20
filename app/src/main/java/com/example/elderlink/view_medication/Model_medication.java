@@ -104,6 +104,9 @@ public class Model_medication {
     }
 
     //Method for MedicationActivityElderSide to convert date+time into milliseconds--------------------------------------------------------------------------------------
+    //Must convert from seconds to milliseconds so that it is on-time
+    //When scheduling a notification, the app would convert time string into milliseconds using Calendar or SimpleDateFormat, bcz AlarmManager only understands milliseconds.
+    //By adding timeMillis into database. This means the conversion is done once (when caregiver sets the medication), and the elder’s device can directly use it without recalculating.
     public long getTimeMillis() {
         try {
             String dateTime = date + " " + time;

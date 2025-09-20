@@ -267,7 +267,7 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
 
     private void scheduleMedication(Context context, Model_medication med) {
         try {
-            long triggerAt = med.getTimeMillis(); // first trigger time
+            long triggerAt = med.getTimeMillis(); // get milliseconds from model
             long now = System.currentTimeMillis();
 
             // Prevent scheduling for past meds

@@ -103,5 +103,19 @@ public class Model_medication {
         this.switchReminder = switchReminder;
     }
 
+    //Method for MedicationActivityElderSide to convert date+time into milliseconds--------------------------------------------------------------------------------------
+    public long getTimeMillis() {
+        try {
+            String dateTime = date + " " + time;
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault());
+            java.util.Date parsedDate = sdf.parse(dateTime);
+            return parsedDate != null ? parsedDate.getTime() : 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
+
+
 
 }

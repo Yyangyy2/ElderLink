@@ -1,6 +1,9 @@
 package com.example.elderlink.view_medication;
 import com.example.elderlink.DrawerMenu;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -81,9 +84,7 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
 
         setupCalendar();
         loadMedications(personUid);
-
-
-
+        listenForMedicationReminders(uid, personUid);  // Start listening for caregiver-scheduled reminders
 
 
 
@@ -225,6 +226,125 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
         }
         adapter.notifyDataSetChanged();
     }
+
+
+    // Elder listens for caregiver-scheduled meds and schedules alarms locally
+    private void listenForMedicationReminders(String caregiverUid, String personUid) {
+        db.collection("users")
+                .document(caregiverUid)
+                .collection("people")
+                .document(personUid)
+                .collection("medications")
+                .addSnapshotListener((snapshots, e) -> {
+                    if (e != null) {
+                        Log.w("ElderReminder", "Listen error", e);
+                        return;
+                    }
+                    if (snapshots == null) return;
+
+                    for (com.google.firebase.firestore.DocumentChange dc : snapshots.getDocumentChanges()) {
+                        Model_medication med = dc.getDocument().toObject(Model_medication.class);
+                        med.setId(dc.getDocument().getId());
+
+                        switch (dc.getType()) {
+                            case ADDED:
+                                scheduleMedication(this, med);
+                                break;
+                            case MODIFIED:
+                                cancelMedication(this, med.getId());
+                                scheduleMedication(this, med);
+                                break;
+                            case REMOVED:
+                                cancelMedication(this, med.getId());
+                                break;
+                        }
+                    }
+                });
+    }
+
+
+
+
+    private void scheduleMedication(Context context, Model_medication med) {
+        try {
+            long triggerAt = med.getTimeMillis(); // first trigger time
+            long now = System.currentTimeMillis();
+
+            // Prevent scheduling for past meds
+            if (triggerAt < now) {
+                Log.d("ElderReminder", "Skipped past medication: " + med.getName());
+                return;
+            }
+
+            Intent intent = new Intent(context, ReminderReceiver.class);
+            intent.putExtra("medId", med.getId());
+            intent.putExtra("medInfo", med.getName() + " " + med.getDosage());
+            intent.putExtra("retryCount", 0);
+
+            int requestCode = med.getId().hashCode();
+            PendingIntent pi = PendingIntent.getBroadcast(
+                    context,
+                    requestCode,
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+            );
+
+            AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+            if (am == null) return;
+
+            String repeatType = med.getRepeatType() != null ? med.getRepeatType().toLowerCase() : "once";
+
+            switch (repeatType) {
+                case "daily":
+                    am.setRepeating(
+                            AlarmManager.RTC_WAKEUP,
+                            triggerAt,
+                            AlarmManager.INTERVAL_DAY,
+                            pi
+                    );
+                    break;
+
+                case "weekly":
+                    am.setRepeating(
+                            AlarmManager.RTC_WAKEUP,
+                            triggerAt,
+                            AlarmManager.INTERVAL_DAY * 7,
+                            pi
+                    );
+                    break;
+
+                default: // once (only as needed)
+                    am.setExactAndAllowWhileIdle(
+                            AlarmManager.RTC_WAKEUP,
+                            triggerAt,
+                            pi
+                    );
+                    break;
+            }
+
+        } catch (Exception e) {
+            Log.e("ElderReminder", "scheduleMedication error", e);
+        }
+    }
+
+
+    private void cancelMedication(Context context, String medId) {
+        int requestCode = medId.hashCode();
+        Intent intent = new Intent(context, ReminderReceiver.class);
+        PendingIntent pi = PendingIntent.getBroadcast(
+                context,
+                requestCode,
+                intent,
+                PendingIntent.FLAG_NO_CREATE | PendingIntent.FLAG_IMMUTABLE
+        );
+        if (pi != null) {
+            AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+            if (am != null) am.cancel(pi);
+            pi.cancel();
+        }
+    }
+
+
 
 
 }

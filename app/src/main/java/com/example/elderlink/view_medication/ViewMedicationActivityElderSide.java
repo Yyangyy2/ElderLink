@@ -280,6 +280,8 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
             intent.putExtra("medId", med.getId());
             intent.putExtra("medInfo", med.getName() + " " + med.getDosage());
             intent.putExtra("retryCount", 0);
+            intent.putExtra("role", "elder");
+
 
             int requestCode = med.getId().hashCode();
             PendingIntent pi = PendingIntent.getBroadcast(

@@ -354,6 +354,7 @@ public class AddMedicationActivity extends AppCompatActivity {
             if (d == null) return;
             long trigger = d.getTime();
 
+
             AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);   //Without AlarmManager, reminders won’t survive when the app closes.
             Intent intent = new Intent(this, ReminderReceiver.class);     //Pass the below data to ReminderReceiver.java
             intent.putExtra("medId", medId);

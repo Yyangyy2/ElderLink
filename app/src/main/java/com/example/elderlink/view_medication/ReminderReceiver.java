@@ -33,7 +33,6 @@ public class ReminderReceiver extends BroadcastReceiver {
         try {
             String medId = intent.getStringExtra("medId");
             String medInfo = intent.getStringExtra("medInfo");
-            String personName  = intent.getStringExtra("personName");
             int retryCount = intent.getIntExtra("retryCount", 0);
             String role = intent.getStringExtra("role");  //(elder/caregiver)
 
@@ -56,7 +55,6 @@ public class ReminderReceiver extends BroadcastReceiver {
                     .setSmallIcon(android.R.drawable.ic_dialog_info)
                     .setContentTitle("Medication Reminder")
                     .setContentText(medInfo)
-                    .setContentText(personName )
                     .setPriority(NotificationCompat.PRIORITY_HIGH)
                     .setAutoCancel(true);
 
@@ -113,6 +111,7 @@ public class ReminderReceiver extends BroadcastReceiver {
 
             }else{
                 // Caregiver only sees info-------------------------------------------------------------------------
+                String personName = intent.getStringExtra("personName");    // must write this so that system remembers which elder even when app is closed/exited
                 builder.setContentText("Reminder for "+ personName +" : " + medInfo);
 
             }

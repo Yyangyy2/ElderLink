@@ -336,7 +336,7 @@ public class AddMedicationActivity extends AppCompatActivity {
                     Log.d(TAG, "Saved successfully " + date);
 
                     if (reminderEnabled) {
-                        String medInfo = name + " " + dosage + " " + unit;
+                        String medInfo = name + " : " + dosage + " " + unit;
                         scheduleReminder(docId, medInfo,personName, date, time);
 
                     }

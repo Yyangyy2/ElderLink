@@ -61,6 +61,7 @@ public class ReminderReceiver extends BroadcastReceiver {
 
             // Elder only sees this--------------------------------------------------------
             if ("elder".equals(role)) {
+                int notifID_role = notifId + role.hashCode();
 
                 // Action: Taken------------------------------------------------------------------------------------
                 Intent takenIntent = new Intent(context, ReminderActionReceiver.class);
@@ -69,7 +70,7 @@ public class ReminderReceiver extends BroadcastReceiver {
 
                 PendingIntent takenPI = PendingIntent.getBroadcast(
                         context,
-                        notifId, // unique request code for taken
+                        notifID_role, // unique request code for taken
                         takenIntent,
                         PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
                 );
@@ -83,7 +84,7 @@ public class ReminderReceiver extends BroadcastReceiver {
 
                 PendingIntent notTakenPI = PendingIntent.getBroadcast(
                         context,
-                        notifId + 1, // unique request code for not taken. +1 is for counts of retries but until 3
+                        notifID_role  + 1, // unique request code for not taken. +1 is for counts of retries but until 3
                         notTakenIntent,
                         PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
                 );
@@ -98,7 +99,7 @@ public class ReminderReceiver extends BroadcastReceiver {
 
                 PendingIntent deletePI = PendingIntent.getBroadcast(
                         context,
-                        notifId + 2, // unique requestCode for delete
+                        notifID_role  + 2, // unique requestCode for delete
                         deleteIntent,
                         PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
                 );

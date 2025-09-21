@@ -22,6 +22,8 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 
+import com.example.elderlink.R;
+
 public class ReminderReceiver extends BroadcastReceiver {
     private static final String TAG = "ReminderReceiver";
     private static final String CHANNEL_ID = "med_channel";
@@ -31,10 +33,11 @@ public class ReminderReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         try {
+            String role = intent.getStringExtra("role");  //(elder/caregiver)
             String medId = intent.getStringExtra("medId");
             String medInfo = intent.getStringExtra("medInfo");
             int retryCount = intent.getIntExtra("retryCount", 0);
-            String role = intent.getStringExtra("role");  //(elder/caregiver)
+
 
             Log.d(TAG, "onReceive medId=" + medId + " retry=" + retryCount + " medInfo=" + medInfo);
 
@@ -52,9 +55,8 @@ public class ReminderReceiver extends BroadcastReceiver {
             //Here, create the buttons which connects to the above PendingIntent below-----------------------------------
 
             NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                    .setSmallIcon(android.R.drawable.ic_dialog_info)
+                    .setSmallIcon(R.drawable.logoelderlink_new)
                     .setContentTitle("Medication Reminder")
-                    .setContentText(medInfo)
                     .setPriority(NotificationCompat.PRIORITY_HIGH)
                     .setAutoCancel(true);
 
@@ -105,7 +107,7 @@ public class ReminderReceiver extends BroadcastReceiver {
                 );
 
                 // Actions(buttons) for elder's notification-----------------------------------------------------
-                builder.setContentText(medInfo)
+                builder.setContentText("Remember to eat " + medInfo)
                         .addAction(android.R.drawable.ic_menu_my_calendar, "Taken", takenPI)
                         .addAction(android.R.drawable.ic_menu_revert, "Not taken", notTakenPI)
                         .setDeleteIntent(deletePI);

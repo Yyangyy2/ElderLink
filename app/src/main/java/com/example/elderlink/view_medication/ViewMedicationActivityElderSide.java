@@ -74,11 +74,11 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
 
 
         adapter = new MedicationAdapter(this, medicationList, medication -> {
-            // handle edit click → open AddMedicationActivity in edit mode
-            Intent intent = new Intent(ViewMedicationActivityElderSide.this, AddMedicationActivity.class);
-            intent.putExtra("personUid", personUid);
-            intent.putExtra("medId", medication.getId());
-            startActivity(intent);
+            // handle edit click → open AddMedicationActivity in edit mode----- change to same acitivity due to not allowing edit
+//            Intent intent = new Intent(ViewMedicationActivityElderSide.this, ViewMedicationActivityElderSide.class);
+//            intent.putExtra("personUid", personUid);
+//            intent.putExtra("medId", medication.getId());
+//            startActivity(intent);
         });
         recyclerView.setAdapter(adapter);
 
@@ -90,19 +90,19 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
 
 
 
-        //FAB button --------------------------------------------------------------------------
-        FloatingActionButton fab = findViewById(R.id.addMedicationFab);
-        fab.setOnClickListener(v -> {
-            // start AddMedicationActivity
-            Intent intent = new Intent(ViewMedicationActivityElderSide.this,
-                    com.example.elderlink.view_medication.AddMedicationActivity.class);
-
-            // Forward the personUid from intent
-            //String personUid = getIntent().getStringExtra("personUid");
-            intent.putExtra("personUid", personUid);
-
-            startActivity(intent);
-        });
+//        //FAB button --------------------------------------------------------------------------
+//        FloatingActionButton fab = findViewById(R.id.addMedicationFab);
+//        fab.setOnClickListener(v -> {
+//            // start AddMedicationActivity
+//            Intent intent = new Intent(ViewMedicationActivityElderSide.this,
+//                    com.example.elderlink.view_medication.AddMedicationActivity.class);
+//
+//            // Forward the personUid from intent
+//            //String personUid = getIntent().getStringExtra("personUid");
+//            intent.putExtra("personUid", personUid);
+//
+//            startActivity(intent);
+//        });
 
 
 
@@ -278,7 +278,7 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
 
             Intent intent = new Intent(context, ReminderReceiver.class);
             intent.putExtra("medId", med.getId());
-            intent.putExtra("medInfo", med.getName() + " " + med.getDosage());
+            intent.putExtra("medInfo", med.getName() + " " + med.getDosage() + " " + med.getUnit());
             intent.putExtra("retryCount", 0);
             intent.putExtra("role", "elder");
 

@@ -63,7 +63,7 @@ public class ReminderReceiver extends BroadcastReceiver {
 
             // Elder only sees this--------------------------------------------------------
             if ("elder".equals(role)) {
-                int notifID_role = notifId + role.hashCode();
+                int notifID_role = notifId + role.hashCode(); //notification ID (based on role)
 
                 // Action: Taken------------------------------------------------------------------------------------
                 Intent takenIntent = new Intent(context, ReminderActionReceiver.class);
@@ -127,6 +127,13 @@ public class ReminderReceiver extends BroadcastReceiver {
             }
 
             NotificationManagerCompat.from(context).notify(notifId, builder.build());
+
+
+            // Automatically schedule the next retry, no matter if user pressed Not Taken,swiped away or did nothing (until MAX_RETRIES of 3)
+            if (retryCount < MAX_RETRIES) {
+                scheduleRetry(context, medId, medInfo, retryCount);
+            }
+
 
         } catch (Exception e) {
             Log.e(TAG, "onReceive error", e);

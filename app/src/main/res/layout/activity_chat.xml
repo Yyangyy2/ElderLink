@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -22,7 +23,8 @@
             android:layout_marginStart="8dp"
             android:background="@android:color/transparent"
             android:contentDescription="Back"
-            android:src="@drawable/back_arrow" />
+            android:src="@drawable/back_arrow"
+            tools:ignore="TouchTargetSizeCheck" />
 
         <TextView
             android:id="@+id/titleText"
@@ -60,6 +62,17 @@
             android:background="#F1F1F1"
             android:scrollbars="vertical" />
     </ScrollView>
+
+
+    <!-- Loading Spinner -->
+    <ProgressBar
+        android:id="@+id/loadingSpinner"
+        style="?android:attr/progressBarStyleLarge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone" />   <!-- hidden by default -->
+
 
     <!-- Input + Send button -->
     <LinearLayout

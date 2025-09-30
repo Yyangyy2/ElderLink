@@ -63,6 +63,17 @@
             android:scrollbars="vertical" />
     </ScrollView>
 
+
+    <!-- Loading Spinner -->
+    <ProgressBar
+        android:id="@+id/loadingSpinner"
+        style="?android:attr/progressBarStyleLarge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone" />   <!-- hidden by default -->
+
+
     <!-- Input + Send button -->
     <LinearLayout
         android:orientation="horizontal"

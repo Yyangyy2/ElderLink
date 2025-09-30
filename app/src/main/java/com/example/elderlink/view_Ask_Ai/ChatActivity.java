@@ -7,6 +7,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,13 +34,23 @@ public class ChatActivity extends AppCompatActivity {
     EditText inputMessage;
     Button btnSend;
     TextView chatHistory;
+    ProgressBar loadingSpinner;
 
-    // Replace with your Gemini API Key
-    private static final String GEMINI_API_KEY = "AIzaSyBaTsP0Kd7QVg9FxrGe2Glx0lXe1oBSX0s";
+
+    // Debug here: Update URL possible for newer version of gemini
+    private static final String GEMINI_API_KEY = "AIzaSyDcoS_TkV47a7227n9hqIxhFx1LIZ3djWE";
     private static final String GEMINI_URL =
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + GEMINI_API_KEY;
+            "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=" + GEMINI_API_KEY;
 
-    OkHttpClient client = new OkHttpClient();
+
+
+
+    OkHttpClient client = new OkHttpClient.Builder()
+            .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS) //Give 30s to connect to the API
+            .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)  //Up to 60s to read the response
+            .writeTimeout(60, java.util.concurrent.TimeUnit.SECONDS) //Up to 60s to upload data
+            .build();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +62,8 @@ public class ChatActivity extends AppCompatActivity {
         inputMessage = findViewById(R.id.inputMessage);
         btnSend = findViewById(R.id.btnSend);
         chatHistory = findViewById(R.id.chatHistory);
+        loadingSpinner = findViewById(R.id.loadingSpinner);
+
 
 
         // Get data from intent
@@ -175,6 +188,8 @@ public class ChatActivity extends AppCompatActivity {
 
 
     private void callGemini(String prompt) {
+
+        runOnUiThread(() -> loadingSpinner.setVisibility(View.VISIBLE)); // show spinner loading
         new Thread(() -> {
             try {
                 // Build request JSON
@@ -221,6 +236,8 @@ public class ChatActivity extends AppCompatActivity {
             } catch (Exception e) {
                 e.printStackTrace();
                 runOnUiThread(() -> appendChat("AI: Exception - " + e.getMessage()));
+            }finally {
+                runOnUiThread(() -> loadingSpinner.setVisibility(View.GONE));
             }
         }).start();
     }

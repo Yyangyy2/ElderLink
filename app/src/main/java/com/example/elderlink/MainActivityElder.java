@@ -18,6 +18,8 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import com.example.elderlink.view_Ask_Ai.ChatActivityElder;
 import com.example.elderlink.view_medication.ViewMedicationActivityElderSide;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class MainActivityElder extends AppCompatActivity {
     @Override
@@ -33,15 +35,34 @@ public class MainActivityElder extends AppCompatActivity {
 
         // Get data from intent
         String name = getIntent().getStringExtra("personName");
-        String imageBase64 = getIntent().getStringExtra("personImageBase64");
+        //String imageBase64 = getIntent().getStringExtra("personImageBase64"); //image too large to pass so no use this
         String personUid = getIntent().getStringExtra("personUid");
+        String caregiverUid = getIntent().getStringExtra("caregiverUid");
 
         nameText.setText(name);
 
-        if (imageBase64 != null && !imageBase64.isEmpty()) {
-            byte[] decodedBytes = Base64.decode(imageBase64, Base64.DEFAULT);
-            Bitmap decodedBitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
-            imageView.setImageBitmap(decodedBitmap);
+        // Load imageBase64 from Firestore using personUid, because image too large to pass
+        if (caregiverUid != null && personUid != null) {
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+            DocumentReference elderRef = db.collection("users")
+                    .document(caregiverUid)
+                    .collection("people")
+                    .document(personUid);
+
+            elderRef.get().addOnSuccessListener(documentSnapshot -> {
+                if (documentSnapshot.exists()) {
+                    String imageBase64 = documentSnapshot.getString("imageBase64");
+                    if (imageBase64 != null && !imageBase64.isEmpty()) {
+                        byte[] decodedBytes = Base64.decode(imageBase64, Base64.DEFAULT);
+                        Bitmap decodedBitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
+                        imageView.setImageBitmap(decodedBitmap);
+                    } else {
+                        imageView.setImageResource(R.drawable.profile_placeholder);
+                    }
+                }
+            }).addOnFailureListener(e -> {
+                imageView.setImageResource(R.drawable.profile_placeholder);
+            });
         } else {
             imageView.setImageResource(R.drawable.profile_placeholder);
         }
@@ -105,7 +126,6 @@ public class MainActivityElder extends AppCompatActivity {
                 String personUid = getIntent().getStringExtra("personUid");
                 intent.putExtra("personUid", personUid);
                 intent.putExtra("personName", name);
-                intent.putExtra("personImageBase64", imageBase64);
                 String uid = getIntent().getStringExtra("caregiverUid");
                 intent.putExtra("caregiverUid", uid);
 
@@ -125,7 +145,6 @@ public class MainActivityElder extends AppCompatActivity {
                 Intent intent = new Intent(MainActivityElder.this, ChatActivityElder.class);
                 intent.putExtra("personUid", personUid);
                 intent.putExtra("personName", name);
-                intent.putExtra("personImageBase64", imageBase64);
                 String uid = getIntent().getStringExtra("caregiverUid");
                 intent.putExtra("caregiverUid", uid);
                 startActivity(intent);

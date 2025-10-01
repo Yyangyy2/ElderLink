@@ -166,7 +166,7 @@ public class ReminderReceiver extends BroadcastReceiver {
             i.putExtra("personName", personName);
 
             if (nextRetry > MAX_RETRIES) {
-                // 👉 After last retry, escalate to caregiver
+                //  After last retry, escalate to caregiver
                 i.putExtra("role", "caregiver");
                 i.putExtra("retryCount", nextRetry);
             } else {

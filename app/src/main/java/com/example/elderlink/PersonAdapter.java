@@ -163,7 +163,7 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
                                         // Pass data ( elder name,elder uid, caregiver uid)
                                         intent.putExtra("personName", person.getName());
                                         intent.putExtra("personUid", person.getId());
-                                        intent.putExtra("personImageBase64", person.getImageBase64());
+                                        //intent.putExtra("personImageBase64", person.getImageBase64());
                                         intent.putExtra("caregiverUid", uid);
 
                                         context.startActivity(intent);

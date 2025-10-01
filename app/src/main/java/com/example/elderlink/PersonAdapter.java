@@ -91,7 +91,7 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
 
                 // Pass data so the new page knows which person it is
                 intent.putExtra("personName", person.getName());
-                intent.putExtra("personImageBase64", person.getImageBase64());
+                //intent.putExtra("personImageBase64", person.getImageBase64());
                 intent.putExtra("personUid", personUid);
 
                 context.startActivity(intent);

@@ -12,6 +12,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.Manifest;
 
@@ -52,6 +53,39 @@ public class LoginActivity extends AppCompatActivity {
                 loginUser();
             }
         });
+
+
+
+        // Forgot Password------------------------------------------------------------------------------
+        TextView forgotPassword = findViewById(R.id.forgotPassword);
+        forgotPassword.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String email = inputEmail.getText().toString().trim();
+
+                if (TextUtils.isEmpty(email)) {
+                    inputEmail.setError("Enter your email first");
+                    inputEmail.requestFocus();
+                    return;
+                }
+                //Send password reset email to caregiver's email
+                mAuth.sendPasswordResetEmail(email)
+                        .addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                Toast.makeText(LoginActivity.this,
+                                        "Password reset email sent to " + email,
+                                        Toast.LENGTH_LONG).show();
+                            } else {
+                                Toast.makeText(LoginActivity.this,
+                                        "Error: " + task.getException().getMessage(),
+                                        Toast.LENGTH_LONG).show();
+                            }
+                        });
+            }
+        });
+
+
+
 
 
         // Ask for notification permission (Android 13+ only)-----------[For Reminder function to work]---------------

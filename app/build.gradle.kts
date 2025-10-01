@@ -69,6 +69,8 @@ dependencies {
     //implementation ("com.google.ai.client:generativelanguage:0.7.0")
     implementation ("com.squareup.okhttp3:okhttp:4.11.0")
     implementation ("com.google.code.gson:gson:2.10.1")
+    implementation ("com.squareup.picasso:picasso:2.71828")
+
 
 
 

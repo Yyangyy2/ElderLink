@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.util.Base64;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -17,6 +18,9 @@ import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.example.elderlink.view_Ask_Ai.ChatActivity;
 import com.example.elderlink.view_medication.ViewMedicationActivity;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class CheckOnElderlyActivity extends AppCompatActivity {
 
@@ -33,18 +37,34 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
 
         // Get data from intent
         String name = getIntent().getStringExtra("personName");
-        String imageBase64 = getIntent().getStringExtra("personImageBase64");
+        //String imageBase64 = getIntent().getStringExtra("personImageBase64");
         String personUid = getIntent().getStringExtra("personUid");
 
         nameText.setText(name);
+        imageView.setImageResource(R.drawable.profile_placeholder); // placeholder initially
 
-        if (imageBase64 != null && !imageBase64.isEmpty()) {
-            byte[] decodedBytes = Base64.decode(imageBase64, Base64.DEFAULT);
-            Bitmap decodedBitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
-            imageView.setImageBitmap(decodedBitmap);
-        } else {
-            imageView.setImageResource(R.drawable.profile_placeholder);
-        }
+
+        // Fetch elder profile from Firestore
+        String caregiverId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        DocumentReference elderRef = db.collection("users")
+                .document(caregiverId)
+                .collection("people")
+                .document(personUid);
+
+        elderRef.get().addOnSuccessListener(documentSnapshot -> {
+            if (documentSnapshot.exists()) {
+                String imageBase64 = documentSnapshot.getString("imageBase64");
+                if (imageBase64 != null && !imageBase64.isEmpty()) {
+                    byte[] decodedBytes = Base64.decode(imageBase64, Base64.DEFAULT);
+                    Bitmap bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
+                    imageView.setImageBitmap(bitmap);
+                }
+            }
+        });
+
+
 
 
         //Back Button (to MainPage)------------------------------------------------
@@ -58,6 +78,23 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
                 finish();
             }
         });
+
+
+        // Info Button (to ProfilePageElder)---------------------------------------------
+        Button infoButton = findViewById(R.id.infobtn);
+
+        infoButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(CheckOnElderlyActivity.this, ProfilePageElder.class);
+                intent.putExtra("personUid", personUid);
+                //intent.putExtra("personImageBase64", imageBase64);
+                intent.putExtra("personName", name);
+                startActivity(intent);
+                finish();
+            }
+        });
+
 
 
 
@@ -129,7 +166,6 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
             public void onClick(View v) {
                 Intent intent = new Intent(CheckOnElderlyActivity.this, ChatActivity.class);
                 intent.putExtra("personUid", personUid);
-                intent.putExtra("personImageBase64", imageBase64);
                 intent.putExtra("personName", name);
                 startActivity(intent);
                 finish();

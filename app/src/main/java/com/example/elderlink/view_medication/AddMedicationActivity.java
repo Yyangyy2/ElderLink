@@ -361,6 +361,7 @@ public class AddMedicationActivity extends AppCompatActivity {
             intent.putExtra("medInfo", medInfo);
             intent.putExtra("personName", personName);
             intent.putExtra("retryCount", 0);
+            intent.putExtra("role", "caregiver");
 
             int requestCode = medId.hashCode() ^ 12345;                                 // medId.hashCode() with 12345, make sure alarm has a different requestCode from retries, so no collision
             PendingIntent pi = PendingIntent.getBroadcast(this, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);

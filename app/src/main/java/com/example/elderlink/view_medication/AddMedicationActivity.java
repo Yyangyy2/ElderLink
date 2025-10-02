@@ -322,7 +322,8 @@ public class AddMedicationActivity extends AppCompatActivity {
                 unit,
                 imageBase64 == null ? "" : imageBase64,
                 repeatType,
-                reminderEnabled
+                reminderEnabled,
+                null    //set status null because no status yet
         );
 
         firestore.collection("users")
@@ -337,7 +338,7 @@ public class AddMedicationActivity extends AppCompatActivity {
 
                     if (reminderEnabled) {
                         String medInfo = name + " : " + dosage + " " + unit;
-                        scheduleReminder(docId, medInfo,personName, date, time);
+                        scheduleReminder(docId, medInfo,personName,personUid,caregiverUid, date, time);
 
                     }
                 })
@@ -347,7 +348,7 @@ public class AddMedicationActivity extends AppCompatActivity {
 
 
     //Reminder (Initial start the reminder to fire to ReminderReceiver.java)------------------------------------------------------------------------------------------------------------------------------------
-    private void scheduleReminder(String medId, String medInfo,String personName, String date, String time) {
+    private void scheduleReminder(String medId, String medInfo,String personName,String personUid,String caregiverUid, String date, String time) {
         try {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
             Date d = sdf.parse(date + " " + time);
@@ -360,8 +361,10 @@ public class AddMedicationActivity extends AppCompatActivity {
             intent.putExtra("medId", medId);
             intent.putExtra("medInfo", medInfo);
             intent.putExtra("personName", personName);
+            intent.putExtra("personUid",personUid);
+            intent.putExtra("caregiverUid",caregiverUid);
             intent.putExtra("retryCount", 0);
-            intent.putExtra("role", "caregiver");
+            //intent.putExtra("role", "elder");//!!! Strangely this needs to be elder to work
 
             int requestCode = medId.hashCode() ^ 12345;                                 // medId.hashCode() with 12345, make sure alarm has a different requestCode from retries, so no collision
             PendingIntent pi = PendingIntent.getBroadcast(this, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);

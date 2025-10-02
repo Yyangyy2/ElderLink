@@ -286,35 +286,25 @@
 
         </GridLayout>
 
-        <!-- Notifications Section -->
+        <!-- Medication adherence dashboard Section -->
         <TextView
-            android:id="@+id/notificationsLabel"
+            android:id="@+id/MedAdherenceLabel"
             android:layout_below="@id/featuresGrid"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginTop="12dp"
-            android:text="Notifications"
+            android:text="Dashboard"
             android:textSize="16sp"
             android:textStyle="bold"/>
 
-        <TextView
-            android:id="@+id/viewMore"
-            android:layout_alignBaseline="@id/notificationsLabel"
-            android:layout_alignParentEnd="true"
-            android:layout_marginEnd="16dp"
-            android:text="View More >"
-            android:textColor="#2962FF"
-            android:textSize="14sp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/notificationsRecyclerView"
             android:layout_width="403dp"
             android:layout_height="323dp"
             android:layout_above="@id/bottomNavigation"
-            android:layout_below="@id/notificationsLabel"
+            android:layout_below="@id/MedAdherenceLabel"
             android:layout_marginStart="8dp"
             android:layout_marginLeft="8dp"
             android:layout_marginTop="27dp"

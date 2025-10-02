@@ -12,6 +12,7 @@ public class Model_medication {
     private String imageBase64;
     private String repeatType;
     private Boolean switchReminder;
+    private String status;
 
     public String getImageBase64() {
         return imageBase64;
@@ -83,14 +84,15 @@ public class Model_medication {
 
     public void setSwitchReminder(Boolean switchReminder) { this.switchReminder = switchReminder; }
 
-
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
 
     public Model_medication() {
 
     }
 
-    public Model_medication(String id, String name, String date, String endDate, String time, String dosage,String unit, String imageBase64, String repeatType, Boolean switchReminder) {
+    public Model_medication(String id, String name, String date, String endDate, String time, String dosage,String unit, String imageBase64, String repeatType, Boolean switchReminder, String status) {
         this.id = id;
         this.name = name;
         this.date = date;
@@ -101,6 +103,7 @@ public class Model_medication {
         this.imageBase64 = imageBase64;
         this.repeatType = repeatType;
         this.switchReminder = switchReminder;
+        this.status = status;
     }
 
     //Method for MedicationActivityElderSide to convert date+time into milliseconds--------------------------------------------------------------------------------------

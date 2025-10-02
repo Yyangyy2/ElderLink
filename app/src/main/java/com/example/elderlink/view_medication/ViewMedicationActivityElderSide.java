@@ -45,7 +45,7 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
     private List<Model_medication> allMedications = new ArrayList<>();
     private FirebaseFirestore db;
     private String personUid;
-
+    private String caregiverUid;
 
     private RecyclerView calendarRecyclerView;
     private CalendarAdapter calendarAdapter;
@@ -64,7 +64,7 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
         String name = getIntent().getStringExtra("personName");
         String imageBase64 = getIntent().getStringExtra("personImageBase64");
         personUid = getIntent().getStringExtra("personUid");
-        String uid = getIntent().getStringExtra("caregiverUid");
+        caregiverUid = getIntent().getStringExtra("caregiverUid");
 
 
         recyclerView = findViewById(R.id.medicationRecyclerView);
@@ -84,7 +84,7 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
 
         setupCalendar();
         loadMedications(personUid);
-        listenForMedicationReminders(uid, personUid);  // Start listening for caregiver-scheduled reminders
+        listenForMedicationReminders(caregiverUid, personUid);  // Start listening for caregiver-scheduled reminders
 
 
 
@@ -119,7 +119,7 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
                 intent.putExtra("personUid", personUid);
                 intent.putExtra("personName", name);
                 intent.putExtra("personImageBase64", imageBase64);
-                intent.putExtra("caregiverUid", uid);
+                intent.putExtra("caregiverUid", caregiverUid);
                 startActivity(intent);
                 finish();
             }
@@ -280,6 +280,8 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
             intent.putExtra("medId", med.getId());
             intent.putExtra("medInfo", med.getName() + " " + med.getDosage() + " " + med.getUnit());
             intent.putExtra("retryCount", 0);
+            intent.putExtra("personUid", personUid);
+            intent.putExtra("caregiverUid",caregiverUid);
             intent.putExtra("role", "elder");
 
 

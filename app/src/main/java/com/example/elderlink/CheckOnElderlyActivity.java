@@ -149,7 +149,9 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
 
                 // Pass along personUid so next activity knows which elderly
                 String personUid = getIntent().getStringExtra("personUid");
+                String caregiverUid = getIntent().getStringExtra("caregiverUid");
                 intent.putExtra("personUid", personUid);
+                intent.putExtra("caregiverUid", caregiverUid);
                 intent.putExtra("personName", name);
                 startActivity(intent);
                 finish();

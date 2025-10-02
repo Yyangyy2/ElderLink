@@ -41,6 +41,7 @@ public class ViewMedicationActivity extends AppCompatActivity {
     private List<Model_medication> allMedications = new ArrayList<>();
     private FirebaseFirestore db;
     private String personUid;
+    private String caregiverUid;
     private String personName;
 
 
@@ -57,6 +58,7 @@ public class ViewMedicationActivity extends AppCompatActivity {
 
         db = FirebaseFirestore.getInstance();
         personUid = getIntent().getStringExtra("personUid");
+        caregiverUid = getIntent().getStringExtra("caregiverUid");
         personName = getIntent().getStringExtra("personName");
 
 
@@ -71,6 +73,7 @@ public class ViewMedicationActivity extends AppCompatActivity {
             Intent intent = new Intent(ViewMedicationActivity.this, AddMedicationActivity.class);
             intent.putExtra("personUid", personUid);
             intent.putExtra("personName", personName);
+            intent.putExtra("caregiverUid",caregiverUid);
             intent.putExtra("medId", medication.getId());
             startActivity(intent);
         });

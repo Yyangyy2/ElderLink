@@ -8,6 +8,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
+import com.google.firebase.firestore.FirebaseFirestore;
+
 public class ReminderActionReceiver extends BroadcastReceiver {
     private static final String TAG = "ReminderActionReceiver";
 
@@ -18,6 +20,8 @@ public class ReminderActionReceiver extends BroadcastReceiver {
             String medId = intent.getStringExtra("medId");
             String medInfo = intent.getStringExtra("medInfo");
             String personName = intent.getStringExtra("personName");
+            String personUid = intent.getStringExtra("personUid");
+            String caregiverUid = intent.getStringExtra("caregiverUid");
             int retryCount = intent.getIntExtra("retryCount", 0);
 
             if (medId == null) {
@@ -32,25 +36,60 @@ public class ReminderActionReceiver extends BroadcastReceiver {
                     context.getSharedPreferences("med_prefs_v1", Context.MODE_PRIVATE);
             String handledKey = "handled_" + medId;
 
+            FirebaseFirestore db = FirebaseFirestore.getInstance(); //connect to Firestore db
+
             if ("ACTION_TAKEN".equals(action)) {
                 prefs.edit().putBoolean(handledKey, true).apply();
                 if (nm != null) nm.cancel(notifId);
                 cancelRetries(context, medId);
+
+                // Update status to Taken
+                db.collection("users")
+                        .document(caregiverUid)
+                        .collection("people")
+                        .document(personUid)
+                        .collection("medications")
+                        .document(medId)
+                        .update("status", "Taken")
+                        .addOnSuccessListener(aVoid -> Log.d(TAG, "Status updated to Taken"))
+                        .addOnFailureListener(e -> Log.e(TAG, "Failed to update status", e));
 
             } else if ("ACTION_NOT_TAKEN".equals(action)) {
                 prefs.edit().putBoolean(handledKey, true).apply();
                 if (nm != null) nm.cancel(notifId);
 
                 // retry (elder only), no personName needed here
-                ReminderReceiver.scheduleRetry(context, medId, medInfo, retryCount, personName);
+                ReminderReceiver.scheduleRetry(context, medId, medInfo, retryCount, personName, personUid, caregiverUid);
+
+                // Update status to Pending
+                db.collection("users")
+                        .document(caregiverUid)
+                        .collection("people")
+                        .document(personUid)
+                        .collection("medications")
+                        .document(medId)
+                        .update("status", "Pending")
+                        .addOnSuccessListener(aVoid -> Log.d(TAG, "Status updated to Pending"))
+                        .addOnFailureListener(e -> Log.e(TAG, "Failed to update status", e));
 
             } else if ("ACTION_DISMISSED".equals(action)) {
                 boolean handled = prefs.getBoolean(handledKey, false);
                 if (handled) {
                     prefs.edit().remove(handledKey).apply();
                 } else {
-                    ReminderReceiver.scheduleRetry(context, medId, medInfo, retryCount, personName);
+                    ReminderReceiver.scheduleRetry(context, medId, medInfo, retryCount, personName, personUid, caregiverUid);
                 }
+
+                // If dismissed, leave it as Pending unless max retries later make it Missed
+                db.collection("users")
+                        .document(caregiverUid)
+                        .collection("people")
+                        .document(personUid)
+                        .collection("medications")
+                        .document(medId)
+                        .update("status", "Pending")
+                        .addOnSuccessListener(aVoid -> Log.d(TAG, "Status set to Pending (Dismissed)"))
+                        .addOnFailureListener(e -> Log.e(TAG, "Failed to update status", e));
 
             } else {
                 Log.w(TAG, "Unknown action: " + action);

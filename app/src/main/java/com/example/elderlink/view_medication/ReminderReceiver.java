@@ -17,6 +17,10 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
 import com.example.elderlink.R;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class ReminderReceiver extends BroadcastReceiver {
     private static final String TAG = "ReminderReceiver";
@@ -31,9 +35,12 @@ public class ReminderReceiver extends BroadcastReceiver {
             String medId = intent.getStringExtra("medId");
             String medInfo = intent.getStringExtra("medInfo");
             String personName = intent.getStringExtra("personName");
+            String personUid = intent.getStringExtra("personUid");
+            String caregiverUid = intent.getStringExtra("caregiverUid");
             int retryCount = intent.getIntExtra("retryCount", 0);
 
             Log.d(TAG, "onReceive medId=" + medId + " retry=" + retryCount + " medInfo=" + medInfo + " role=" + role);
+
 
             if (medId == null || medInfo == null) {
                 Log.w(TAG, "Missing medId or medInfo");
@@ -51,10 +58,13 @@ public class ReminderReceiver extends BroadcastReceiver {
             if ("elder".equals(role)) {
                 int notifID_role = notifId + role.hashCode();
 
-                // Action: Taken
+                // Action: Taken-----------------------------------------------------------------------
                 Intent takenIntent = new Intent(context, ReminderActionReceiver.class);
                 takenIntent.setAction("ACTION_TAKEN");
                 takenIntent.putExtra("medId", medId);
+                takenIntent.putExtra("personName", personName);
+                takenIntent.putExtra("personUid", personUid);
+                takenIntent.putExtra("caregiverUid", caregiverUid);
 
                 PendingIntent takenPI = PendingIntent.getBroadcast(
                         context,
@@ -63,11 +73,14 @@ public class ReminderReceiver extends BroadcastReceiver {
                         PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
                 );
 
-                // Action: Not Taken
+                // Action: Not Taken-----------------------------------------------------------------------
                 Intent notTakenIntent = new Intent(context, ReminderActionReceiver.class);
                 notTakenIntent.setAction("ACTION_NOT_TAKEN");
                 notTakenIntent.putExtra("medId", medId);
                 notTakenIntent.putExtra("medInfo", medInfo);
+                notTakenIntent.putExtra("personName", personName);
+                notTakenIntent.putExtra("personUid", personUid);
+                notTakenIntent.putExtra("caregiverUid", caregiverUid);
                 notTakenIntent.putExtra("retryCount", retryCount);
 
                 PendingIntent notTakenPI = PendingIntent.getBroadcast(
@@ -77,11 +90,14 @@ public class ReminderReceiver extends BroadcastReceiver {
                         PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
                 );
 
-                // Action: Dismissed
+                // Action: Dismissed-----------------------------------------------------------------------
                 Intent deleteIntent = new Intent(context, ReminderActionReceiver.class);
                 deleteIntent.setAction("ACTION_DISMISSED");
                 deleteIntent.putExtra("medId", medId);
                 deleteIntent.putExtra("medInfo", medInfo);
+                deleteIntent.putExtra("personName", personName);
+                deleteIntent.putExtra("personUid", personUid);
+                deleteIntent.putExtra("caregiverUid", caregiverUid);
                 deleteIntent.putExtra("retryCount", retryCount);
 
                 PendingIntent deletePI = PendingIntent.getBroadcast(
@@ -104,17 +120,38 @@ public class ReminderReceiver extends BroadcastReceiver {
 
                 // Retry loop for elder
                 if (retryCount < MAX_RETRIES) {
-                    scheduleRetry(context, medId, medInfo, retryCount, personName);
+                    scheduleRetry(context, medId, medInfo, retryCount, personName, personUid, caregiverUid);
+                    // Update Firestore medications with status = "Pending" before retryCount reached max
+                    FirebaseFirestore db = FirebaseFirestore.getInstance();
+                    db.collection("users")
+                            .document(caregiverUid)
+                            .collection("people")
+                            .document(personUid)
+                            .collection("medications")
+                            .document(medId)
+                            .update("status", "Pending")
+                            .addOnSuccessListener(aVoid -> Log.d(TAG, "Status updated to Missed for medId=" + medId))
+                            .addOnFailureListener(e -> Log.e(TAG, "Failed to update status", e));
+                } else if (retryCount >= MAX_RETRIES) {
+                    // Update Firestore medications with status = "Missed" once retryCount reached max
+                    FirebaseFirestore db = FirebaseFirestore.getInstance();
+                    db.collection("users")
+                            .document(caregiverUid)
+                            .collection("people")
+                            .document(personUid)
+                            .collection("medications")
+                            .document(medId)
+                            .update("status", "Missed")
+                            .addOnSuccessListener(aVoid -> Log.d(TAG, "Status updated to Missed for medId=" + medId))
+                            .addOnFailureListener(e -> Log.e(TAG, "Failed to update status", e));
+
                 }
 
-            } else if ("caregiver".equals(role))  {
-                // Caregiver notification
-                if (retryCount >= MAX_RETRIES) {
-                    // Once elder hit MAX_RETRIES → Trigger caregiver alert
-                    notifyCaregiver(context, personName, medInfo, medId);
-                } else {
-                    builder.setContentTitle("Medication Reminder").setContentText("Reminder for " + personName + " : " + medInfo);
-                }
+            } else {
+                // Caregiver notification-----------------------------------------------------------------------
+                personName = intent.getStringExtra("personName");    // must write this so that system remembers which elder even when app is closed/exited
+                builder.setContentTitle("Medication Reminder").setContentText("Reminder for " + personName + " : " + medInfo);
+
 
                 if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
                         == PackageManager.PERMISSION_GRANTED) {
@@ -127,19 +164,7 @@ public class ReminderReceiver extends BroadcastReceiver {
         }
     }
 
-    private void notifyCaregiver(Context context, String personName, String medInfo, String medId) {
-        NotificationCompat.Builder caregiverBuilder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.drawable.logoelderlink_new)
-                .setContentTitle("Caregiver Alert")
-                .setContentText(personName + " has not taken all medicines for 3 mins")
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setAutoCancel(true);
 
-        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
-                == PackageManager.PERMISSION_GRANTED) {
-            NotificationManagerCompat.from(context).notify(medId.hashCode() + 999, caregiverBuilder.build());
-        }
-    }
 
 
     private void ensureChannel(Context context) {
@@ -151,7 +176,7 @@ public class ReminderReceiver extends BroadcastReceiver {
         }
     }
 
-    public static void scheduleRetry(Context context, String medId, String medInfo, int currentRetry, String personName) {
+    public static void scheduleRetry(Context context, String medId, String medInfo, int currentRetry, String personName,String personUid, String caregiverUid) {
         try {
             int nextRetry = currentRetry + 1;
             AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
@@ -164,15 +189,16 @@ public class ReminderReceiver extends BroadcastReceiver {
             i.putExtra("medId", medId);
             i.putExtra("medInfo", medInfo);
             i.putExtra("personName", personName);
+            i.putExtra("personUid", personUid);
+            i.putExtra("caregiverUid", caregiverUid);
+            i.putExtra("retryCount", nextRetry);
 
             if (nextRetry > MAX_RETRIES) {
                 //  After last retry, escalate to caregiver
                 i.putExtra("role", "caregiver");
-                i.putExtra("retryCount", nextRetry);
             } else {
                 // Normal elder retry
                 i.putExtra("role", "elder");
-                i.putExtra("retryCount", nextRetry);
             }
 
             int requestCode = medId.hashCode() ^ (nextRetry * 7919);

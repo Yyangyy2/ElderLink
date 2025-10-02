@@ -37,13 +37,13 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
     private Context context;
     private List<Person> personList;
     private boolean isLoginElder; // true = elder view, false = caregiver view
-    private String uid;
+    private String uid; //caregiver's uid
 
     public PersonAdapter(Context context, List<Person> personList, boolean isLoginElder, String uid) {
         this.context = context;
         this.personList = personList;
         this.isLoginElder = isLoginElder;
-        this.uid = uid;
+        this.uid = uid; //caregiver's uid
     }
 
     @Override
@@ -64,6 +64,7 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
         Person person = personList.get(position);
         holder.personName.setText(person.getName());
         String personUid = person.getId();
+        String caregiverUid = uid;
 
 
         // Decode Base64 image if available, otherwise use profile_placeholder from drawable
@@ -93,6 +94,7 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
                 intent.putExtra("personName", person.getName());
                 //intent.putExtra("personImageBase64", person.getImageBase64());
                 intent.putExtra("personUid", personUid);
+                intent.putExtra("caregiverUid",caregiverUid);
 
                 context.startActivity(intent);
             });

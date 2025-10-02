@@ -40,6 +40,9 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
         return new MedicationViewHolder(view);
     }
 
+
+
+    // Show the item’s data in the card (medication_item)----------------------------------------------------------------------
     @Override
     public void onBindViewHolder(@NonNull MedicationViewHolder holder, int position) {
         Model_medication med = medicationList.get(position);
@@ -57,6 +60,30 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
             holder.medImage.setImageResource(R.drawable.view_medication_logo); // default
         }
 
+
+        // Status handling
+        String status = med.getStatus();
+
+        if (status == null || status.isEmpty()) {
+            holder.statusInfo.setText("");  // No text if null (do not display anything if null)
+        } else {
+            holder.statusInfo.setText(status);
+            switch (status) {
+                case "Taken":
+                    holder.statusInfo.setTextColor(context.getResources().getColor(android.R.color.holo_green_dark));
+                    break;
+                case "Pending":
+                    holder.statusInfo.setTextColor(context.getResources().getColor(android.R.color.holo_orange_light));
+                    break;
+                case "Missed":
+                    holder.statusInfo.setTextColor(context.getResources().getColor(android.R.color.holo_red_dark));
+                    break;
+                default:
+                    holder.statusInfo.setTextColor(context.getResources().getColor(android.R.color.black)); // fallback
+                    break;
+            }
+        }
+
         holder.btnEdit.setOnClickListener(v -> listener.onEditClick(med));
 
     }
@@ -67,8 +94,9 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
     }
 
     public static class MedicationViewHolder extends RecyclerView.ViewHolder {
-        TextView medName, medTime,medDosage, medUnit, btnEdit;
+        TextView medName, medTime,medDosage, medUnit, statusInfo;
         ImageView medImage;
+        View btnEdit;
 
         public MedicationViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -77,6 +105,7 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
             medDosage = itemView.findViewById(R.id.med_dosage);
             medUnit = itemView.findViewById(R.id.med_unit);
             medImage = itemView.findViewById(R.id.med_image);
+            statusInfo = itemView.findViewById(R.id.statusinfo);
             btnEdit = itemView.findViewById(R.id.btnEdit);
         }
     }

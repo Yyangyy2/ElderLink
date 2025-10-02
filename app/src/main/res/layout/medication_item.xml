@@ -14,18 +14,23 @@
     android:clickable="true"
     android:foreground="?attr/selectableItemBackground">
 
+    <!-- ContraintLayout is the button -->
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/btnEdit"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:padding="10dp"
+        android:clickable="true"
+        android:focusable="true"
         android:background="@drawable/custom_border_white">
 
-        <!-- Edit button top-right -->
+
+        <!-- Status -->
         <TextView
-            android:id="@+id/btnEdit"
+            android:id="@+id/statusinfo"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Edit >"
+            android:text="Show status"
             android:textColor="#1E62F0"
             android:textSize="12sp"
             android:textStyle="bold"
@@ -40,14 +45,13 @@
             android:id="@+id/med_image"
             android:layout_width="72dp"
             android:layout_height="72dp"
+            android:layout_marginTop="28dp"
+            android:contentDescription="Medication image"
             android:scaleType="centerInside"
             android:src="@drawable/view_medication_logo"
-        app:layout_constraintTop_toBottomOf="@+id/btnEdit"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:contentDescription="Medication image"
-        android:layout_marginTop="6dp"/>
-
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
         <!-- Medication name -->
         <TextView
             android:id="@+id/med_name"
@@ -78,7 +82,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_marginTop="6dp"/>
 
-        <!-- Dosage and unit  -->
+        <!-- Dosage and unit -->
         <LinearLayout
             android:id="@+id/dosage_unit_container"
             android:layout_width="0dp"

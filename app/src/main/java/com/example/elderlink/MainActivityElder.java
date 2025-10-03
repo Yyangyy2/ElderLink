@@ -73,18 +73,18 @@ public class MainActivityElder extends AppCompatActivity {
 
 
         //Bottom Navigation Bar-----------------------------------------------------------------------------------------
-        ImageButton navHome = findViewById(R.id.navHome);
-
-        navHome.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(MainActivityElder.this, MainActivityElder.class);
-                intent.putExtra("personUid", personUid);
-                intent.putExtra("personName", name);
-                startActivity(intent);
-                finish();
-            }
-        });
+//        ImageButton navHome = findViewById(R.id.navHome);
+//
+//        navHome.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                Intent intent = new Intent(MainActivityElder.this, MainActivityElder.class);
+//                intent.putExtra("personUid", personUid);
+//                intent.putExtra("personName", name);
+//                startActivity(intent);
+//                finish();
+//            }
+//        });
 
         //Bottom Navigation Bar-----------------------------------------------------------------------------------------
 //        ImageButton navNotifications = findViewById(R.id.navNotifications);

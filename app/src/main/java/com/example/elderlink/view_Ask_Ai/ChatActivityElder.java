@@ -15,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.elderlink.MainActivityElder;
 import com.example.elderlink.R;
+import com.example.elderlink.BuildConfig;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.gson.JsonArray;
@@ -37,9 +38,8 @@ public class ChatActivityElder extends AppCompatActivity {
     ProgressBar loadingSpinner;
 
     // Debug here: Update URL possible for newer version of gemini
-    private static final String GEMINI_API_KEY = "AIzaSyDcoS_TkV47a7227n9hqIxhFx1LIZ3djWE";
     private static final String GEMINI_URL =
-            "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=" + GEMINI_API_KEY;
+            "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=" + BuildConfig.GEMINI_API_KEY;
 
 
 

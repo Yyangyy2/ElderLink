@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="ElderLink">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-10-02T14:43:04.355361700Z">
+        <DropdownSelection timestamp="2025-10-02T15:07:57.832317200Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\user\.android\avd\Pixel_9_Pro.avd" />
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=RR8M509LNDE" />
             </handle>
           </Target>
         </DropdownSelection>

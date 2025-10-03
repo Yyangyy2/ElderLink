@@ -300,7 +300,7 @@
 
 
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/notificationsRecyclerView"
+            android:id="@+id/dashboardRecyclerView"
             android:layout_width="403dp"
             android:layout_height="323dp"
             android:layout_above="@id/bottomNavigation"

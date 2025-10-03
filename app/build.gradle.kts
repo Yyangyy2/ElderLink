@@ -5,6 +5,16 @@ plugins {
     alias(libs.plugins.google.gms.google.services)
 }
 
+// Load .env properties (optional) so sensitive keys can be stored outside VCS
+val envFile = rootProject.file(".env")
+val geminiApiKeyFromEnv: String? = if (envFile.exists()) {
+    envFile.readLines()
+        .map { it.trim() }
+        .firstOrNull { it.startsWith("GEMINI_API_KEY=") }
+        ?.substringAfter("=")
+} else null
+val geminiApiKey: String? = geminiApiKeyFromEnv ?: System.getenv("GEMINI_API_KEY")
+
 android {
     namespace = "com.example.elderlink"
     compileSdk = 35
@@ -17,6 +27,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Expose the GEMINI API key to the app via BuildConfig (empty string if not provided)
+        buildConfigField("String", "GEMINI_API_KEY", "\"${geminiApiKey ?: ""}\"")
     }
 
     buildTypes {
@@ -43,6 +56,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

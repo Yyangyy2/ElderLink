@@ -15,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.elderlink.CheckOnElderlyActivity;
 import com.example.elderlink.R;
+import com.example.elderlink.BuildConfig;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.gson.JsonArray;
@@ -38,9 +39,8 @@ public class ChatActivity extends AppCompatActivity {
 
 
     // Debug here: Update URL possible for newer version of gemini
-    private static final String GEMINI_API_KEY = "AIzaSyDcoS_TkV47a7227n9hqIxhFx1LIZ3djWE";
     private static final String GEMINI_URL =
-            "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=" + GEMINI_API_KEY;
+            "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=" + BuildConfig.GEMINI_API_KEY;
 
 
 
@@ -95,6 +95,7 @@ public class ChatActivity extends AppCompatActivity {
                             + "Each record may include: name, dosage, unit, time (24-hour format), date, endDate, repeatType, and switchReminder. "
                             + "Answer the user’s question in a short, clear, and polite way.\n\n"
 
+
                             + "JSON Data:\n" + firestoreData + "\n\n"
 
                             + "User Question: " + userQuestion + "\n\n"
@@ -106,8 +107,12 @@ public class ChatActivity extends AppCompatActivity {
                             + "- For 'when' questions, always show both formats like: '14:00 (2:00 PM)'.\n"
                             + "- For 'when' questions, use time/date/repeat info.\n"
                             + "- For 'how much' questions, use dosage + unit.\n"
-                            + "- If the info isn’t in the data, say: 'I don’t know based on the data.'\n"
+                            + "- If the info isn’t in the data, say: 'I don’t know based on the data.'\n\n"
                             + "- Never invent details not in the JSON.\n\n"
+
+
+
+
 
                             + "Answer:";
 
@@ -165,6 +170,7 @@ public class ChatActivity extends AppCompatActivity {
                         String endDate = doc.getString("endDate");
                         String repeatType = doc.getString("repeatType");
                         Boolean switchReminder = doc.getBoolean("switchReminder");
+                        String status = doc.getString("status");
 
                         // Build JSON-style record
                         JsonObject record = new JsonObject();
@@ -177,6 +183,7 @@ public class ChatActivity extends AppCompatActivity {
                         record.addProperty("endDate", endDate);
                         record.addProperty("repeatType", repeatType);
                         record.addProperty("switchReminder", switchReminder != null ? switchReminder : false);
+                        record.addProperty("status", status);
 
                         medicationArray.add(record);
 

@@ -1,1 +1,4 @@
 /build
+
+# Ignore env file placed at project root
+../.env

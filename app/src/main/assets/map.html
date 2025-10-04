@@ -1,0 +1,108 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Map</title>
+  <link href="https://unpkg.com/maplibre-gl@2.6.1/dist/maplibre-gl.css" rel="stylesheet" />
+  <style>
+    html, body { margin:0; padding:0; height:100%; }
+    #map { position:absolute; top:0; bottom:0; width:100%; }
+    #error { position:absolute; left:8px; right:8px; top:8px; background:rgba(255,255,255,0.9); color:#000; padding:8px; border-radius:6px; display:none; z-index:999; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div id="error"></div>
+
+  <script src="https://unpkg.com/maplibre-gl@2.6.1/dist/maplibre-gl.js"></script>
+  <script>
+    // Forward console messages to Android (if available) for easier debugging
+    (function(){
+      function sendConsole(level, args) {
+        try {
+          var msg = Array.prototype.slice.call(args).map(function(a){
+            try { return typeof a === 'string' ? a : JSON.stringify(a); } catch(e) { return String(a); }
+          }).join(' ');
+          if (window.AndroidLog && window.AndroidLog.log) {
+            window.AndroidLog.log(level + ': ' + msg);
+          }
+        } catch(e) {
+          // ignore
+        }
+      }
+      var origLog = console.log;
+      var origErr = console.error;
+      console.log = function(){ sendConsole('LOG', arguments); origLog.apply(console, arguments); };
+      console.error = function(){ sendConsole('ERR', arguments); origErr.apply(console, arguments); };
+    })();
+
+    var map = null;
+    var marker = null;
+
+    function showError(msg) {
+      try {
+        var e = document.getElementById('error');
+        e.textContent = msg;
+        e.style.display = 'block';
+        console.error('MAP_ERROR: ' + msg);
+      } catch (ex) { console.error(ex); }
+    }
+
+    window.initMap = function(styleUrl) {
+      try {
+        if (map) return;
+        if (!styleUrl) {
+          showError('No styleUrl provided');
+          return;
+        }
+        console.log('initMap: styleUrl=' + styleUrl);
+        maplibregl.accessToken = undefined;
+        map = new maplibregl.Map({
+          container: 'map',
+          style: styleUrl,
+          center: [0,0],
+          zoom: 2
+        });
+        map.on('load', function(){
+          console.log('map loaded');
+        });
+        map.addControl(new maplibregl.NavigationControl());
+      } catch (e) {
+        showError('Failed to initialize map: ' + e.message);
+      }
+    };
+
+    window.updateMarker = function(lat, lon) {
+      try {
+        if (!map) {
+          console.log('updateMarker called but map not ready');
+          return;
+        }
+        var _lat = parseFloat(lat);
+        var _lon = parseFloat(lon);
+        if (isNaN(_lat) || isNaN(_lon)) {
+          console.error('Invalid coords', lat, lon);
+          return;
+        }
+        if (!marker) {
+          marker = new maplibregl.Marker({color:'#FF0000'})
+            .setLngLat([_lon, _lat])
+            .addTo(map);
+        } else {
+          marker.setLngLat([_lon, _lat]);
+        }
+        map.easeTo({center: [_lon, _lat], zoom: Math.max(map.getZoom(), 14)});
+        console.log('marker moved to', _lat, _lon);
+      } catch (e) {
+        console.error('updateMarker error', e);
+      }
+    };
+
+    // Expose for debugging
+    window.maplibre_debug = {
+      getMapReady: function(){ return !!map; }
+    };
+  </script>
+</body>
+</html>

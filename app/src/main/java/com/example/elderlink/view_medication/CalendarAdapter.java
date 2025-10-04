@@ -63,16 +63,32 @@ public class CalendarAdapter extends RecyclerView.Adapter<CalendarAdapter.Calend
             holder.dateText.setText(rawDate); // fallback
         }
 
-        
-        
-        // Highlight selected date
-        if (date.equals(selectedDate)) {
-            holder.dateText.setBackgroundColor(Color.BLUE);
+
+        // Get today's date (yyyy-MM-dd)
+        String today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                .format(new Date());
+
+        // Reset default style first
+        holder.dateText.setBackgroundColor(Color.TRANSPARENT);
+        holder.dateText.setTextColor(Color.BLACK);
+
+        // Always mark today with black border
+        if (date.equals(today)) {
+            holder.dateText.setBackgroundResource(R.drawable.calendar_today_border);
             holder.dateText.setTextColor(Color.WHITE);
-        } else {
-            holder.dateText.setBackgroundColor(Color.TRANSPARENT);
-            holder.dateText.setTextColor(Color.BLACK);
         }
+
+        // color selected date
+        if (date.equals(selectedDate)) {
+            holder.dateText.setTextColor(Color.WHITE);
+            holder.dateText.setBackgroundColor(Color.parseColor("#0066ff")); // blue fill
+            // if selected date is also today, keep border visible:
+            if (date.equals(today)) {
+                holder.dateText.setBackgroundResource(R.drawable.calendar_today_border);
+            }
+        }
+
+
 
         holder.itemView.setOnClickListener(v -> {
             selectedDate = date;

@@ -65,7 +65,7 @@ public class MedicationAdapter extends RecyclerView.Adapter<MedicationAdapter.Me
         String status = med.getStatus();
 
         if (status == null || status.isEmpty()) {
-            holder.statusInfo.setText("");  // No text if null (do not display anything if null)
+            holder.statusInfo.setText("Upcoming");  // No text if null (do not display anything if null)
         } else {
             holder.statusInfo.setText(status);
             switch (status) {

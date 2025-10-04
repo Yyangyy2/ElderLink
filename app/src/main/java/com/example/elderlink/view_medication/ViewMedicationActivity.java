@@ -209,6 +209,17 @@ public class ViewMedicationActivity extends AppCompatActivity {
             filterMedicationsByDate(selectedDate);
         });
         calendarRecyclerView.setAdapter(calendarAdapter);
+
+        // scroll to today’s position
+        int todayIndex = dateList.indexOf(today);
+        if (todayIndex != -1) {
+            // Snap instantly
+            calendarRecyclerView.scrollToPosition(todayIndex);
+
+        }
+
+
+
     }
 
 

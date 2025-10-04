@@ -5,49 +5,51 @@
     android:id="@+id/drawerLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <RelativeLayout
+
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@android:color/white">
+        android:fillViewport="true">
 
-
-        <!-- Top Blue Bar -->
         <LinearLayout
-            android:id="@+id/topBar"
             android:layout_width="match_parent"
-            android:layout_height="118dp"
-            android:background="#2962FF"
-            android:gravity="top"
-            android:padding="10dp">
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
-            <ImageButton
-                android:id="@+id/backButton"
-                android:layout_width="35dp"
-                android:layout_height="35dp"
-                android:background="@drawable/back_arrow"
-                android:contentDescription="Back"
-                tools:ignore="TouchTargetSizeCheck" />
-        </LinearLayout>
+            <!-- Top Blue Bar -->
+            <LinearLayout
+                android:id="@+id/topBar"
+                android:layout_width="match_parent"
+                android:layout_height="118dp"
+                android:background="#2962FF"
+                android:gravity="top"
+                android:padding="10dp">
 
-        <!-- Profile Section -->
-        <LinearLayout
-            android:id="@+id/profileSection"
-            android:layout_width="387dp"
-            android:layout_height="105dp"
-            android:layout_alignParentTop="true"
-            android:layout_marginStart="10dp"
-            android:layout_marginLeft="10dp"
-            android:layout_marginTop="75dp"
-            android:layout_marginEnd="10dp"
-            android:layout_marginRight="10dp"
-            android:layout_marginBottom="10dp"
-            android:background="@android:color/white"
-            android:radius="160000dp"
-            android:width="1dp"
-            android:color="#DDDDDD"
-            android:elevation="4dp"
-            android:orientation="horizontal"
-            android:padding="12dp">
+                <ImageButton
+                    android:id="@+id/backButton"
+                    android:layout_width="35dp"
+                    android:layout_height="35dp"
+                    android:background="@drawable/back_arrow"
+                    android:contentDescription="Back"
+                    tools:ignore="TouchTargetSizeCheck" />
+            </LinearLayout>
+
+            <!-- Profile Section -->
+            <LinearLayout
+                android:id="@+id/profileSection"
+                android:layout_width="387dp"
+                android:layout_height="105dp"
+                android:layout_gravity="top"
+                android:layout_marginStart="10dp"
+                android:layout_marginLeft="10dp"
+                android:layout_marginTop="-50dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginRight="10dp"
+                android:layout_marginBottom="10dp"
+                android:background="@android:color/white"
+                android:elevation="8dp"
+                android:orientation="horizontal"
+                android:padding="12dp">
 
             <ImageView
                 android:id="@+id/personImage"
@@ -84,10 +86,10 @@
             </LinearLayout>
         </LinearLayout>
 
+
         <!-- Features Section -->
         <TextView
             android:id="@+id/featuresLabel"
-            android:layout_below="@id/profileSection"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
@@ -96,13 +98,10 @@
             android:textSize="16sp"
             android:textStyle="bold"/>
 
-
-
         <GridLayout
             android:id="@+id/featuresGrid"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/featuresLabel"
             android:layout_marginTop="14dp"
             android:columnCount="3"
             android:rowCount="2"
@@ -116,9 +115,7 @@
                 android:layout_margin="6dp"
                 android:orientation="vertical"
                 android:gravity="center"
-
-                android:background="@drawable/custom_border"
-                >
+                android:background="@drawable/custom_border">
 
                 <ImageButton
                     android:id="@+id/btnMedication"
@@ -147,8 +144,7 @@
                 android:layout_margin="6dp"
                 android:orientation="vertical"
                 android:gravity="center"
-                android:background="@drawable/custom_border"
-                >
+                android:background="@drawable/custom_border">
 
                 <ImageButton
                     android:layout_width="60dp"
@@ -161,7 +157,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="View Doctor’s Appointment"
+                    android:text="View Doctor's Appointment"
                     android:textSize="12sp"
                     android:textStyle="bold"
                     android:gravity="center"
@@ -175,8 +171,7 @@
                 android:layout_margin="6dp"
                 android:orientation="vertical"
                 android:gravity="center"
-                android:background="@drawable/custom_border"
-                >
+                android:background="@drawable/custom_border">
 
                 <ImageButton
                     android:id="@+id/btnAibot"
@@ -205,8 +200,7 @@
                 android:layout_margin="6dp"
                 android:orientation="vertical"
                 android:gravity="center"
-                android:background="@drawable/custom_border"
-                >
+                android:background="@drawable/custom_border">
 
                 <ImageButton
                     android:layout_width="60dp"
@@ -234,8 +228,7 @@
                 android:layout_margin="6dp"
                 android:orientation="vertical"
                 android:gravity="center"
-                android:background="@drawable/custom_border"
-                >
+                android:background="@drawable/custom_border">
 
                 <ImageButton
                     android:layout_width="60dp"
@@ -263,8 +256,7 @@
                 android:layout_margin="6dp"
                 android:orientation="vertical"
                 android:gravity="center"
-                android:background="@drawable/custom_border"
-                >
+                android:background="@drawable/custom_border">
 
                 <ImageButton
                     android:layout_width="60dp"
@@ -287,38 +279,129 @@
         </GridLayout>
 
         <!-- Medication adherence dashboard Section -->
-        <TextView
-            android:id="@+id/MedAdherenceLabel"
-            android:layout_below="@id/featuresGrid"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="12dp"
-            android:text="Dashboard"
-            android:textSize="16sp"
-            android:textStyle="bold"/>
+            android:orientation="vertical"
+            android:layout_margin="16dp">
 
+            <TextView
+                android:id="@+id/MedAdherenceLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Medication Adherence Dashboard"
+                android:textSize="16sp"
+                android:textStyle="bold"/>
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/dashboardRecyclerView"
-            android:layout_width="403dp"
-            android:layout_height="323dp"
-            android:layout_above="@id/bottomNavigation"
-            android:layout_below="@id/MedAdherenceLabel"
-            android:layout_marginStart="8dp"
-            android:layout_marginLeft="8dp"
-            android:layout_marginTop="27dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginRight="8dp"
-            android:layout_marginBottom="8dp"
-            tools:ignore="SpeakableTextPresentCheck"
+            <!-- Progress Summary Cards -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="16dp">
 
-            />
+                <!-- Today's Progress Card -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="80dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/card_background"
+                    android:orientation="vertical"
+                    android:padding="12dp"
+                    android:gravity="center">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Today's Progress"
+                        android:textSize="12sp"
+                        android:textColor="#666"/>
+
+                    <TextView
+                        android:id="@+id/tvTodayProgress"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0%"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#2962FF"
+                        android:layout_marginTop="4dp"/>
+
+                </LinearLayout>
+
+                <!-- Overall Progress Card -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="80dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/card_background"
+                    android:orientation="vertical"
+                    android:padding="12dp"
+                    android:gravity="center">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Overall Progress"
+                        android:textSize="12sp"
+                        android:textColor="#666"/>
+
+                    <TextView
+                        android:id="@+id/tvOverallProgress"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0%"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#2962FF"
+                        android:layout_marginTop="4dp"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Date Filter -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Filter by:"
+                    android:textSize="14sp"
+                    android:layout_marginEnd="8dp"/>
+
+                <Spinner
+                    android:id="@+id/dateFilterSpinner"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/spinner_background"
+                    tools:ignore="TouchTargetSizeCheck" />
+
+            </LinearLayout>
+
+            <!-- Dashboard RecyclerView -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/dashboardRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
+                tools:ignore="SpeakableTextPresentCheck"
+                tools:listitem="@layout/item_dashboard_date_group" />
+
+        </LinearLayout>
 
         <!-- Bottom Navigation -->
         <LinearLayout
             android:id="@+id/bottomNavigation"
-            android:layout_alignParentBottom="true"
             android:layout_width="match_parent"
             android:layout_height="60dp"
             android:orientation="horizontal"
@@ -354,10 +437,12 @@
                 tools:ignore="SpeakableTextPresentCheck" />
         </LinearLayout>
 
-    </RelativeLayout>
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>
 
-    <include layout="@layout/left_side_menu"
-        android:layout_width="280dp"
-        android:layout_height="match_parent"
-        android:layout_gravity="start"/> <!-- Include the left side menu within this page -->
-</androidx.drawerlayout.widget.DrawerLayout>
+<include layout="@layout/left_side_menu"
+android:layout_width="280dp"
+android:layout_height="match_parent"
+android:layout_gravity="start"/> <!-- Include the left side menu within this page -->
+
+    </androidx.drawerlayout.widget.DrawerLayout>

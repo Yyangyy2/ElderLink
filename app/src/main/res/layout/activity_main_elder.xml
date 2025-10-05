@@ -5,10 +5,17 @@
     android:id="@+id/drawerLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <RelativeLayout
+
+
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@android:color/white">
+        android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
 
         <!-- Top Blue Bar -->
@@ -25,12 +32,12 @@
                 android:id="@+id/logoutButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Log out"
-                android:textSize="12sp"
-                android:background="@drawable/circle_button"
-                android:textColor="#FFFFFF"
                 android:layout_alignParentEnd="true"
-                android:layout_marginTop="10dp" />
+                android:layout_marginTop="10dp"
+                android:background="@drawable/circle_button"
+                android:text="Log out"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp" />
         </LinearLayout>
 
         <!-- Profile Section -->
@@ -38,18 +45,15 @@
             android:id="@+id/profileSection"
             android:layout_width="387dp"
             android:layout_height="105dp"
-            android:layout_alignParentTop="true"
+            android:layout_gravity="top"
             android:layout_marginStart="10dp"
             android:layout_marginLeft="10dp"
-            android:layout_marginTop="75dp"
+            android:layout_marginTop="-50dp"
             android:layout_marginEnd="10dp"
             android:layout_marginRight="10dp"
             android:layout_marginBottom="10dp"
             android:background="@android:color/white"
-            android:radius="160000dp"
-            android:width="1dp"
-            android:color="#DDDDDD"
-            android:elevation="4dp"
+            android:elevation="8dp"
             android:orientation="horizontal"
             android:padding="12dp">
 
@@ -87,15 +91,14 @@
         <!-- Features Section -->
         <TextView
             android:id="@+id/featuresLabel"
-            android:layout_below="@id/profileSection"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_below="@id/profileSection"
             android:layout_marginStart="16dp"
             android:layout_marginTop="8dp"
             android:text="Features"
             android:textSize="16sp"
-            android:textStyle="bold"/>
-
+            android:textStyle="bold" />
 
 
         <GridLayout
@@ -105,8 +108,8 @@
             android:layout_below="@id/featuresLabel"
             android:layout_marginTop="14dp"
             android:columnCount="3"
-            android:rowCount="2"
-            android:padding="8dp">
+            android:padding="8dp"
+            android:rowCount="2">
 
             <!-- Feature Buttons -->
             <LinearLayout
@@ -114,10 +117,9 @@
                 android:layout_height="120dp"
                 android:layout_columnWeight="1"
                 android:layout_margin="6dp"
-                android:orientation="vertical"
-                android:gravity="center"
                 android:background="@drawable/custom_border"
-                >
+                android:gravity="center"
+                android:orientation="vertical">
 
                 <ImageButton
                     android:id="@+id/btnMedication"
@@ -131,11 +133,11 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:gravity="center"
                     android:text="View Medication"
                     android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:gravity="center"
-                    android:layout_marginTop="6dp" />
+                    android:textStyle="bold" />
             </LinearLayout>
 
             <LinearLayout
@@ -144,27 +146,26 @@
                 android:layout_height="120dp"
                 android:layout_columnWeight="1"
                 android:layout_margin="6dp"
-                android:orientation="vertical"
-                android:gravity="center"
                 android:background="@drawable/custom_border"
-                >
+                android:gravity="center"
+                android:orientation="vertical">
 
                 <ImageButton
                     android:layout_width="60dp"
                     android:layout_height="60dp"
-                    android:src="@drawable/view_doctor_appointment"
-                    android:scaleType="centerInside"
                     android:background="@android:color/transparent"
-                    android:contentDescription="Doctor Appointment" />
+                    android:contentDescription="Doctor Appointment"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/view_doctor_appointment" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:gravity="center"
                     android:text="View Doctor’s Appointment"
                     android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:gravity="center"
-                    android:layout_marginTop="6dp" />
+                    android:textStyle="bold" />
             </LinearLayout>
 
             <LinearLayout
@@ -172,10 +173,9 @@
                 android:layout_height="120dp"
                 android:layout_columnWeight="1"
                 android:layout_margin="6dp"
-                android:orientation="vertical"
-                android:gravity="center"
                 android:background="@drawable/custom_border"
-                >
+                android:gravity="center"
+                android:orientation="vertical">
 
                 <ImageButton
                     android:id="@+id/btnAibot"
@@ -189,43 +189,164 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:gravity="center"
                     android:text="Ask AI"
                     android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:gravity="center"
-                    android:layout_marginTop="6dp" />
+                    android:textStyle="bold" />
             </LinearLayout>
         </GridLayout>
 
-        <!-- Notifications Section -->
-        <TextView
-            android:id="@+id/notificationsLabel"
-            android:layout_below="@id/featuresGrid"
-            android:layout_width="wrap_content"
+
+        <!-- Medication adherence dashboard Section -->
+        <LinearLayout
+            android:id="@+id/linearLayout"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="12dp"
-            android:text="People caring for you"
-            android:textSize="16sp"
-            android:textStyle="bold"/>
+            android:layout_below="@+id/featuresGrid"
+            android:layout_margin="16dp"
+            android:layout_marginTop="-366dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/MedAdherenceLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Medication Adherence Dashboard"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <!-- Progress Summary Cards -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="16dp"
+                android:orientation="horizontal">
+
+                <!-- Today's Progress Card -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="80dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/card_background"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Today's Progress"
+                        android:textColor="#666"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/tvTodayProgress"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="0%"
+                        android:textColor="#2962FF"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
+
+                <!-- Overall Progress Card -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="80dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/card_background"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Overall Progress (this week)"
+                        android:textColor="#666"
+                        android:textSize="10sp" />
+
+                    <TextView
+                        android:id="@+id/tvOverallProgress"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="0%"
+                        android:textColor="#2962FF"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Date Filter -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btnFilterDate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="8dp"
+                    android:padding="12dp"
+                    android:text="Filter by Date"
+                    android:textSize="11sp" />
+
+
+                <Spinner
+                    android:id="@+id/dateFilterSpinner"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/spinner_background"
+                    tools:ignore="TouchTargetSizeCheck" />
+
+            </LinearLayout>
+
+            <!-- Dashboard RecyclerView -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/dashboardRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
+                tools:ignore="SpeakableTextPresentCheck"
+                tools:listitem="@layout/item_dashboard_date_group" />
+
+        </LinearLayout>
+
+
+        <!-- People Caring for you Section -->
 
         <TextView
-            android:id="@+id/viewMore"
-            android:layout_alignBaseline="@id/notificationsLabel"
-            android:layout_alignParentEnd="true"
-            android:layout_marginEnd="16dp"
-            android:text="View More >"
-            android:textColor="#2962FF"
-            android:textSize="14sp"
+            android:id="@+id/collaborationLabel"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/linearLayout"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="10dp"
+            android:text="People caring for you"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/caregiverRecyclerView"
             android:layout_width="403dp"
             android:layout_height="323dp"
             android:layout_above="@id/bottomNavigation"
-            android:layout_below="@id/notificationsLabel"
+            android:layout_below="@id/collaborationLabel"
             android:layout_marginStart="8dp"
             android:layout_marginLeft="8dp"
             android:layout_marginTop="27dp"
@@ -237,13 +358,13 @@
         <!-- Bottom Navigation -->
         <LinearLayout
             android:id="@+id/bottomNavigation"
-            android:layout_alignParentBottom="true"
             android:layout_width="match_parent"
             android:layout_height="60dp"
-            android:orientation="horizontal"
-            android:weightSum="3"
+            android:layout_alignParentBottom="true"
             android:background="@android:color/white"
-            android:elevation="8dp">
+            android:elevation="8dp"
+            android:orientation="horizontal"
+            android:weightSum="3">
 
             <ImageButton
                 android:id="@+id/navHome"
@@ -273,7 +394,8 @@
                 tools:ignore="SpeakableTextPresentCheck" />
         </LinearLayout>
 
-    </RelativeLayout>
+    </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
 
     <include layout="@layout/left_side_menu"
         android:layout_width="280dp"

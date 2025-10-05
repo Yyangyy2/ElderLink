@@ -28,6 +28,7 @@ public class LoginElderActivity extends AppCompatActivity {
     private Button enterButton, caregiverRedirectButton;
     private FirebaseFirestore db;
 
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

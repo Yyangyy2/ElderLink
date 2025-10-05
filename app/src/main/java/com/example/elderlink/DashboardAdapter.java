@@ -1,5 +1,5 @@
-//This java file controls what to display in item_dashboard_date_group.xml
 package com.example.elderlink;
+import com.example.elderlink.DateGroup;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,9 +17,9 @@ import java.util.Locale;
 
 public class DashboardAdapter extends RecyclerView.Adapter<DashboardAdapter.DateGroupViewHolder> {
 
-    private List<CheckOnElderlyActivity.DateGroup> dateGroupList;
+    private List<DateGroup> dateGroupList;
 
-    public DashboardAdapter(List<CheckOnElderlyActivity.DateGroup> dateGroupList) {
+    public DashboardAdapter(List<DateGroup> dateGroupList) {
         this.dateGroupList = dateGroupList;
     }
 
@@ -32,7 +32,7 @@ public class DashboardAdapter extends RecyclerView.Adapter<DashboardAdapter.Date
 
     @Override
     public void onBindViewHolder(@NonNull DateGroupViewHolder holder, int position) {
-        CheckOnElderlyActivity.DateGroup dateGroup = dateGroupList.get(position);
+        DateGroup dateGroup = dateGroupList.get(position);
 
         // Format date for display
         String formattedDate = formatDate(dateGroup.getDate());

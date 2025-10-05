@@ -1,3 +1,4 @@
+//This java file controls what to display in item_dashboard_medication.xml
 package com.example.elderlink;
 
 import android.view.LayoutInflater;

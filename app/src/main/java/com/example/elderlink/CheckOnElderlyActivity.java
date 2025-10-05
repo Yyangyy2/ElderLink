@@ -1,6 +1,7 @@
 package com.example.elderlink;
 
 import android.annotation.SuppressLint;
+import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -30,6 +31,7 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -45,9 +47,9 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
     private List<DateGroup> dateGroupList = new ArrayList<>();
 
     private TextView tvTodayProgress, tvOverallProgress;
-
-    private FirebaseFirestore db;
     private String caregiverUid, personUid, elderName;
+    private FirebaseFirestore db;
+    private List<Model_medication> medicationList = new ArrayList<>();   //keep meds in Model_medication list for date picker
 
     @SuppressLint("ResourceType")
     @Override
@@ -204,10 +206,18 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
         });
 
 
+        //Filter by Date Button (to DatePicker)------------------------------------------------
+        Button btnFilterDate = findViewById(R.id.btnFilterDate);
+        btnFilterDate.setOnClickListener(v -> {
+            // Pass your current medications list
+            showDatePickerWithMedDates(medicationList);
+        });
 
 
     }
 
+
+    //Dashboard --------------------------------------------------------------------------------------
     private void initializeDashboardViews() {
         tvTodayProgress = findViewById(R.id.tvTodayProgress);
         tvOverallProgress = findViewById(R.id.tvOverallProgress);
@@ -229,14 +239,14 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
                 .get()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        List<Model_medication> allMedications = new ArrayList<>();
+                        medicationList.clear();
                         for (QueryDocumentSnapshot document : task.getResult()) {
                             Model_medication medication = document.toObject(Model_medication.class);
                             medication.setId(document.getId());
-                            allMedications.add(medication);
+                            medicationList.add(medication);
                         }
 
-                        groupMedicationsByDate(allMedications);
+                        groupMedicationsByDate(medicationList);
                         calculateOverallProgress();
                     } else {
                         Log.e("Dashboard", "Error getting medications: ", task.getException());
@@ -245,67 +255,172 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
     }
 
     private void groupMedicationsByDate(List<Model_medication> medications) {
-        Map<String, List<Model_medication>> medicationsByDate = new HashMap<>();
 
+        // Get Today's date
+        String todayStr = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+
+        // Filter medications only for today to show
+        List<Model_medication> medsForToday = new ArrayList<>();
         for (Model_medication medication : medications) {
-            String date = medication.getDate();
-            if (!medicationsByDate.containsKey(date)) {
-                medicationsByDate.put(date, new ArrayList<>());
+            if (todayStr.equals(medication.getDate())) {
+                medsForToday.add(medication);
             }
-            medicationsByDate.get(date).add(medication);
         }
 
+        // Clear old data and add only today's group
         dateGroupList.clear();
-        for (Map.Entry<String, List<Model_medication>> entry : medicationsByDate.entrySet()) {
-            dateGroupList.add(new DateGroup(entry.getKey(), entry.getValue()));
+        if (!medsForToday.isEmpty()) {
+            dateGroupList.add(new DateGroup(todayStr, medsForToday));
         }
-
-        // Sort by date (most recent first)
-        Collections.sort(dateGroupList, (d1, d2) -> d2.getDate().compareTo(d1.getDate()));
 
         dashboardAdapter.notifyDataSetChanged();
     }
 
+
+    //Gray out dates without meds in date picker
+    private void showDatePickerWithMedDates(List<Model_medication> allMedications) {
+        // Collect all dates with meds
+        List<String> medDates = new ArrayList<>();
+        for (Model_medication med : allMedications) {
+            if (!medDates.contains(med.getDate())) {
+                medDates.add(med.getDate());
+            }
+        }
+
+        if (medDates.isEmpty()) {
+            return; // no meds, do nothing
+        }
+
+        // Get min and max date from medication list
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        try {
+            Date minDate = sdf.parse(Collections.min(medDates));
+            Date maxDate = sdf.parse(Collections.max(medDates));
+
+            final Calendar calendar = Calendar.getInstance();
+
+            DatePickerDialog datePickerDialog = new DatePickerDialog(
+                    this,
+                    (view, year, month, dayOfMonth) -> {
+                        String selectedDate = String.format(Locale.getDefault(), "%04d-%02d-%02d", year, month + 1, dayOfMonth);
+
+                        //  Only allow if this date exists in medDates
+                        if (medDates.contains(selectedDate)) {
+                            filterByDate(selectedDate);
+                        } else {
+                            // Show warning or ignore
+                            Log.w("DatePicker", "No medication on " + selectedDate);
+                        }
+                    },
+                    calendar.get(Calendar.YEAR),
+                    calendar.get(Calendar.MONTH),
+                    calendar.get(Calendar.DAY_OF_MONTH)
+            );
+
+            // Restrict visible date range
+            if (minDate != null) datePickerDialog.getDatePicker().setMinDate(minDate.getTime());
+            if (maxDate != null) datePickerDialog.getDatePicker().setMaxDate(maxDate.getTime());
+
+            datePickerDialog.show();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
+    private void filterByDate(String selectedDate) {
+        db.collection("users")
+                .document(caregiverUid)
+                .collection("people")
+                .document(personUid)
+                .collection("medications")
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        List<Model_medication> allMedications = new ArrayList<>();
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            Model_medication medication = document.toObject(Model_medication.class);
+                            medication.setId(document.getId());
+                            allMedications.add(medication);
+                        }
+
+                        // Filter only selected date
+                        dateGroupList.clear();
+                        List<Model_medication> medsForDate = new ArrayList<>();
+                        for (Model_medication med : allMedications) {
+                            if (selectedDate.equals(med.getDate())) {
+                                medsForDate.add(med);
+                            }
+                        }
+
+                        if (!medsForDate.isEmpty()) {
+                            dateGroupList.add(new DateGroup(selectedDate, medsForDate));
+                        }
+
+                        dashboardAdapter.notifyDataSetChanged();
+                    }
+                });
+    }
+
+
+    //Calculate overall progress for today and this week
     private void calculateOverallProgress() {
-        if (dateGroupList.isEmpty()) {
+        if (medicationList.isEmpty()) {
             tvOverallProgress.setText("0%");
             tvTodayProgress.setText("0%");
             return;
         }
 
-        // Calculate overall progress
+        // Get start and end of this week
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.DAY_OF_WEEK, calendar.getFirstDayOfWeek()); // start of week (Monday or Sunday depending on locale)
+        Date weekStart = calendar.getTime();
+
+        calendar.add(Calendar.DAY_OF_WEEK, 6); // end of week
+        Date weekEnd = calendar.getTime();
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+
         int totalMeds = 0;
         int totalTaken = 0;
 
-        for (DateGroup group : dateGroupList) {
-            totalMeds += group.getMedications().size();
-            for (Model_medication med : group.getMedications()) {
-                // Check if medication is taken based on status
-                if ("Taken".equals(med.getStatus())) {
-                    totalTaken++;
+        int todayTotal = 0;
+        int todayTaken = 0;
+
+        String todayStr = sdf.format(new Date());
+
+        for (Model_medication med : medicationList) {
+            try {
+                Date medDate = sdf.parse(med.getDate());
+                if (medDate != null && !medDate.before(weekStart) && !medDate.after(weekEnd)) {
+                    // inside this week
+                    totalMeds++;
+                    if ("Taken".equals(med.getStatus())) {
+                        totalTaken++;
+                    }
                 }
+
+                // Today’s progress separately
+                if (todayStr.equals(med.getDate())) {
+                    todayTotal++;
+                    if ("Taken".equals(med.getStatus())) {
+                        todayTaken++;
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
 
         int overallPercentage = totalMeds > 0 ? (int) ((totalTaken * 100.0f) / totalMeds) : 0;
         tvOverallProgress.setText(overallPercentage + "%");
 
-        // Calculate today's progress
-        String today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
-        boolean foundToday = false;
-        for (DateGroup group : dateGroupList) {
-            if (group.getDate().equals(today)) {
-                tvTodayProgress.setText(group.getProgress());
-                foundToday = true;
-                break;
-            }
-        }
-
-        // If no medications for today, show 0%
-        if (!foundToday) {
-            tvTodayProgress.setText("0%");
-        }
+        int todayPercentage = todayTotal > 0 ? (int) ((todayTaken * 100.0f) / todayTotal) : 0;
+        tvTodayProgress.setText(todayPercentage + "%");
     }
+
 
     // Data model for date groups
     public static class DateGroup {

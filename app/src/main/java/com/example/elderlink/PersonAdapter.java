@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Base64;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,7 +29,10 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.WriteBatch;
 
 import java.util.List;
 
@@ -37,7 +41,8 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
     private Context context;
     private List<Person> personList;
     private boolean isLoginElder; // true = elder view, false = caregiver view
-    private String uid; //caregiver's uid
+    private String uid; //caregiver's uid, should be caregiverUid but idk why I wrote uid previously
+
 
     public PersonAdapter(Context context, List<Person> personList, boolean isLoginElder, String uid) {
         this.context = context;
@@ -265,19 +270,38 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
 
     //Share Person----------------------------------------------------------------------------------------------------------------------------------
     private void sharePerson(Person person, int position) {
+        final String personUid = person.getId();    //Use final means This person’s ID is fixed/lock it/unchangeable, don’t let it change while the code runs|| The code inside .addOnSuccessListener() actually runs later, not immediately.
+                                                    //So, between now and that “later,” personUid could be changed by other parts of your code if it’s not locked (final).
+
+        // find which user (caregiver) is currently sharing the person, below here is like going through customs, check logs------------------------
+        String temporaryUid = this.uid;
+        if (temporaryUid == null || temporaryUid.isEmpty()) {
+            temporaryUid = FirebaseAuth.getInstance().getCurrentUser() != null
+                    ? FirebaseAuth.getInstance().getCurrentUser().getUid()
+                    : null;
+        }
+
+        if (temporaryUid == null) {
+            Toast.makeText(context, "Error: caregiver UID not found. Please re-login.", Toast.LENGTH_SHORT).show();
+            Log.e("SharePerson", "Caregiver UID is null — cannot share person.");
+            return;
+        }
+                                                        //I can't write "final String caregiverUid = uid" because the uid is a global variable, it may change by other code/methods.
+                                                        //Another reason is bcz listeners requires to have final
+        final String caregiverUid = temporaryUid;       // lock it as final, to be used inside Firebase listeners (.addOnSuccessListener())
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        // Create share dialog
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle("Share " + person.getName());
-
         View dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_share_person, null);
         EditText emailInput = dialogView.findViewById(R.id.shareEmailInput);
         Button sendBtn = dialogView.findViewById(R.id.btnSendShare);
         Button cancelBtn = dialogView.findViewById(R.id.btnCancelShare);
         builder.setView(dialogView);
-
         AlertDialog dialog = builder.create();
         dialog.show();
 
-        // Cancel button only closes dialog
         cancelBtn.setOnClickListener(v -> dialog.dismiss());
 
         sendBtn.setOnClickListener(v -> {
@@ -287,39 +311,105 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
                 return;
             }
 
-            FirebaseFirestore db = FirebaseFirestore.getInstance();
-
-            // Find user with this email
+            // STEP 1: Find target user UID
             db.collection("users")
                     .whereEqualTo("email", targetEmail)
                     .get()
-                    .addOnSuccessListener(querySnapshot -> {
-                        if (!querySnapshot.isEmpty()) {
-                            String targetUserUid = querySnapshot.getDocuments().get(0).getId();
-
-                            // Add personUid to that user (adjust path as you need)
-                            db.collection("users")
-                                    .document(targetUserUid)
-                                    .collection("sharedPeople")
-                                    .document(person.getId())
-                                    .set(person)
-                                    .addOnSuccessListener(aVoid -> {
-                                        dialog.dismiss();
-                                        showSuccessPopup();
-                                    })
-                                    .addOnFailureListener(e ->
-                                            Toast.makeText(context, "Share failed: " + e.getMessage(), Toast.LENGTH_SHORT).show()
-                                    );
-
-                        } else {
+                    .addOnSuccessListener(query -> {
+                        if (query.isEmpty()) {
                             Toast.makeText(context, "User not found", Toast.LENGTH_SHORT).show();
+                            return;
                         }
+
+                        String targetUserUid = query.getDocuments().get(0).getId();
+
+                        // STEP 2: Read the source person's doc
+                        db.collection("users")
+                                .document(caregiverUid)
+                                .collection("people")
+                                .document(personUid)
+                                .get()
+                                .addOnSuccessListener(personDoc -> {
+                                    if (!personDoc.exists()) {
+                                        Toast.makeText(context, "Source person not found", Toast.LENGTH_SHORT).show();
+                                        dialog.dismiss();
+                                        return;
+                                    }
+
+                                    // STEP 3: Write person doc to target user based on email found/inputted (copy and paste)
+                                    db.collection("users")
+                                            .document(targetUserUid)
+                                            .collection("people")
+                                            .document(personUid)
+                                            .set(personDoc.getData())
+                                            .addOnSuccessListener(aVoid -> {
+
+                                                // STEP 4: Copy all subcollections under this person----------!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                                                copyAllSubcollections(db, caregiverUid, targetUserUid, personUid, dialog);
+                                            })
+                                            .addOnFailureListener(e -> {
+                                                Toast.makeText(context, "Failed to share person: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                                dialog.dismiss();
+                                            });
+                                })
+                                .addOnFailureListener(e -> {
+                                    Toast.makeText(context, "Error reading person: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    dialog.dismiss();
+                                });
                     })
-                    .addOnFailureListener(e ->
-                            Toast.makeText(context, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show()
-                    );
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(context, "Error finding user: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        dialog.dismiss();
+                    });
         });
     }
+
+
+    // Copy all subcollections (like medications) from one person (elder) to another user’s account (caregiver).
+
+    private void copyAllSubcollections(FirebaseFirestore db, String fromUid, String toUid, String personUid, AlertDialog dialog) {
+        db.collection("users")
+                .document(fromUid)
+                .collection("people")
+                .document(personUid)
+                .collection("medications")
+                .get()
+                .addOnSuccessListener(subQuery -> {
+                    if (subQuery.isEmpty()) {
+                        dialog.dismiss();
+                        showSuccessPopup();
+                        return;
+                    }
+
+                    WriteBatch batch = db.batch();  // Batch write, a special Firestore tool that lets you group multiple write operations into a single request.
+                                                    // This is more efficient and ensures all writes succeed or fail together.
+                    for (QueryDocumentSnapshot doc : subQuery) {     // for loop every medication document found under this person
+                        DocumentReference targetDoc = db.collection("users")
+                                .document(toUid)
+                                .collection("people")
+                                .document(personUid)
+                                .collection("medications")
+                                .document(doc.getId());
+                        batch.set(targetDoc, doc.getData());   // set the data of each medication document to the new location
+                    }
+
+                    batch.commit()    //commit = executes
+                            .addOnSuccessListener(aVoid -> {
+                                dialog.dismiss();
+                                showSuccessPopup();
+                            })
+                            .addOnFailureListener(e -> {
+                                Toast.makeText(context, "Failed copying subcollections: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                dialog.dismiss();
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(context, "Error reading subcollections: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    dialog.dismiss();
+                });
+    }
+
+
 
     // Success popup with green check
     private void showSuccessPopup() {

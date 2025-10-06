@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp"
+    >
+
+    <!-- Header -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Share Access"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="#2962FF"
+        android:gravity="center"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Description -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Enter the email address of the person you want to share access with"
+        android:textSize="14sp"
+        android:textColor="#666666"
+        android:lineSpacingExtra="4dp"
+        android:layout_marginBottom="20dp" />
+
+    <!-- Email Input with Label -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginBottom="24dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Email Address *"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="#333333"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Custom styled EditText -->
+        <EditText
+            android:id="@+id/shareEmailInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="user@example.com"
+            android:inputType="textEmailAddress"
+            android:maxLines="1"
+            android:padding="16dp"
+            android:textSize="16sp"
+            android:background="@drawable/edittext_background"
+            android:drawablePadding="8dp" />
+
+        <!-- Error message (initially hidden) -->
+        <TextView
+            android:id="@+id/emailErrorText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Please enter a valid email address"
+            android:textSize="12sp"
+            android:textColor="#FF0000"
+            android:visibility="gone"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="4dp" />
+
+    </LinearLayout>
+
+    <!-- Buttons Section -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <Button
+            android:id="@+id/btnSendShare"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Share Now"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="12dp"
+            android:elevation="2dp" />
+
+        <Button
+            android:id="@+id/btnCancelShare"
+            style="?attr/borderlessButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cancel"
+            android:textColor="#FF5252"
+            android:textSize="14sp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:layout_marginEnd="12dp" />
+
+
+
+    </LinearLayout>
+
+</LinearLayout>

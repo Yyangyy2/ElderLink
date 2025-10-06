@@ -105,10 +105,13 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
                 popup.setOnMenuItemClickListener(item -> {
                     int id = item.getItemId();
                     if (id == R.id.edit) {
-                        showEditDialog(person, holder.getAdapterPosition());
+                        editNamePerson(person, holder.getAdapterPosition());
                         return true;
                     } else if (id == R.id.delete) {
                         deletePerson(person, holder.getAdapterPosition());
+                        return true;
+                    } else if (id == R.id.share) {
+                        sharePerson(person, holder.getAdapterPosition());
                         return true;
                     }
                     return false;
@@ -198,8 +201,8 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
         }
     }
 
-
-    private void showEditDialog(Person person, int position) {
+    //Edit Person name----------------------------------------------------------------------------------------------------------------------------------
+    private void editNamePerson(Person person, int position) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle("Edit Person");
 
@@ -236,6 +239,10 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
         builder.show();
     }
 
+
+
+
+    //Delete Person----------------------------------------------------------------------------------------------------------------------------------
     private void deletePerson(Person person, int position) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("users")
@@ -255,6 +262,95 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
                     Toast.makeText(context, "Delete failed", Toast.LENGTH_SHORT).show();
                 });
     }
+
+    //Share Person----------------------------------------------------------------------------------------------------------------------------------
+    private void sharePerson(Person person, int position) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle("Share " + person.getName());
+
+        View dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_share_person, null);
+        EditText emailInput = dialogView.findViewById(R.id.shareEmailInput);
+        Button sendBtn = dialogView.findViewById(R.id.btnSendShare);
+        Button cancelBtn = dialogView.findViewById(R.id.btnCancelShare);
+        builder.setView(dialogView);
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        // Cancel button only closes dialog
+        cancelBtn.setOnClickListener(v -> dialog.dismiss());
+
+        sendBtn.setOnClickListener(v -> {
+            String targetEmail = emailInput.getText().toString().trim();
+            if (targetEmail.isEmpty()) {
+                Toast.makeText(context, "Enter an email", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+            // Find user with this email
+            db.collection("users")
+                    .whereEqualTo("email", targetEmail)
+                    .get()
+                    .addOnSuccessListener(querySnapshot -> {
+                        if (!querySnapshot.isEmpty()) {
+                            String targetUserUid = querySnapshot.getDocuments().get(0).getId();
+
+                            // Add personUid to that user (adjust path as you need)
+                            db.collection("users")
+                                    .document(targetUserUid)
+                                    .collection("sharedPeople")
+                                    .document(person.getId())
+                                    .set(person)
+                                    .addOnSuccessListener(aVoid -> {
+                                        dialog.dismiss();
+                                        showSuccessPopup();
+                                    })
+                                    .addOnFailureListener(e ->
+                                            Toast.makeText(context, "Share failed: " + e.getMessage(), Toast.LENGTH_SHORT).show()
+                                    );
+
+                        } else {
+                            Toast.makeText(context, "User not found", Toast.LENGTH_SHORT).show();
+                        }
+                    })
+                    .addOnFailureListener(e ->
+                            Toast.makeText(context, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show()
+                    );
+        });
+    }
+
+    // Success popup with green check
+    private void showSuccessPopup() {
+        Dialog successDialog = new Dialog(context);
+        successDialog.setContentView(R.layout.dialog_share_success);
+        successDialog.getWindow().setLayout(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+
+        ImageView checkIcon = successDialog.findViewById(R.id.successCheckIcon);
+        Button okBtn = successDialog.findViewById(R.id.btnOk);
+
+        okBtn.setOnClickListener(v -> successDialog.dismiss());
+        successDialog.show();
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     @Override
     public int getItemCount() {

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="280dp"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:padding="32dp"
+    >
+
+    <!-- Success Icon -->
+    <ImageView
+        android:id="@+id/successCheckIcon"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:src="@drawable/check_circle_green"
+        android:layout_marginBottom="20dp" />
+
+    <!-- Success Title -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Success!"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="#4CAF50"
+        android:gravity="center"
+        android:layout_marginBottom="12dp" />
+
+    <!-- Success Message -->
+    <TextView
+        android:id="@+id/successMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="The invitation has been sent successfully"
+        android:textSize="16sp"
+        android:textColor="#666666"
+        android:gravity="center"
+        android:lineSpacingExtra="4dp"
+        android:layout_marginBottom="24dp" />
+
+    <!-- OK Button -->
+    <Button
+        android:id="@+id/btnOk"
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
+        android:text="OK"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:elevation="2dp" />
+
+</LinearLayout>

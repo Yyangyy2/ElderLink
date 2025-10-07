@@ -1,19 +1,28 @@
 package com.example.elderlink.view_gps;
 
-import android.content.Intent;
+import android.Manifest;
+import android.annotation.SuppressLint;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Bundle;
+import android.os.Looper;
 import android.util.Log;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
 import com.example.elderlink.R;
+import com.google.android.gms.location.*;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.SetOptions;
 
 import org.osmdroid.config.Configuration;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class GPSActivity extends AppCompatActivity {
@@ -22,6 +31,7 @@ public class GPSActivity extends AppCompatActivity {
     private Marker caregiverMarker;
     private ListenerRegistration elderListener;
     private ListenerRegistration caregiverListener;
+    private FusedLocationProviderClient fusedLocationClient;
 
     private String caregiverUid;
     private String personUid;
@@ -42,23 +52,112 @@ public class GPSActivity extends AppCompatActivity {
             setTitle(personName + "'s Location");
         }
 
-
         mapView = findViewById(R.id.mapView);
         mapView.setBuiltInZoomControls(true);
         mapView.setMultiTouchControls(true);
         mapView.getController().setZoom(15.0);
         mapView.getController().setCenter(new GeoPoint(5.4141, 100.3288)); // Penang default
 
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
-        Intent serviceIntent = new Intent(this, ElderLocationService.class);
-        serviceIntent.putExtra("caregiverUid", caregiverUid);
-        serviceIntent.putExtra("personUid", personUid);
-        //serviceIntent.putExtra("personName", personName);
-        startService(serviceIntent);
-
+        // Get one-time location update
+        getOneTimeLocation();
 
         startElderLocationListener();
         startCaregiverLocationListener();
+    }
+
+    @SuppressLint("MissingPermission")
+    private void getOneTimeLocation() {
+        // First, check if we have permission
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            // Request permission if we don't have it
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    1001);
+            return;
+        }
+
+        Log.d("GPSActivity", "Getting one-time location update");
+
+        // Try to get last known location first (fastest)
+        fusedLocationClient.getLastLocation()
+                .addOnSuccessListener(this, location -> {
+                    if (location != null) {
+                        Log.d("GPSActivity", "Got last known location: " + location.getLatitude() + ", " + location.getLongitude());
+                        updateLocationInFirestore(location);
+                        updateMarker(location.getLatitude(), location.getLongitude(), true);
+                    } else {
+                        // If no last location, request a fresh one
+                        Log.d("GPSActivity", "No last known location, requesting fresh location");
+                        requestFreshLocation();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("GPSActivity", "Failed to get last location: " + e.getMessage());
+                    requestFreshLocation();
+                });
+    }
+
+    @SuppressLint("MissingPermission")
+    private void requestFreshLocation() {
+        LocationRequest request = LocationRequest.create();
+        request.setNumUpdates(1); // We only want one location update
+        request.setPriority(Priority.PRIORITY_HIGH_ACCURACY);
+        request.setMaxWaitTime(10000); // Maximum wait time 10 seconds
+
+        LocationCallback callback = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                if (locationResult != null) {
+                    Location location = locationResult.getLastLocation();
+                    if (location != null) {
+                        Log.d("GPSActivity", "Got fresh location: " + location.getLatitude() + ", " + location.getLongitude());
+                        updateLocationInFirestore(location);
+                        updateMarker(location.getLatitude(), location.getLongitude(), true);
+                    }
+                }
+                // Remove updates after getting one location
+                fusedLocationClient.removeLocationUpdates(this);
+            }
+        };
+
+        fusedLocationClient.requestLocationUpdates(request, callback, Looper.getMainLooper());
+    }
+
+    private void updateLocationInFirestore(Location location) {
+        Map<String, Object> locationData = new HashMap<>();
+        locationData.put("latitude", location.getLatitude());
+        locationData.put("longitude", location.getLongitude());
+        locationData.put("timestamp", System.currentTimeMillis());
+
+        Map<String, Object> updateData = new HashMap<>();
+        updateData.put("location", locationData);
+
+        FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(caregiverUid)
+                .collection("people")
+                .document(personUid)
+                .set(updateData, SetOptions.merge())
+                .addOnSuccessListener(aVoid ->
+                        Log.d("GPSActivity", "One-time location updated in Firestore"))
+                .addOnFailureListener(e ->
+                        Log.e("GPSActivity", "Failed to update location: " + e.getMessage()));
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 1001) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission granted, get location
+                getOneTimeLocation();
+            } else {
+                Log.e("GPSActivity", "Location permission denied");
+            }
+        }
     }
 
     private void startElderLocationListener() {
@@ -69,13 +168,20 @@ public class GPSActivity extends AppCompatActivity {
                 .collection("people")
                 .document(personUid)
                 .addSnapshotListener((snapshot, e) -> {
+                    if (e != null) {
+                        Log.e("GPSActivity", "Listen failed for elder location", e);
+                        return;
+                    }
+
                     if (snapshot != null && snapshot.exists()) {
                         Map<String, Object> locationData = (Map<String, Object>) snapshot.get("location");
                         if (locationData != null) {
-                            double lat = (double) locationData.get("latitude");
-                            double lon = (double) locationData.get("longitude");
-                            updateMarker(lat, lon, true);
-                            Log.d("GPSActivity", "Elder: " + lat + ", " + lon);
+                            Double lat = (Double) locationData.get("latitude");
+                            Double lon = (Double) locationData.get("longitude");
+                            if (lat != null && lon != null) {
+                                updateMarker(lat, lon, true);
+                                Log.d("GPSActivity", "Elder location updated from Firestore: " + lat + ", " + lon);
+                            }
                         }
                     }
                 });
@@ -87,13 +193,20 @@ public class GPSActivity extends AppCompatActivity {
         caregiverListener = db.collection("users")
                 .document(caregiverUid)
                 .addSnapshotListener((snapshot, e) -> {
+                    if (e != null) {
+                        Log.e("GPSActivity", "Listen failed for caregiver location", e);
+                        return;
+                    }
+
                     if (snapshot != null && snapshot.exists()) {
                         Map<String, Object> locationData = (Map<String, Object>) snapshot.get("location");
                         if (locationData != null) {
-                            double lat = (double) locationData.get("latitude");
-                            double lon = (double) locationData.get("longitude");
-                            updateMarker(lat, lon, false);
-                            Log.d("GPSActivity", "Caregiver: " + lat + ", " + lon);
+                            Double lat = (Double) locationData.get("latitude");
+                            Double lon = (Double) locationData.get("longitude");
+                            if (lat != null && lon != null) {
+                                updateMarker(lat, lon, false);
+                                Log.d("GPSActivity", "Caregiver location: " + lat + ", " + lon);
+                            }
                         }
                     }
                 });
@@ -130,8 +243,11 @@ public class GPSActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        // Clean up listeners
         if (elderListener != null) elderListener.remove();
         if (caregiverListener != null) caregiverListener.remove();
+
+        // No need to stop service since we're not using it anymore
+        Log.d("GPSActivity", "GPSActivity destroyed");
     }
 }
-

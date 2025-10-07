@@ -32,7 +32,6 @@ import com.example.elderlink.DrawerMenu;
 import com.example.elderlink.LoginElderActivity;
 import com.example.elderlink.R;
 import com.example.elderlink.view_Ask_Ai.ChatActivityElder;
-import com.example.elderlink.view_gps.ElderLocationService;
 import com.example.elderlink.view_medication.Model_medication;
 import com.example.elderlink.view_medication.ViewMedicationActivityElderSide;
 import com.google.firebase.auth.FirebaseAuth;
@@ -165,26 +164,13 @@ public class MainActivityElder extends AppCompatActivity {
         });
 
 
-        // Call this after successful PIN verification
-        startLocationService();
+
 
 
 
     }
 
-    // Start location service when elder logs in
-    private void startLocationService() {
-        Intent serviceIntent = new Intent(this, ElderLocationService.class);
-        serviceIntent.putExtra("caregiverUid", caregiverUid);
-        serviceIntent.putExtra("personUid", personUid);
 
-        try {
-            startService(serviceIntent);
-            Log.d("LocationService", "Location service started");
-        } catch (Exception e) {
-            Log.e("LocationService", "Failed to start service: " + e.getMessage());
-        }
-    }
 
 
 

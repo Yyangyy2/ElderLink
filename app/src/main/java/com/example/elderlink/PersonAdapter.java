@@ -271,7 +271,7 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
     //Share Person----------------------------------------------------------------------------------------------------------------------------------
     private void sharePerson(Person person, int position) {
         final String personUid = person.getId();    //Use final means This person’s ID is fixed/lock it/unchangeable, don’t let it change while the code runs|| The code inside .addOnSuccessListener() actually runs later, not immediately.
-                                                    //So, between now and that “later,” personUid could be changed by other parts of your code if it’s not locked (final).
+        //So, between now and that “later,” personUid could be changed by other parts of your code if it’s not locked (final).
 
         // find which user (caregiver) is currently sharing the person, below here is like going through customs, check logs------------------------
         String temporaryUid = this.uid;
@@ -286,8 +286,8 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
             Log.e("SharePerson", "Caregiver UID is null — cannot share person.");
             return;
         }
-                                                        //I can't write "final String caregiverUid = uid" because the uid is a global variable, it may change by other code/methods.
-                                                        //Another reason is bcz listeners requires to have final
+        //I can't write "final String caregiverUid = uid" because the uid is a global variable, it may change by other code/methods.
+        //Another reason is bcz listeners requires to have final
         final String caregiverUid = temporaryUid;       // lock it as final, to be used inside Firebase listeners (.addOnSuccessListener())
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
@@ -382,7 +382,7 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
                     }
 
                     WriteBatch batch = db.batch();  // Batch write, a special Firestore tool that lets you group multiple write operations into a single request.
-                                                    // This is more efficient and ensures all writes succeed or fail together.
+                    // This is more efficient and ensures all writes succeed or fail together.
                     for (QueryDocumentSnapshot doc : subQuery) {     // for loop every medication document found under this person
                         DocumentReference targetDoc = db.collection("users")
                                 .document(toUid)

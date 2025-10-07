@@ -19,13 +19,8 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.elderlink.DashboardAdapter;
-import com.example.elderlink.DateGroup;
-import com.example.elderlink.DrawerMenu;
-import com.example.elderlink.MainActivity;
-import com.example.elderlink.ProfilePageElder;
-import com.example.elderlink.R;
 import com.example.elderlink.view_Ask_Ai.ChatActivity;
+import com.example.elderlink.view_gps.GPSActivity;
 import com.example.elderlink.view_medication.Model_medication;
 import com.example.elderlink.view_medication.ViewMedicationActivity;
 import com.google.firebase.auth.FirebaseAuth;
@@ -49,7 +44,7 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
     private final List<DateGroup> dateGroupList = new ArrayList<>();    //Get model from DateGroup
 
     private TextView tvTodayProgress, tvOverallProgress;
-    private String caregiverUid, personUid, elderName;
+    private String caregiverUid, personUid, personName;
     private FirebaseFirestore db;
     private final List<Model_medication> medicationList = new ArrayList<>();   //keep meds in Model_medication list for date picker
 
@@ -66,7 +61,7 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
         caregiverUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
         // Get data from intent
-        elderName = getIntent().getStringExtra("personName");
+        personName = getIntent().getStringExtra("personName");
         personUid = getIntent().getStringExtra("personUid");
         String caregiverUidIntent = getIntent().getStringExtra("caregiverUid");
         if (caregiverUidIntent != null) {
@@ -76,7 +71,7 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
         TextView nameText = findViewById(R.id.personName);
         ImageView imageView = findViewById(R.id.personImage);
 
-        nameText.setText(elderName);
+        nameText.setText(personName);
         imageView.setImageResource(R.drawable.profile_placeholder); // placeholder initially
 
         // Initialize dashboard views
@@ -116,7 +111,7 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
         infoButton.setOnClickListener(v -> {
             Intent intent = new Intent(CheckOnElderlyActivity.this, ProfilePageElder.class);
             intent.putExtra("personUid", personUid);
-            intent.putExtra("personName", elderName);
+            intent.putExtra("personName", personName);
             startActivity(intent);
             finish();
         });
@@ -142,7 +137,7 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
             Intent intent = new Intent(CheckOnElderlyActivity.this, ViewMedicationActivity.class);
             intent.putExtra("personUid", personUid);
             intent.putExtra("caregiverUid", caregiverUid);
-            intent.putExtra("personName", elderName);
+            intent.putExtra("personName", personName);
             startActivity(intent);
             finish();
         });
@@ -152,10 +147,26 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
         btnAibot.setOnClickListener(v -> {
             Intent intent = new Intent(CheckOnElderlyActivity.this, ChatActivity.class);
             intent.putExtra("personUid", personUid);
-            intent.putExtra("personName", elderName);
+            intent.putExtra("personName", personName);
             startActivity(intent);
             finish();
         });
+
+
+        //View GPS (to GPS)------------------------------------------------
+        ImageButton btnGPS = findViewById(R.id.btnGPS);
+        btnGPS.setOnClickListener(v -> {
+            Intent intent = new Intent(CheckOnElderlyActivity.this, GPSActivity.class);
+            intent.putExtra("personUid", personUid);
+            intent.putExtra("personName", personName);
+            intent.putExtra("caregiverUid", caregiverUid);
+            startActivity(intent);
+            finish();
+        });
+
+
+
+
 
         //Filter by Date Button (to DatePicker)------------------------------------------------
         Button btnFilterDate = findViewById(R.id.btnFilterDate);

@@ -193,7 +193,6 @@
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/btnDashboard"
                 android:layout_width="0dp"
                 android:layout_height="120dp"
                 android:layout_columnWeight="1"
@@ -203,17 +202,18 @@
                 android:background="@drawable/custom_border">
 
                 <ImageButton
-                    android:layout_width="60dp"
-                    android:layout_height="60dp"
-                    android:src="@drawable/view_dashboard"
-                    android:scaleType="centerInside"
+                    android:id="@+id/btnGPS"
+                    android:layout_width="83dp"
+                    android:layout_height="77dp"
                     android:background="@android:color/transparent"
-                    android:contentDescription="Dashboard" />
+                    android:contentDescription="Dashboard"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/view_dashboard" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Dashboard"
+                    android:text="GPS"
                     android:textSize="12sp"
                     android:textStyle="bold"
                     android:gravity="center"
@@ -401,6 +401,8 @@
                 tools:listitem="@layout/item_dashboard_date_group" />
 
         </LinearLayout>
+
+
 
         <!-- Bottom Navigation -->
         <LinearLayout

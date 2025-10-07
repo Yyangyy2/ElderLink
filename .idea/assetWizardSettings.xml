@@ -308,7 +308,7 @@
                                 <PersistentState>
                                   <option name="values">
                                     <map>
-                                      <entry key="url" value="file:/$USER_HOME$/AppData/Local/Android/Sdk/icons/material/materialicons/check_circle/baseline_check_circle_24.xml" />
+                                      <entry key="url" value="file:/$USER_HOME$/AppData/Local/Android/Sdk/icons/material/materialicons/location_pin/baseline_location_pin_24.xml" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -318,7 +318,7 @@
                         </option>
                         <option name="values">
                           <map>
-                            <entry key="outputName" value="check_circle_green" />
+                            <entry key="outputName" value="caregiver_marker" />
                             <entry key="sourceFile" value="C:\Users\user\AndroidStudioProjects\ElderLink" />
                           </map>
                         </option>

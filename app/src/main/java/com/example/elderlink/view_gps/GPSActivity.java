@@ -90,7 +90,7 @@ public class GPSActivity extends AppCompatActivity {
     private void initializeViews() {
         mapView = findViewById(R.id.mapView);
 
-        // Status dashboard views
+        // Status dashboard views//
         tvLocationStatus = findViewById(R.id.tvLocationStatus);
         tvBatteryStatus = findViewById(R.id.tvBatteryStatus);
         tvLastSeen = findViewById(R.id.tvLastSeen);

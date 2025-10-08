@@ -5,6 +5,8 @@ import static android.content.Intent.getIntent;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
@@ -30,9 +32,11 @@ import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -53,6 +57,12 @@ public class GPSActivity extends AppCompatActivity {
     private String caregiverUid;
     private String personUid;
     private String personName;
+
+    // Location Age tracking variables
+    private long currentLocationStartTime = 0;
+    private double lastKnownLatitude = 0;
+    private double lastKnownLongitude = 0;
+    private static final double LOCATION_CHANGE_THRESHOLD = 50.0; // meters
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,14 +93,13 @@ public class GPSActivity extends AppCompatActivity {
         getOneTimeLocation();
 
         startElderLocationListener();
-        startCaregiverLocationListener();
         startElderBatteryListener(); // Listen for elder's battery status
     }
 
     private void initializeViews() {
         mapView = findViewById(R.id.mapView);
 
-        // Status dashboard views//
+        // Status dashboard views
         tvLocationStatus = findViewById(R.id.tvLocationStatus);
         tvBatteryStatus = findViewById(R.id.tvBatteryStatus);
         tvLastSeen = findViewById(R.id.tvLastSeen);
@@ -122,7 +131,7 @@ public class GPSActivity extends AppCompatActivity {
         // Initial status
         updateLocationStatus("Updating...", "#2962FF");
         updateElderBatteryStatus(-1, false, 0); // Unknown initially
-        updateLastSeen(System.currentTimeMillis());
+        updateLocationAge(System.currentTimeMillis()); // Initialize with current time
         updateAccuracy(10.0f); // Default high accuracy
     }
 
@@ -185,14 +194,179 @@ public class GPSActivity extends AppCompatActivity {
     private void handleLocationUpdate(Location location, String source) {
         Log.d("GPSActivity", "Got " + source + " location: " + location.getLatitude() + ", " + location.getLongitude());
 
-        // Update status
-        updateLocationStatus("Live", "#4CAF50");
+        // Update accuracy and location age
         updateAccuracy(location.getAccuracy());
-        updateLastSeen(System.currentTimeMillis());
+        updateLocationAge(location);
+
+        // Get address from coordinates (reverse geocoding)
+        getAddressFromLocation(location);
 
         // Update map and Firestore
         updateMarker(location.getLatitude(), location.getLongitude(), true);
         updateLocationInFirestore(location);
+    }
+
+    // Location Age functionality
+    private void updateLocationAge(Location newLocation) {
+        if (tvLastSeen == null) return;
+
+        double newLat = newLocation.getLatitude();
+        double newLon = newLocation.getLongitude();
+
+        // Check if this is a new location (moved more than threshold)
+        if (isNewLocation(newLat, newLon)) {
+            // Reset timer for new location
+            currentLocationStartTime = System.currentTimeMillis();
+            lastKnownLatitude = newLat;
+            lastKnownLongitude = newLon;
+            Log.d("GPSActivity", "New location detected, resetting timer");
+        }
+
+        // Calculate how long they've been at this location
+        long currentTime = System.currentTimeMillis();
+        long timeAtLocation = currentTime - currentLocationStartTime;
+
+        String locationAgeText = formatLocationAge(timeAtLocation);
+        tvLastSeen.setText(locationAgeText);
+    }
+
+    private boolean isNewLocation(double newLat, double newLon) {
+        if (currentLocationStartTime == 0) {
+            return true; // First location
+        }
+
+        float[] results = new float[1];
+        Location.distanceBetween(
+                lastKnownLatitude, lastKnownLongitude,
+                newLat, newLon,
+                results
+        );
+
+        float distanceMoved = results[0];
+        return distanceMoved > LOCATION_CHANGE_THRESHOLD;
+    }
+
+    private String formatLocationAge(long timeAtLocationMs) {
+        long seconds = timeAtLocationMs / 1000;
+        long minutes = seconds / 60;
+        long hours = minutes / 60;
+        long days = hours / 24;
+
+        String ageText;
+        int color;
+
+        if (minutes < 5) {
+            ageText = "Just arrived";
+            color = android.graphics.Color.parseColor("#4CAF50"); // Green
+        } else if (minutes < 30) {
+            ageText = minutes + " min here";
+            color = android.graphics.Color.parseColor("#2196F3"); // Blue
+        } else if (hours < 2) {
+            ageText = minutes + " min";
+            color = android.graphics.Color.parseColor("#FF9800"); // Orange
+        } else if (hours < 24) {
+            ageText = hours + " hr" + (hours > 1 ? "s" : "") + " here";
+            color = android.graphics.Color.parseColor("#FF5722"); // Deep Orange
+        } else {
+            ageText = days + " day" + (days > 1 ? "s" : "") + " here";
+            color = android.graphics.Color.parseColor("#F44336"); // Red
+        }
+
+        tvLastSeen.setTextColor(color);
+        return ageText;
+    }
+
+    // Keep this method for backward compatibility with battery updates
+    private void updateLocationAge(long timestamp) {
+        if (tvLastSeen == null) return;
+
+        long now = System.currentTimeMillis();
+        long diff = now - timestamp;
+
+        String timeText;
+        if (diff < 60000) { // Less than 1 minute
+            timeText = "Just arrived";
+            tvLastSeen.setTextColor(android.graphics.Color.parseColor("#4CAF50"));
+        } else if (diff < 3600000) { // Less than 1 hour
+            long minutes = diff / 60000;
+            timeText = minutes + " min here";
+            tvLastSeen.setTextColor(android.graphics.Color.parseColor("#2196F3"));
+        } else {
+            long hours = diff / 3600000;
+            timeText = hours + " hr" + (hours > 1 ? "s" : "") + " here";
+            tvLastSeen.setTextColor(android.graphics.Color.parseColor("#FF5722"));
+        }
+
+        tvLastSeen.setText(timeText);
+    }
+
+    private void getAddressFromLocation(Location location) {
+        // Show loading state while fetching address
+        updateLocationStatus("Getting address...", "#FF9800");
+
+        // Using Android's built-in Geocoder
+        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+
+        try {
+            List<Address> addresses = geocoder.getFromLocation(
+                    location.getLatitude(),
+                    location.getLongitude(),
+                    1 // Maximum number of results
+            );
+
+            if (addresses != null && !addresses.isEmpty()) {
+                Address address = addresses.get(0);
+                String addressText = formatAddress(address);
+                updateLocationStatus(addressText, "#4CAF50");
+                Log.d("GPSActivity", "Address found: " + addressText);
+            } else {
+                updateLocationStatus("Address not found", "#FF9800");
+                Log.d("GPSActivity", "No address found for coordinates");
+            }
+
+        } catch (IOException e) {
+            Log.e("GPSActivity", "Geocoder error: " + e.getMessage());
+            updateLocationStatus("Network error", "#F44336");
+
+            // Fallback: Show coordinates if address lookup fails
+            String coordinates = String.format(Locale.getDefault(),
+                    "%.6f, %.6f", location.getLatitude(), location.getLongitude());
+            updateLocationStatus(coordinates, "#FF9800");
+        }
+    }
+
+    private String formatAddress(Address address) {
+        StringBuilder addressText = new StringBuilder();
+
+        // Add thoroughfare (street name)
+        if (address.getThoroughfare() != null) {
+            addressText.append(address.getThoroughfare());
+        }
+
+        // Add locality (city)
+        if (address.getLocality() != null) {
+            if (addressText.length() > 0) addressText.append(", ");
+            addressText.append(address.getLocality());
+        }
+
+        // Add admin area (state) if no locality found
+        if (addressText.length() == 0 && address.getAdminArea() != null) {
+            addressText.append(address.getAdminArea());
+        }
+
+        // If still no address, show coordinates as fallback
+        if (addressText.length() == 0) {
+            addressText.append(String.format(Locale.getDefault(),
+                    "%.4f, %.4f", address.getLatitude(), address.getLongitude()));
+        }
+
+        // Limit address length for display
+        String result = addressText.toString();
+        if (result.length() > 40) {
+            result = result.substring(0, 37) + "...";
+        }
+
+        return result;
     }
 
     private void refreshLocation() {
@@ -226,7 +400,7 @@ public class GPSActivity extends AppCompatActivity {
         }
 
         // Add charging indicator if applicable
-        String batteryText = batteryPercent + "%" + (isCharging ? " ⚡" : "");
+        String batteryText = batteryPercent + "%" + (isCharging ? " (charging)" : "");
         tvBatteryStatus.setText(batteryText);
 
         // Set appropriate battery icon and color based on level
@@ -249,33 +423,10 @@ public class GPSActivity extends AppCompatActivity {
 
         ivBatteryIcon.setImageResource(batteryIcon);
 
-        // Update last seen based on battery update time if it's more recent
+        // Update location age based on battery update time if it's more recent
         if (lastUpdate > 0) {
-            updateLastSeen(lastUpdate);
+            updateLocationAge(lastUpdate);
         }
-    }
-
-    private void updateLastSeen(long timestamp) {
-        if (tvLastSeen == null) return;
-
-        long now = System.currentTimeMillis();
-        long diff = now - timestamp;
-
-        String timeText;
-        if (diff < 60000) { // Less than 1 minute
-            timeText = "Just now";
-            tvLastSeen.setTextColor(android.graphics.Color.parseColor("#4CAF50"));
-        } else if (diff < 3600000) { // Less than 1 hour
-            long minutes = diff / 60000;
-            timeText = minutes + " min ago";
-            tvLastSeen.setTextColor(android.graphics.Color.parseColor("#FF9800"));
-        } else {
-            SimpleDateFormat sdf = new SimpleDateFormat("h:mm a", Locale.getDefault());
-            timeText = sdf.format(new Date(timestamp));
-            tvLastSeen.setTextColor(android.graphics.Color.parseColor("#F44336"));
-        }
-
-        tvLastSeen.setText(timeText);
     }
 
     private void updateAccuracy(float accuracy) {
@@ -348,10 +499,14 @@ public class GPSActivity extends AppCompatActivity {
                             Double lon = (Double) locationData.get("longitude");
                             Long timestamp = (Long) locationData.get("timestamp");
                             if (lat != null && lon != null) {
+                                // Create location object for age calculation
+                                Location elderLocation = new Location("elder");
+                                elderLocation.setLatitude(lat);
+                                elderLocation.setLongitude(lon);
+                                elderLocation.setTime(timestamp != null ? timestamp : System.currentTimeMillis());
+
                                 updateMarker(lat, lon, true);
-                                if (timestamp != null) {
-                                    updateLastSeen(timestamp);
-                                }
+                                updateLocationAge(elderLocation); // Update location age
                                 Log.d("GPSActivity", "Elder location updated from Firestore: " + lat + ", " + lon);
                             }
                         }
@@ -389,31 +544,6 @@ public class GPSActivity extends AppCompatActivity {
                         } else {
                             // No battery data available yet
                             updateElderBatteryStatus(-1, false, 0);
-                        }
-                    }
-                });
-    }
-
-    private void startCaregiverLocationListener() {
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-
-        caregiverListener = db.collection("users")
-                .document(caregiverUid)
-                .addSnapshotListener((snapshot, e) -> {
-                    if (e != null) {
-                        Log.e("GPSActivity", "Listen failed for caregiver location", e);
-                        return;
-                    }
-
-                    if (snapshot != null && snapshot.exists()) {
-                        Map<String, Object> locationData = (Map<String, Object>) snapshot.get("location");
-                        if (locationData != null) {
-                            Double lat = (Double) locationData.get("latitude");
-                            Double lon = (Double) locationData.get("longitude");
-                            if (lat != null && lon != null) {
-                                updateMarker(lat, lon, false);
-                                Log.d("GPSActivity", "Caregiver location: " + lat + ", " + lon);
-                            }
                         }
                     }
                 });

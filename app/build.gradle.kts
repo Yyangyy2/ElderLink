@@ -79,6 +79,7 @@ dependencies {
     implementation("com.github.bumptech.glide:glide:4.16.0")
     implementation(libs.firebase.storage)
     implementation(libs.firebase.firestore)
+    implementation(libs.androidx.preference)
     annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
     //implementation ("com.google.ai.client:generativelanguage:0.7.0")
     implementation ("com.squareup.okhttp3:okhttp:4.11.0")

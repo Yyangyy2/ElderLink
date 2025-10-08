@@ -17,6 +17,7 @@ recyclerview = "1.4.0"
 material = "1.12.0"
 firebaseStorage = "22.0.0"
 firebaseFirestore = "26.0.0"
+preference = "1.2.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -41,6 +42,7 @@ androidx-recyclerview = { group = "androidx.recyclerview", name = "recyclerview"
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 firebase-storage = { group = "com.google.firebase", name = "firebase-storage", version.ref = "firebaseStorage" }
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore", version.ref = "firebaseFirestore" }
+androidx-preference = { group = "androidx.preference", name = "preference", version.ref = "preference" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

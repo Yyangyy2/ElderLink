@@ -1,9 +1,13 @@
 package com.example.elderlink;
 
 import android.app.DatePickerDialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.BatteryManager;
 import android.os.Bundle;
 import android.util.Base64;
 import android.util.Log;
@@ -38,6 +42,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.SetOptions;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +55,7 @@ public class MainActivityElder extends AppCompatActivity {
     private TextView tvOverallProgress, tvTodayProgress;
     private String caregiverUid;
     private String personUid;
-// progress labels
+    private BroadcastReceiver batteryReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,6 +84,9 @@ public class MainActivityElder extends AppCompatActivity {
 
         nameText.setText(name);
 
+
+        // Start battery monitoring
+        startBatteryMonitoring();
 
         // Load medications and group by date
         loadMedicationsFromFirestore(caregiverUid, personUid, dateGroupList, dashboardAdapter);
@@ -174,8 +182,70 @@ public class MainActivityElder extends AppCompatActivity {
 
 
 
+    // Battery monitoring methods-------------[Elder send battery status to firestore then caregiver's dashboard reads it]------------------------------------------------------
+    private void startBatteryMonitoring() {
+        batteryReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+                int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+                int status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+
+                if (level != -1 && scale != -1) {
+                    int batteryPct = (int) ((level / (float) scale) * 100);
+                    boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
+                            status == BatteryManager.BATTERY_STATUS_FULL;
+
+                    updateBatteryStatusToFirestore(batteryPct, isCharging);
+                }
+            }
+        };
+
+        IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+        registerReceiver(batteryReceiver, filter);
+
+        // Also update immediately
+        Intent batteryIntent = registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+        if (batteryIntent != null) {
+            batteryReceiver.onReceive(this, batteryIntent);
+        }
+    }
+
+    private void updateBatteryStatusToFirestore(int batteryPercent, boolean isCharging) {
+        if (caregiverUid == null || personUid == null) return;
+
+        Map<String, Object> batteryData = new HashMap<>();
+        batteryData.put("batteryLevel", batteryPercent);
+        batteryData.put("isCharging", isCharging);
+        batteryData.put("lastBatteryUpdate", System.currentTimeMillis());
+
+        FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(caregiverUid)
+                .collection("people")
+                .document(personUid)
+                .set(batteryData, SetOptions.merge())
+                .addOnSuccessListener(aVoid ->
+                        Log.d("BatteryMonitor", "Elder battery updated: " + batteryPercent + "%"))
+                .addOnFailureListener(e ->
+                        Log.e("BatteryMonitor", "Failed to update battery: " + e.getMessage()));
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (batteryReceiver != null) {
+            unregisterReceiver(batteryReceiver);
+        }
+    }
 
 
+
+
+
+
+
+    // Dashboard (medication adherence) methods---------------------------------------------------------------------------------------------------------------------------------
     private void loadMedicationsFromFirestore(String caregiverUid, String personUid, List<DateGroup> dateGroupList, DashboardAdapter adapter) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("users")

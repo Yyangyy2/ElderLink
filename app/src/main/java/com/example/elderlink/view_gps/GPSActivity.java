@@ -1,7 +1,5 @@
 package com.example.elderlink.view_gps;
 
-import static android.content.Intent.getIntent;
-
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
@@ -10,18 +8,30 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
+import android.os.Vibrator;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import com.example.elderlink.R;
-import com.google.android.gms.location.*;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.Priority;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.switchmaterial.SwitchMaterial;
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.SetOptions;
@@ -30,10 +40,12 @@ import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.Polygon;
 import org.osmdroid.views.overlay.Marker;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -45,14 +57,22 @@ public class GPSActivity extends AppCompatActivity {
     private Marker elderMarker;
     private Marker caregiverMarker;
     private ListenerRegistration elderListener;
-    private ListenerRegistration caregiverListener;
     private FusedLocationProviderClient fusedLocationClient;
 
     // Status UI elements
     private TextView tvLocationStatus, tvBatteryStatus, tvLastSeen, tvAccuracy;
     private ImageView ivBatteryIcon, ivAccuracyIcon;
-    private FloatingActionButton fabRefresh;
     private LinearLayout statusDashboard;
+
+    private LocationCallback locationCallback;
+
+    // Safe Zone variables
+    private FloatingActionButton fabSafeZone;
+    private Polygon safeZoneCircle;
+    private boolean isSafeZoneEnabled = false;
+    private double safeZoneRadius = 100.0; // meters
+    private double safeZoneCenterLat = 0;
+    private double safeZoneCenterLon = 0;
 
     private String caregiverUid;
     private String personUid;
@@ -89,6 +109,11 @@ public class GPSActivity extends AppCompatActivity {
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
+        // Initialize notification channel
+        NotificationHelper.createNotificationChannel(this);
+
+        loadSafeZoneFromFirestore();
+
         // Get one-time location update
         getOneTimeLocation();
 
@@ -99,6 +124,8 @@ public class GPSActivity extends AppCompatActivity {
     private void initializeViews() {
         mapView = findViewById(R.id.mapView);
 
+
+
         // Status dashboard views
         tvLocationStatus = findViewById(R.id.tvLocationStatus);
         tvBatteryStatus = findViewById(R.id.tvBatteryStatus);
@@ -106,11 +133,18 @@ public class GPSActivity extends AppCompatActivity {
         tvAccuracy = findViewById(R.id.tvAccuracy);
         ivBatteryIcon = findViewById(R.id.ivBatteryIcon);
         ivAccuracyIcon = findViewById(R.id.ivAccuracyIcon);
-        fabRefresh = findViewById(R.id.fabRefresh);
         statusDashboard = findViewById(R.id.statusDashboard);
 
-        // Setup refresh FAB
-        fabRefresh.setOnClickListener(v -> refreshLocation());
+        // Safe Zone FAB
+        fabSafeZone = findViewById(R.id.fabSafeZone);
+        fabSafeZone.setOnClickListener(v -> showSafeZoneDialog());
+
+
+        // Back button - GPSActivity
+        FloatingActionButton fabBack = findViewById(R.id.fabBack);
+        fabBack.setOnClickListener(v -> {
+            finish();
+        });
     }
 
     private void setupMap() {
@@ -129,7 +163,7 @@ public class GPSActivity extends AppCompatActivity {
 
     private void setupStatusDashboard() {
         // Initial status
-        updateLocationStatus("Updating...", "#2962FF");
+        updateLocationStatus("Finding location...", "#2962FF");
         updateElderBatteryStatus(-1, false, 0); // Unknown initially
         updateLocationAge(System.currentTimeMillis()); // Initialize with current time
         updateAccuracy(10.0f); // Default high accuracy
@@ -154,41 +188,78 @@ public class GPSActivity extends AppCompatActivity {
                         handleLocationUpdate(location, "Last known");
                     } else {
                         updateLocationStatus("No last location", "#F44336");
-                        requestFreshLocation();
                     }
+                    // Start continuous updates after getting initial location
+                    startContinuousLocationUpdates();
                 })
                 .addOnFailureListener(e -> {
                     updateLocationStatus("Location error", "#F44336");
                     Log.e("GPSActivity", "Failed to get last location: " + e.getMessage());
-                    requestFreshLocation();
+                    startContinuousLocationUpdates();   // Start continuous updates even if last location fails
                 });
     }
 
     @SuppressLint("MissingPermission")
-    private void requestFreshLocation() {
-        updateLocationStatus("Getting fresh location...", "#FF9800");
+    private void startContinuousLocationUpdates() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
 
         LocationRequest request = LocationRequest.create();
-        request.setNumUpdates(1);
+        request.setInterval(30000); // Update every 30 seconds
+        request.setFastestInterval(15000); // Minimum time between updates: 15 seconds
         request.setPriority(Priority.PRIORITY_HIGH_ACCURACY);
-        request.setMaxWaitTime(10000);
+        request.setSmallestDisplacement(10); // Update every 10 meters movement
 
-        LocationCallback callback = new LocationCallback() {
+        // Initialize the locationCallback properly
+        locationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(LocationResult locationResult) {
                 if (locationResult != null) {
                     Location location = locationResult.getLastLocation();
                     if (location != null) {
-                        handleLocationUpdate(location, "Live");
-                    } else {
-                        updateLocationStatus("No location found", "#F44336");
+                        handleLocationUpdate(location, "Auto-update");
                     }
                 }
-                fusedLocationClient.removeLocationUpdates(this);
             }
         };
 
-        fusedLocationClient.requestLocationUpdates(request, callback, Looper.getMainLooper());
+        fusedLocationClient.requestLocationUpdates(request, locationCallback, Looper.getMainLooper());
+        Log.d("GPSActivity", "Started continuous location updates");
+    }
+
+    private void loadSafeZoneFromFirestore() {
+        FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(caregiverUid)
+                .collection("people")
+                .document(personUid)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot != null && documentSnapshot.exists()) {
+                        Boolean enabled = documentSnapshot.getBoolean("enabled");
+                        Double radius = documentSnapshot.getDouble("radius");
+                        Double centerLat = documentSnapshot.getDouble("centerLat");
+                        Double centerLon = documentSnapshot.getDouble("centerLon");
+
+                        if (enabled != null) isSafeZoneEnabled = enabled;
+                        if (radius != null) safeZoneRadius = radius;
+                        if (centerLat != null) safeZoneCenterLat = centerLat;
+                        if (centerLon != null) safeZoneCenterLon = centerLon;
+
+                        if (isSafeZoneEnabled && safeZoneCenterLat != 0 && safeZoneCenterLon != 0) {
+                            // Draw the safe zone if enabled and center coordinates are set
+                            drawSafeZone();
+                        }
+
+                        Log.d("GPSActivity", "Safe zone loaded from Firestore: " +
+                                (isSafeZoneEnabled ? "Enabled" : "Disabled"));
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("GPSActivity", "Failed to load safe zone: " + e.getMessage());
+                });
     }
 
     private void handleLocationUpdate(Location location, String source) {
@@ -204,6 +275,9 @@ public class GPSActivity extends AppCompatActivity {
         // Update map and Firestore
         updateMarker(location.getLatitude(), location.getLongitude(), true);
         updateLocationInFirestore(location);
+
+        // Check safe zone
+        checkSafeZone(location);
     }
 
     // Location Age functionality
@@ -301,8 +375,12 @@ public class GPSActivity extends AppCompatActivity {
     }
 
     private void getAddressFromLocation(Location location) {
-        // Show loading state while fetching address
-        updateLocationStatus("Getting address...", "#FF9800");
+        // Only show loading if we don't already have an address
+        if (tvLocationStatus.getText().toString().contains("Updating") ||
+                tvLocationStatus.getText().toString().contains("Getting") ||
+                tvLocationStatus.getText().toString().contains("Refreshing")) {
+            updateLocationStatus("Getting address...", "#FF9800");
+        }
 
         // Using Android's built-in Geocoder
         Geocoder geocoder = new Geocoder(this, Locale.getDefault());
@@ -317,33 +395,37 @@ public class GPSActivity extends AppCompatActivity {
             if (addresses != null && !addresses.isEmpty()) {
                 Address address = addresses.get(0);
                 String addressText = formatAddress(address);
-                updateLocationStatus(addressText, "#4CAF50");
+                updateLocationStatus(addressText, "#4CAF50"); // Green color for success
                 Log.d("GPSActivity", "Address found: " + addressText);
             } else {
-                updateLocationStatus("Address not found", "#FF9800");
-                Log.d("GPSActivity", "No address found for coordinates");
+                // Fallback to coordinates if no address found
+                String coordinates = String.format(Locale.getDefault(),
+                        "%.6f, %.6f", location.getLatitude(), location.getLongitude());
+                updateLocationStatus(coordinates, "#FF9800"); // Orange for coordinates
+                Log.d("GPSActivity", "No address found for coordinates, showing coordinates instead");
             }
 
         } catch (IOException e) {
             Log.e("GPSActivity", "Geocoder error: " + e.getMessage());
-            updateLocationStatus("Network error", "#F44336");
-
-            // Fallback: Show coordinates if address lookup fails
+            // Fallback to coordinates on error
             String coordinates = String.format(Locale.getDefault(),
                     "%.6f, %.6f", location.getLatitude(), location.getLongitude());
-            updateLocationStatus(coordinates, "#FF9800");
+            updateLocationStatus(coordinates, "#F44336"); // Red for error
         }
     }
 
     private String formatAddress(Address address) {
         StringBuilder addressText = new StringBuilder();
 
-        // Add thoroughfare (street name)
+        // Add thoroughfare (street name and number)
         if (address.getThoroughfare() != null) {
             addressText.append(address.getThoroughfare());
+            if (address.getSubThoroughfare() != null) {
+                addressText.append(" ").append(address.getSubThoroughfare()); // Street number
+            }
         }
 
-        // Add locality (city)
+        // Add locality (city) - most important for identification
         if (address.getLocality() != null) {
             if (addressText.length() > 0) addressText.append(", ");
             addressText.append(address.getLocality());
@@ -354,31 +436,37 @@ public class GPSActivity extends AppCompatActivity {
             addressText.append(address.getAdminArea());
         }
 
+        // Add postal code for more precision
+        if (address.getPostalCode() != null && addressText.length() > 0) {
+            addressText.append(" ").append(address.getPostalCode());
+        }
+
         // If still no address, show coordinates as fallback
         if (addressText.length() == 0) {
             addressText.append(String.format(Locale.getDefault(),
-                    "%.4f, %.4f", address.getLatitude(), address.getLongitude()));
+                    "Coordinates: %.4f, %.4f", address.getLatitude(), address.getLongitude()));
         }
 
-        // Limit address length for display
+        // Limit address length for display but keep it readable
         String result = addressText.toString();
-        if (result.length() > 40) {
-            result = result.substring(0, 37) + "...";
+        if (result.length() > 50) {
+            // Try to keep the important parts (street and city)
+            if (result.contains(",")) {
+                String[] parts = result.split(",");
+                if (parts.length >= 2) {
+                    result = parts[0].trim() + ", " + parts[1].trim();
+                    if (result.length() > 50) {
+                        result = result.substring(0, 47) + "...";
+                    }
+                } else {
+                    result = result.substring(0, 47) + "...";
+                }
+            } else {
+                result = result.substring(0, 47) + "...";
+            }
         }
 
         return result;
-    }
-
-    private void refreshLocation() {
-        // Show refreshing state
-        fabRefresh.setEnabled(false);
-        updateLocationStatus("Refreshing...", "#FF9800");
-
-        // Get new location
-        getOneTimeLocation();
-
-        // Re-enable FAB after a delay
-        fabRefresh.postDelayed(() -> fabRefresh.setEnabled(true), 5000);
     }
 
     // Status update methods
@@ -505,8 +593,15 @@ public class GPSActivity extends AppCompatActivity {
                                 elderLocation.setLongitude(lon);
                                 elderLocation.setTime(timestamp != null ? timestamp : System.currentTimeMillis());
 
+                                // Check safe zone
+                                checkSafeZone(elderLocation);
+
                                 updateMarker(lat, lon, true);
                                 updateLocationAge(elderLocation); // Update location age
+
+                                // Also get and display address for elder's location
+                                getAddressFromLocation(elderLocation);
+
                                 Log.d("GPSActivity", "Elder location updated from Firestore: " + lat + ", " + lon);
                             }
                         }
@@ -598,7 +693,199 @@ public class GPSActivity extends AppCompatActivity {
         super.onDestroy();
         // Clean up listeners
         if (elderListener != null) elderListener.remove();
-        if (caregiverListener != null) caregiverListener.remove();
+
+        // Stop location updates if callback exists
+        if (fusedLocationClient != null && locationCallback != null) {
+            fusedLocationClient.removeLocationUpdates(locationCallback);
+        }
+
         Log.d("GPSActivity", "GPSActivity destroyed");
+    }
+
+    // Safe Zone methods
+    private void showSafeZoneDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_safe_zone, null);
+        builder.setView(dialogView);
+
+        TextInputEditText etRadius = dialogView.findViewById(R.id.etRadius);
+        SwitchMaterial switchEnable = dialogView.findViewById(R.id.switchEnable);
+        Button btnCancel = dialogView.findViewById(R.id.btnCancel);
+        Button btnSave = dialogView.findViewById(R.id.btnSave);
+
+        // Set current values
+        etRadius.setText(String.valueOf((int) safeZoneRadius));
+        switchEnable.setChecked(isSafeZoneEnabled);
+
+        AlertDialog dialog = builder.create();
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+        btnSave.setOnClickListener(v -> {
+            try {
+                int radius = Integer.parseInt(etRadius.getText().toString());
+                if (radius < 10 || radius > 5000) {
+                    Toast.makeText(this, "Radius must be between 10-5000 meters", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                safeZoneRadius = radius;
+                isSafeZoneEnabled = switchEnable.isChecked();
+
+                if (isSafeZoneEnabled && elderMarker != null) {
+                    // Use elder's current location as center
+                    GeoPoint elderPosition = elderMarker.getPosition();
+                    safeZoneCenterLat = elderPosition.getLatitude();
+                    safeZoneCenterLon = elderPosition.getLongitude();
+                    drawSafeZone();
+                } else {
+                    removeSafeZone();
+                }
+
+                saveSafeZoneToFirestore();
+                dialog.dismiss();
+
+            } catch (NumberFormatException e) {
+                Toast.makeText(this, "Please enter a valid number", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        dialog.show();
+    }
+
+    private void drawSafeZone() {
+        removeSafeZone(); // Remove existing circle
+
+        // Create a polygon that approximates a circle
+        safeZoneCircle = new Polygon();
+        safeZoneCircle.setPoints(createCirclePoints(safeZoneCenterLat, safeZoneCenterLon, safeZoneRadius));
+        safeZoneCircle.setFillColor(0x224CAF50);
+        safeZoneCircle.setStrokeColor(0xFF4CAF50);
+        safeZoneCircle.setStrokeWidth(2.0f);
+
+        mapView.getOverlays().add(safeZoneCircle);
+        mapView.invalidate();
+    }
+
+    private List<GeoPoint> createCirclePoints(double centerLat, double centerLon, double radiusMeters) {
+        List<GeoPoint> points = new ArrayList<>();
+        int pointsCount = 36; // Number of points to approximate circle
+
+        for (int i = 0; i < pointsCount; i++) {
+            double angle = Math.toRadians(i * (360.0 / pointsCount));
+
+            // Convert meters to degrees (approximate)
+            double latOffset = (radiusMeters / 111320.0) * Math.cos(angle);
+            double lonOffset = (radiusMeters / (111320.0 * Math.cos(Math.toRadians(centerLat)))) * Math.sin(angle);
+
+            double lat = centerLat + latOffset;
+            double lon = centerLon + lonOffset;
+
+            points.add(new GeoPoint(lat, lon));
+        }
+
+        // Close the circle
+        points.add(points.get(0));
+        return points;
+    }
+
+    private void removeSafeZone() {
+        if (safeZoneCircle != null) {
+            mapView.getOverlays().remove(safeZoneCircle);
+            safeZoneCircle = null;
+            mapView.invalidate();
+        }
+    }
+
+    private void checkSafeZone(Location elderLocation) {
+        if (!isSafeZoneEnabled || safeZoneCenterLat == 0) return;
+
+        float[] results = new float[1];
+        Location.distanceBetween(
+                safeZoneCenterLat, safeZoneCenterLon,
+                elderLocation.getLatitude(), elderLocation.getLongitude(),
+                results
+        );
+
+        float distanceFromCenter = results[0];
+        boolean isOutsideZone = distanceFromCenter > safeZoneRadius;
+
+        if (isOutsideZone) {
+            triggerSafeZoneAlert(distanceFromCenter);
+        }
+    }
+
+    private void triggerSafeZoneAlert(float distance) {
+        // Show enhanced local notification with vibration
+        showEnhancedLocalNotification(distance);
+
+        // Show local alert
+        Toast.makeText(this, "ALERT: " + personName + " left safe zone!", Toast.LENGTH_LONG).show();
+
+        // Log the alert
+        Log.d("GPSActivity", "Safe zone alert triggered - Distance: " + distance + " meters");
+
+        // Save alert to Firestore for record keeping
+        saveAlertToFirestore(distance);
+    }
+
+    private void showEnhancedLocalNotification(float distance) {
+        String title = "SAFE ZONE ALERT";
+        String message = personName + " has left the safe zone. Current distance: " +
+                String.format("%.0f", distance) + " meters away. Time: " +
+                new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date());
+
+        // Show urgent notification
+        NotificationHelper.showUrgentNotification(this, title, message, GPSActivity.class);
+
+        // Vibrate for attention
+        try {
+            Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+            if (vibrator != null && vibrator.hasVibrator()) {
+                // Vibrate pattern: wait 0, vibrate 1000ms, wait 500ms, vibrate 1000ms
+                long[] pattern = {0, 1000, 500, 1000};
+                vibrator.vibrate(pattern, -1);
+            }
+        } catch (Exception e) {
+            Log.e("GPSActivity", "Vibration error: " + e.getMessage());
+        }
+    }
+
+    private void saveAlertToFirestore(float distance) {
+        Map<String, Object> alertData = new HashMap<>();
+        alertData.put("personName", personName);
+        alertData.put("distance", Math.round(distance));
+        alertData.put("timestamp", System.currentTimeMillis());
+        alertData.put("safeZoneCenter", new HashMap<String, Object>() {{
+            put("latitude", safeZoneCenterLat);
+            put("longitude", safeZoneCenterLon);
+        }});
+        alertData.put("radius", safeZoneRadius);
+
+        FirebaseFirestore.getInstance()
+                .collection("alerts")
+                .add(alertData)
+                .addOnSuccessListener(documentReference ->
+                        Log.d("GPSActivity", "Alert saved to Firestore: " + documentReference.getId()))
+                .addOnFailureListener(e ->
+                        Log.e("GPSActivity", "Failed to save alert: " + e.getMessage()));
+    }
+
+    private void saveSafeZoneToFirestore() {
+        Map<String, Object> safeZoneData = new HashMap<>();
+        safeZoneData.put("enabled", isSafeZoneEnabled);
+        safeZoneData.put("radius", safeZoneRadius);
+        safeZoneData.put("centerLat", safeZoneCenterLat);
+        safeZoneData.put("centerLon", safeZoneCenterLon);
+
+        FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(caregiverUid)
+                .collection("people")
+                .document(personUid)
+                .set(safeZoneData, SetOptions.merge())
+                .addOnSuccessListener(aVoid ->
+                        Log.d("GPSActivity", "Safe zone saved to Firestore"))
+                .addOnFailureListener(e ->
+                        Log.e("GPSActivity", "Failed to save safe zone: " + e.getMessage()));
     }
 }

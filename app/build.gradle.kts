@@ -80,6 +80,7 @@ dependencies {
     implementation(libs.firebase.storage)
     implementation(libs.firebase.firestore)
     implementation(libs.androidx.preference)
+    implementation(libs.play.services.maps)
     annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
     //implementation ("com.google.ai.client:generativelanguage:0.7.0")
     implementation ("com.squareup.okhttp3:okhttp:4.11.0")
@@ -89,6 +90,8 @@ dependencies {
     implementation ("org.osmdroid:osmdroid-android:6.1.18")
     implementation ("com.google.firebase:firebase-firestore:25.0.0")
     implementation ("com.google.android.gms:play-services-location:21.0.1")
+    implementation ("com.google.android.material:material:1.9.0")
+    implementation ("androidx.work:work-runtime:2.9.0")
 
 
 

@@ -4,4 +4,5 @@
     <string name="title_activity_main2">MainActivity2</string>
 <!--    this line somehow controls the app icon-->
     <string name="title_activity_login_elder">ElderLink</string>
+    <string name="fcm_server_key">AIzaSyDP7s9_vRmbSpf6r9MbSVBwSEC9Ofq71o8</string>
 </resources>

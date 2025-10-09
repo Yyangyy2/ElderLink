@@ -8,6 +8,7 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.util.Base64;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -47,6 +48,8 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
     private String caregiverUid, personUid, personName;
     private FirebaseFirestore db;
     private final List<Model_medication> medicationList = new ArrayList<>();   //keep meds in Model_medication list for date picker
+
+    private TextView noMedsToday;
 
     @SuppressLint("ResourceType")
     @Override
@@ -180,6 +183,7 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
         tvTodayProgress = findViewById(R.id.tvTodayProgress);
         tvOverallProgress = findViewById(R.id.tvOverallProgress);
         dashboardRecyclerView = findViewById(R.id.dashboardRecyclerView);
+        noMedsToday = findViewById(R.id.noMedsToday);
     }
 
     private void setupDashboardRecyclerView() {
@@ -205,6 +209,9 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
                         }
                         groupMedicationsByDate(medicationList);
                         calculateOverallProgress();
+
+
+                        updatenoMedsToday();  // Show/hide empty state based on data
                     } else {
                         Log.e("Dashboard", "Error getting medications: ", task.getException());
                     }
@@ -224,7 +231,27 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
             dateGroupList.add(new DateGroup(todayStr, medsForToday));
         }
         dashboardAdapter.notifyDataSetChanged();
+        updatenoMedsToday(); // Update empty state after grouping
     }
+
+
+
+
+    // Update empty state visibility
+    private void updatenoMedsToday() {
+        if (noMedsToday != null) {
+            if (dateGroupList.isEmpty()) {
+                noMedsToday.setVisibility(View.VISIBLE);
+                dashboardRecyclerView.setVisibility(View.GONE);
+            } else {
+                noMedsToday.setVisibility(View.GONE);
+                dashboardRecyclerView.setVisibility(View.VISIBLE);
+            }
+        }
+    }
+
+
+
 
     //Gray out dates without meds in date picker
     private void showDatePickerWithMedDates(List<Model_medication> allMedications) {
@@ -234,7 +261,15 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
                 medDates.add(med.getDate());
             }
         }
-        if (medDates.isEmpty()) return;
+        if (medDates.isEmpty()){
+            // Show message if no medications at all
+            if (noMedsToday != null) {
+                noMedsToday.setText("No medications available");
+                noMedsToday.setVisibility(View.VISIBLE);
+                dashboardRecyclerView.setVisibility(View.GONE);
+            }
+            return;
+        }
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
         try {
             Date minDate = sdf.parse(Collections.min(medDates));
@@ -247,6 +282,13 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
                         if (medDates.contains(selectedDate)) {
                             filterByDate(selectedDate);
                         } else {
+                            // Show message if no meds on selected date
+                            if (noMedsToday != null) {
+                                noMedsToday.setText("No medications on " + selectedDate);
+                                noMedsToday.setVisibility(View.VISIBLE);
+                                dashboardRecyclerView.setVisibility(View.GONE);
+                            }
+
                             Log.w("DatePicker", "No medication on " + selectedDate);
                         }
                     },
@@ -288,6 +330,7 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
                             dateGroupList.add(new DateGroup(selectedDate, medsForDate));
                         }
                         dashboardAdapter.notifyDataSetChanged();
+                        updatenoMedsToday(); // Update empty state after filtering
                     }
                 });
     }

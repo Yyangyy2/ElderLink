@@ -203,12 +203,12 @@
 
                 <ImageButton
                     android:id="@+id/btnGPS"
-                    android:layout_width="83dp"
-                    android:layout_height="77dp"
+                    android:layout_width="94dp"
+                    android:layout_height="80dp"
                     android:background="@android:color/transparent"
                     android:contentDescription="Dashboard"
                     android:scaleType="centerInside"
-                    android:src="@drawable/view_dashboard" />
+                    android:src="@drawable/view_gps_logo" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -390,6 +390,18 @@
                     tools:ignore="TouchTargetSizeCheck" />
 
             </LinearLayout>
+
+            <!-- No Medications Message -->
+            <TextView
+                android:id="@+id/noMedsToday"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="16dp"
+                android:gravity="center"
+                android:text="No medications today"
+                android:textSize="16sp"
+                android:textColor="#666"
+                android:visibility="gone" />
 
             <!-- Dashboard RecyclerView -->
             <androidx.recyclerview.widget.RecyclerView

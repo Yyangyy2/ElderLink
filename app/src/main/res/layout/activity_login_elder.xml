@@ -2,9 +2,10 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:padding="16dp">
 
-    <!-- Caregiver dropdown button at top right -->
+    <!-- Caregiver redirect button -->
     <Button
         android:id="@+id/caregiver_redirect_Button"
         android:layout_width="wrap_content"
@@ -12,52 +13,164 @@
         android:text="Caregiver?"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_margin="16dp" />
+        android:textSize="12sp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp" />
 
-    <!-- Container for login content (centered) -->
-    <LinearLayout
-        android:id="@+id/loginContainer"
+    <!-- Main container -->
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:padding="20dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintWidth_percent="0.9">
 
-        <TextView
-            android:layout_width="wrap_content"
+        <!-- Logo section -->
+        <LinearLayout
+            android:id="@+id/logoSection"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Enter Your Caregiver Username"
-            android:textStyle="bold"
-            android:textSize="18sp"
-            android:layout_marginBottom="10dp"/>
+            android:orientation="vertical"
+            android:gravity="center"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
 
-        <EditText
-            android:id="@+id/login_elder"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:hint="Caregiver Username"
-            android:background="@drawable/edittext_background"
-            android:padding="10dp" />
+            <!-- Logo circle -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                app:cardCornerRadius="60dp"
+                app:cardElevation="8dp"
+                android:background="@drawable/logoelderlink_new">
 
-        <!-- Enter Button -->
-        <Button
-            android:id="@+id/enter_button"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:layout_marginTop="16dp"
-            android:text="Enter"
-            android:textColor="#FFFFFF"
-            android:textStyle="bold"
-            android:backgroundTint="#0066FF" />
+                <ImageView
+                    android:layout_width="120dp"
+                    android:layout_height="120dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="ElderLink Logo"
+                    android:src="@drawable/logoelderlink_new" />
 
-    </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- App name and tagline -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ElderLink"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="#2563EB"
+                android:layout_marginTop="16dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Connecting Care, Empowering Lives"
+                android:textSize="14sp"
+                android:textColor="#6B7280"
+                android:layout_marginTop="4dp" />
+
+        </LinearLayout>
+
+        <!-- Login form card -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/loginContainer"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="8dp"
+            android:layout_marginTop="32dp"
+            app:layout_constraintTop_toBottomOf="@+id/logoSection"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="32dp">
+
+                <!-- Welcome text -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:layout_marginBottom="24dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Welcome"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:textColor="#1F2937" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Enter your caregiver username to continue"
+                        android:textSize="14sp"
+                        android:textColor="#6B7280"
+                        android:layout_marginTop="8dp" />
+
+                </LinearLayout>
+
+                <!-- Caregiver Username input -->
+                <EditText
+                    android:id="@+id/login_elder"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:textSize="16sp"
+                    android:hint="Caregiver Username"
+                    android:background="@drawable/edittext_background"
+                    android:padding="10dp" />
+
+                <!-- Enter button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/enter_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="Enter"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:layout_marginTop="24dp"
+                    app:cornerRadius="12dp"
+                    style="@style/Widget.Material3.Button" />
+
+                <!-- Support section -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#E5E7EB"
+                    android:layout_marginTop="24dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:layout_marginTop="16dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Secure access for caregivers to manage and monitor elderly care."
+                        android:textSize="12sp"
+                        android:textColor="#6B7280"
+                        android:gravity="center"
+                        />
 
 
+                </LinearLayout>
 
+            </LinearLayout>
 
+        </com.google.android.material.card.MaterialCardView>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

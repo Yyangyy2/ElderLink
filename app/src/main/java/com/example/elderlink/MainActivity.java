@@ -4,10 +4,14 @@ import android.app.AlertDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Base64;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -22,11 +26,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -44,12 +43,18 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private FloatingActionButton addPersonBtn;
     private List<Person> personList;
+    private List<Person> filteredPersonList; // For search results
     private PersonAdapter adapter;
     private FirebaseFirestore firestore;
     private String uid;
     private String selectedImageBase64 = "";
     private ImageView imagePreview;
     private ListenerRegistration peopleListener;
+
+    // Search variables
+    private EditText searchBar;
+    private ImageButton btnClearSearch;
+    private String currentSearchQuery = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,12 +63,19 @@ public class MainActivity extends AppCompatActivity {
 
         recyclerView = findViewById(R.id.peopleRecyclerView);
         addPersonBtn = findViewById(R.id.addPersonBtn);
-        TextView userNameTextView = findViewById(R.id.userName); //Mainpage Caregiver Username
-        Button logoutButton = findViewById(R.id.logoutButton); //Logout caregiver
+        TextView userNameTextView = findViewById(R.id.userName);
+        Button logoutButton = findViewById(R.id.logoutButton);
+
+        // Initialize search views
+        searchBar = findViewById(R.id.searchBar);
+        btnClearSearch = findViewById(R.id.btnClearSearch);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         personList = new ArrayList<>();
-        adapter = new PersonAdapter(this, personList,false, uid);
+        filteredPersonList = new ArrayList<>();
+
+
+        adapter = new PersonAdapter(this, filteredPersonList, false, uid);
         recyclerView.setAdapter(adapter);
 
         if (FirebaseAuth.getInstance().getCurrentUser() == null) {
@@ -76,6 +88,9 @@ public class MainActivity extends AppCompatActivity {
         firestore = FirebaseFirestore.getInstance();
         Log.d("MainActivity", "Current UID: " + uid);
 
+        // Setup search functionality
+        setupSearch();
+
         // Safe snapshot listener
         peopleListener = firestore.collection("users")
                 .document(uid)
@@ -84,12 +99,8 @@ public class MainActivity extends AppCompatActivity {
 
         addPersonBtn.setOnClickListener(v -> showAddPersonDialog());
 
-
-
-
-        //Caregiver username-----------------------------------------------------------------------------
+        // Caregiver username-------------------------------------------------------------------------------------------------------
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-
         db.collection("users")
                 .document(uid)
                 .get()
@@ -105,29 +116,100 @@ public class MainActivity extends AppCompatActivity {
                     userNameTextView.setText("No Name");
                 });
 
-
-
-        //Log out Caregiver----------------------------------------------------------------------------
+        // Log out Caregiver----------------------------------------------------------------------------------------------------------
         logoutButton.setOnClickListener(v -> {
-            // Sign out from Firebase
             FirebaseAuth.getInstance().signOut();
-
-            //Redirect to SignupActivity
             Intent intent = new Intent(MainActivity.this, SignupActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            // Clear back stack so user can't press back to return
             startActivity(intent);
-            finish(); //ensures current activity is finished
+            finish();
+        });
+    }
+
+    // Search Bar-------------------------------------------------------------------------------------------------------------------------------
+    private void setupSearch() {
+        // Text change listener for real-time search
+        searchBar.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                currentSearchQuery = s.toString().trim();
+                updateClearButtonVisibility();
+                applySearchFilter(); // Apply search filter
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
         });
 
+        // Clear search button
+        btnClearSearch.setOnClickListener(v -> {
+            searchBar.setText("");
+            currentSearchQuery = "";
+            applySearchFilter();
+        });
+    }
 
+    private void updateClearButtonVisibility() {
+        if (currentSearchQuery.isEmpty()) {
+            btnClearSearch.setVisibility(View.GONE);
+        } else {
+            btnClearSearch.setVisibility(View.VISIBLE);
+        }
+    }
 
+    private void applySearchFilter() {
+        // Clear the filtered list
+        filteredPersonList.clear();
 
+        if (currentSearchQuery.isEmpty()) {
+            // No search query, show all people
+            filteredPersonList.addAll(personList);
+        } else {
+            // Apply search filter
+            String searchLower = currentSearchQuery.toLowerCase();
+            for (Person person : personList) {
+                if (matchesSearchQuery(person, searchLower)) {
+                    filteredPersonList.add(person);
+                }
+            }
+        }
 
+        // Update the adapter with filtered results
+        adapter.notifyDataSetChanged();
+        showEmptyStateIfNeeded();
+    }
 
+    private boolean matchesSearchQuery(Person person, String searchQuery) {
+        if (person == null) return false;
 
+        // Search in person name
+        if (person.getName() != null &&
+                person.getName().toLowerCase().contains(searchQuery)) {
+            return true;
+        }
 
+        // Search in person ID (if you want to search by ID as well)
+        if (person.getId() != null &&
+                person.getId().toLowerCase().contains(searchQuery)) {
+            return true;
+        }
 
+        return false;
+    }
+
+    private void showEmptyStateIfNeeded() {
+        if (filteredPersonList.isEmpty()) {
+            if (currentSearchQuery.isEmpty()) {
+                // No people at all
+                Toast.makeText(this, "No people under your care", Toast.LENGTH_SHORT).show();
+            } else {
+                // No search results
+                Toast.makeText(this, "No people found for: " + currentSearchQuery, Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     private void onPeopleSnapshot(@NonNull QuerySnapshot snapshots, @NonNull FirebaseFirestoreException e) {
@@ -145,11 +227,12 @@ public class MainActivity extends AppCompatActivity {
                 personList.add(p);
             }
         }
-        adapter.notifyDataSetChanged();
+
+        //Apply search filter after loading data to update the displayed list
+        applySearchFilter();
     }
 
-
-    //Add person dialog----------------------------------------------------------------------------
+    // Add person dialog----------------------------------------------------------------------------------------------------------------------------
     private void showAddPersonDialog() {
         selectedImageBase64 = ""; // Reset image every time
 
@@ -158,7 +241,6 @@ public class MainActivity extends AppCompatActivity {
 
         final android.view.View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_person, null);
         builder.setView(dialogView);
-
 
         EditText editName = dialogView.findViewById(R.id.editPersonName);
         ImageView selectedImage = dialogView.findViewById(R.id.selectedImage);
@@ -179,14 +261,11 @@ public class MainActivity extends AppCompatActivity {
             // Hash the PIN
             String hashedPin = HashPIN.hashPin(pin);
 
-
-
-
             // Generate a new document reference with an auto ID
             DocumentReference newPersonRef = firestore.collection("users")
                     .document(uid)
                     .collection("people")
-                    .document(); // <-- generates a unique ID
+                    .document();
 
             // Get the generated ID
             String generatedId = newPersonRef.getId();
@@ -199,7 +278,6 @@ public class MainActivity extends AppCompatActivity {
                     .addOnSuccessListener(aVoid -> {
                         Log.d("FirestoreAdd", "Saved person with ID: " + generatedId);
                         Toast.makeText(this, "Saved successfully", Toast.LENGTH_SHORT).show();
-                        // Snapshot listener will update personList
                     })
                     .addOnFailureListener(err -> {
                         Log.e("FirestoreAdd", "Failed to save person", err);

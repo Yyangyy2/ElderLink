@@ -65,9 +65,17 @@
             android:layout_width="0dp"
             android:layout_height="45dp"
             android:layout_weight="1"
-            android:hint="Search . . ."
+            android:hint="Search people..."
             android:paddingStart="15dp"
             android:textSize="14sp"
+            tools:ignore="TouchTargetSizeCheck" />
+
+        <ImageButton
+            android:id="@+id/btnClearSearch"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:visibility="gone"
+            android:contentDescription="Clear search"
             tools:ignore="TouchTargetSizeCheck" />
 
         <ImageButton

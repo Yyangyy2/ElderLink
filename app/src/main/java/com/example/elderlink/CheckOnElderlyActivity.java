@@ -209,9 +209,9 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
                         }
                         groupMedicationsByDate(medicationList);
                         calculateOverallProgress();
-
-
                         updatenoMedsToday();  // Show/hide empty state based on data
+
+
                     } else {
                         Log.e("Dashboard", "Error getting medications: ", task.getException());
                     }

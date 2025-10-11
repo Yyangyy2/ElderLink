@@ -6,9 +6,12 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
@@ -30,33 +33,39 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 
 public class ViewMedicationActivityElderSide extends AppCompatActivity {
 
-
     private RecyclerView recyclerView;
     private MedicationAdapter adapter;
-    // For view medicines shown in recyclerView but before selceting date
     private List<Model_medication> medicationList = new ArrayList<>();
-    // For view medicines shown in recyclerView, then filter by selected date
     private List<Model_medication> allMedications = new ArrayList<>();
+    private List<Model_medication> filteredMedications = new ArrayList<>(); // For search results
     private FirebaseFirestore db;
     private String personUid;
     private String caregiverUid;
 
     private RecyclerView calendarRecyclerView;
     private CalendarAdapter calendarAdapter;
+    private List<String> dateList;
+
+    // Search variables
+    private EditText searchInput;
+    private ImageButton btnClearSearch;
+    private String currentSearchQuery = "";
+    private String currentSelectedDate = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.medication_view_page);
 
-        DrawerMenu.setupMenu(this); // Add the Left side menu
-
+        DrawerMenu.setupMenu(this);
 
         db = FirebaseFirestore.getInstance();
 
@@ -66,12 +75,9 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
         personUid = getIntent().getStringExtra("personUid");
         caregiverUid = getIntent().getStringExtra("caregiverUid");
 
-
         recyclerView = findViewById(R.id.medicationRecyclerView);
-        // Use 2 columns
         GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 2);
         recyclerView.setLayoutManager(gridLayoutManager);
-
 
         adapter = new MedicationAdapter(this, medicationList, medication -> {
             // handle edit click → open AddMedicationActivity in edit mode----- change to same acitivity due to not allowing edit
@@ -82,75 +88,160 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
         });
         recyclerView.setAdapter(adapter);
 
+        // Initialize search functionality
+        setupSearch();
+
         setupCalendar();
         loadMedications(personUid);
-        listenForMedicationReminders(caregiverUid, personUid);  // Start listening for caregiver-scheduled reminders
+        listenForMedicationReminders(caregiverUid, personUid);
 
-
-
-
-
-//        //FAB button --------------------------------------------------------------------------
-//        FloatingActionButton fab = findViewById(R.id.addMedicationFab);
-//        fab.setOnClickListener(v -> {
-//            // start AddMedicationActivity
-//            Intent intent = new Intent(ViewMedicationActivityElderSide.this,
-//                    com.example.elderlink.view_medication.AddMedicationActivity.class);
-//
-//            // Forward the personUid from intent
-//            //String personUid = getIntent().getStringExtra("personUid");
-//            intent.putExtra("personUid", personUid);
-//
-//            startActivity(intent);
-//        });
-
-
-
-
-
-
-        //Bottom Navigation Bar--------------------------------------------------------------------------
+        // Bottom Navigation Bar
         ImageButton navHome = findViewById(R.id.navHome);
-
-        navHome.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(ViewMedicationActivityElderSide.this, MainActivityElder.class);
-                intent.putExtra("personUid", personUid);
-                intent.putExtra("personName", name);
-                intent.putExtra("personImageBase64", imageBase64);
-                intent.putExtra("caregiverUid", caregiverUid);
-                startActivity(intent);
-                finish();
-            }
+        navHome.setOnClickListener(v -> {
+            Intent intent = new Intent(ViewMedicationActivityElderSide.this, MainActivityElder.class);
+            intent.putExtra("personUid", personUid);
+            intent.putExtra("personName", name);
+            intent.putExtra("personImageBase64", imageBase64);
+            intent.putExtra("caregiverUid", caregiverUid);
+            startActivity(intent);
+            finish();
         });
 
-
-
-        //Open Left navigation menu------------------------------------------------ rmb add DrawerMenu.setupMenu(this); on top
+        // Open Left navigation menu
         DrawerLayout drawerLayout = findViewById(R.id.drawerLayout);
         ImageButton navMenu = findViewById(R.id.navMenu);
-
-
-        // When clicking the button, open the drawer
         navMenu.setOnClickListener(v -> {
-            drawerLayout.openDrawer(GravityCompat.START); // START is opens from left; END opens from right
+            drawerLayout.openDrawer(GravityCompat.START);
         });
-
-
-
     }
 
-    //Out of onCreate boundary--------------------------------------------------------------------------
-    //Display medications-------------------------------------------------------------------------------
-    // do not use .get(), it is not realtime and i have to reenter the page to only see the changes (add/delete), instead use SnapshotListener() to listen for updates
+    private void setupSearch() {
+        searchInput = findViewById(R.id.searchInput);
+        btnClearSearch = findViewById(R.id.btnClearSearch);
+
+        // Text change listener for real-time search
+        searchInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                currentSearchQuery = s.toString().trim();
+                updateClearButtonVisibility();
+                applyFilters(); // Apply both date and search filters
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        // Clear search button
+        btnClearSearch.setOnClickListener(v -> {
+            searchInput.setText("");
+            currentSearchQuery = "";
+            applyFilters();
+        });
+    }
+
+    private void updateClearButtonVisibility() {
+        if (currentSearchQuery.isEmpty()) {
+            btnClearSearch.setVisibility(View.GONE);
+        } else {
+            btnClearSearch.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void applyFilters() {
+        filteredMedications.clear();
+
+        if (currentSearchQuery.isEmpty()) {
+            // No search query, just filter by date
+            for (Model_medication med : allMedications) {
+                if (med.getDate() != null && med.getDate().equals(currentSelectedDate)) {
+                    filteredMedications.add(med);
+                }
+            }
+        } else {
+            // Apply both date and search filters
+            String searchLower = currentSearchQuery.toLowerCase();
+            for (Model_medication med : allMedications) {
+                boolean matchesDate = med.getDate() != null && med.getDate().equals(currentSelectedDate);
+                boolean matchesSearch = matchesSearchQuery(med, searchLower);
+
+                if (matchesDate && matchesSearch) {
+                    filteredMedications.add(med);
+                }
+            }
+        }
+
+        // Update the displayed list
+        medicationList.clear();
+        medicationList.addAll(filteredMedications);
+        adapter.notifyDataSetChanged();
+
+        // Show empty state if no results
+        showEmptyStateIfNeeded();
+    }
+
+    private boolean matchesSearchQuery(Model_medication medication, String searchQuery) {
+        // Search in medication name
+        if (medication.getName() != null &&
+                medication.getName().toLowerCase().contains(searchQuery)) {
+            return true;
+        }
+
+        // Search in dosage
+        if (medication.getDosage() != null &&
+                medication.getDosage().toLowerCase().contains(searchQuery)) {
+            return true;
+        }
+
+        // Search in unit
+        if (medication.getUnit() != null &&
+                medication.getUnit().toLowerCase().contains(searchQuery)) {
+            return true;
+        }
+
+        // Search in status
+        if (medication.getStatus() != null &&
+                medication.getStatus().toLowerCase().contains(searchQuery)) {
+            return true;
+        }
+
+        // Search in repeat type (if exists)
+        if (medication.getRepeatType() != null &&
+                medication.getRepeatType().toLowerCase().contains(searchQuery)) {
+            return true;
+        }
+
+        // Search in time (if exists and is string format)
+        if (medication.getTime() != null &&
+                medication.getTime().toLowerCase().contains(searchQuery)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private void showEmptyStateIfNeeded() {
+        if (medicationList.isEmpty()) {
+            if (currentSearchQuery.isEmpty()) {
+                // No medications for selected date
+                Toast.makeText(this, "No medications for selected date", Toast.LENGTH_SHORT).show();
+            } else {
+                // No search results
+                Toast.makeText(this, "No medications found for: " + currentSearchQuery, Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
     private void loadMedications(String personUid) {
         if (personUid == null || personUid.isEmpty()) {
             Toast.makeText(this, "No person specified.", Toast.LENGTH_LONG).show();
             return;
         }
 
-        String userUid = getIntent().getStringExtra("caregiverUid");   //convert caregiverUid to userUid, because must follow database structure
+        String userUid = getIntent().getStringExtra("caregiverUid");
 
         db.collection("users")
                 .document(userUid)
@@ -173,22 +264,18 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
                             }
                         }
 
-                        // Default to today’s date
+                        // Default to today's date
                         String today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                                 .format(Calendar.getInstance().getTime());
-                        filterMedicationsByDate(today);
+                        currentSelectedDate = today;
+                        applyFilters(); // Apply both date and search filters
+
+                        // Load medication status for calendar AFTER loading medications
+                        loadMedicationStatusForCalendar(caregiverUid, personUid);
                     }
                 });
     }
 
-
-
-
-
-
-
-
-    // Setup horizontal scrolling calendar ---------------------------------------------------------------
     private void setupCalendar() {
         calendarRecyclerView = findViewById(R.id.calendarRecyclerView);
         calendarRecyclerView.setLayoutManager(
@@ -196,7 +283,7 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
         );
 
         // Generate ±15 days around today
-        List<String> dateList = new ArrayList<>();
+        dateList = new ArrayList<>(); // Initialize the class variable
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
         Calendar cal = Calendar.getInstance();
         for (int i = -15; i <= 15; i++) {
@@ -206,35 +293,96 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
         }
 
         String today = sdf.format(cal.getTime());
+        currentSelectedDate = today;
 
         calendarAdapter = new CalendarAdapter(dateList, today, selectedDate -> {
-            // filter meds when a new date is selected
-            filterMedicationsByDate(selectedDate);
+            currentSelectedDate = selectedDate;
+            applyFilters(); // Apply both date and search filters when date changes
         });
         calendarRecyclerView.setAdapter(calendarAdapter);
 
-        // scroll to today’s position
+        // scroll to today's position
         int todayIndex = dateList.indexOf(today);
         if (todayIndex != -1) {
-            // Snap instantly
             calendarRecyclerView.scrollToPosition(todayIndex);
-
         }
     }
 
+    // Remove the dateList parameter since it's now a class variable
+    private void loadMedicationStatusForCalendar(String caregiverUid, String personUid) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        Map<String, String> dateStatusMap = new HashMap<>();
 
+        db.collection("users")
+                .document(caregiverUid)
+                .collection("people")
+                .document(personUid)
+                .collection("medications")
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        // Group medications by date
+                        Map<String, List<String>> dateMedicationsMap = new HashMap<>();
 
-    // Filter by date -----------------------------------------------------------------------------------
-    private void filterMedicationsByDate(String date) {
-        medicationList.clear();
-        for (Model_medication med : allMedications) {
-            if (med.getDate() != null && med.getDate().equals(date)) {
-                medicationList.add(med);
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            Model_medication medication = document.toObject(Model_medication.class);
+                            String date = medication.getDate();
+                            String status = medication.getStatus();
+
+                            if (date != null) {
+                                if (!dateMedicationsMap.containsKey(date)) {
+                                    dateMedicationsMap.put(date, new ArrayList<>());
+                                }
+                                dateMedicationsMap.get(date).add(status);
+                            }
+                        }
+
+                        // Determine overall status for each date
+                        for (Map.Entry<String, List<String>> entry : dateMedicationsMap.entrySet()) {
+                            String date = entry.getKey();
+                            List<String> statuses = entry.getValue();
+
+                            String overallStatus = calculateOverallStatus(statuses);
+                            dateStatusMap.put(date, overallStatus);
+                        }
+
+                        // Update the calendar adapter
+                        if (calendarAdapter != null) {
+                            calendarAdapter.updateDateStatus(dateStatusMap);
+                        }
+                    } else {
+                        Log.e("ViewMedicationActivityElderSide", "Error loading medication status: ", task.getException());
+                    }
+                });
+    }
+
+    private String calculateOverallStatus(List<String> statuses) {
+        boolean hasMissed = false;
+        boolean hasNotTaken = false;
+        boolean hasTaken = false;
+
+        for (String status : statuses) {
+            if ("Missed".equals(status)) {
+                hasMissed = true;
+            }
+            if (status == null || "Upcoming".equals(status) || "Pending".equals(status)) {
+                hasNotTaken = true;
+            }
+            if ("Taken".equals(status)) {
+                hasTaken = true;
             }
         }
-        adapter.notifyDataSetChanged();
-    }
 
+        if (hasMissed) {
+            return "RED"; // At least one medication missed
+        } else if (!hasNotTaken && hasTaken && statuses.size() > 0) {
+            return "GREEN"; // All medications taken (no upcoming/pending/missed, only taken)
+        } else if (hasNotTaken) {
+            return "BLUE"; // Some medications not taken yet (null, Upcoming, Pending)
+        } else {
+            return "BLUE"; // Default case
+        }
+    }
 
     // Elder listens for caregiver-scheduled meds and schedules alarms locally
     private void listenForMedicationReminders(String caregiverUid, String personUid) {
@@ -270,9 +418,6 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
                 });
     }
 
-
-
-
     private void scheduleMedication(Context context, Model_medication med) {
         try {
             long triggerAt = med.getTimeMillis(); // get milliseconds from model
@@ -291,7 +436,6 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
             intent.putExtra("personUid", personUid);
             intent.putExtra("caregiverUid",caregiverUid);
             intent.putExtra("role", "elder");
-
 
             int requestCode = med.getId().hashCode();
             PendingIntent pi = PendingIntent.getBroadcast(
@@ -339,7 +483,6 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
         }
     }
 
-
     private void cancelMedication(Context context, String medId) {
         int requestCode = medId.hashCode();
         Intent intent = new Intent(context, ReminderReceiver.class);
@@ -355,8 +498,4 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
             pi.cancel();
         }
     }
-
-
-
-
 }

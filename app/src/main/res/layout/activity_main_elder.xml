@@ -314,6 +314,18 @@
 
             </LinearLayout>
 
+            <!-- No Medications Message -->
+            <TextView
+                android:id="@+id/noMedsToday"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="16dp"
+                android:gravity="center"
+                android:text="No medications today"
+                android:textSize="16sp"
+                android:textColor="#666"
+                android:visibility="gone" />
+
             <!-- Dashboard RecyclerView -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/dashboardRecyclerView"

@@ -31,7 +31,6 @@
         android:theme="@style/Theme.ElderLink"
         tools:targetApi="31">
 
-        <service android:name=".view_gps.ElderLocationService" />
 
 
         <activity
@@ -51,6 +50,7 @@
 
         <activity android:name=".MainActivity"
             android:exported="false"
+            android:windowSoftInputMode="adjustPan|stateHidden"
             android:theme="@style/Theme.ElderLink" />
 
         <activity android:name=".MainActivityElder"
@@ -77,12 +77,16 @@
             android:exported="false"
             android:theme="@style/Theme.ElderLink" />
 
+
+        <!--adjustPan|stateHidden is to stop the UI from resizing when keyboard pops up-->
         <activity android:name=".view_medication.ViewMedicationActivity"
             android:exported="false"
+            android:windowSoftInputMode="adjustPan|stateHidden"
             android:theme="@style/Theme.ElderLink"/>
 
         <activity android:name=".view_medication.ViewMedicationActivityElderSide"
             android:exported="false"
+            android:windowSoftInputMode="adjustPan|stateHidden"
             android:theme="@style/Theme.ElderLink"/>
 
         <activity android:name=".view_medication.AddMedicationActivity"

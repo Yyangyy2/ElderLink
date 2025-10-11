@@ -3,9 +3,12 @@ import com.example.elderlink.DrawerMenu;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
@@ -38,6 +41,7 @@ public class ViewMedicationActivity extends AppCompatActivity {
     private MedicationAdapter adapter;
     private List<Model_medication> medicationList = new ArrayList<>();
     private List<Model_medication> allMedications = new ArrayList<>();
+    private List<Model_medication> filteredMedications = new ArrayList<>(); // For search results
     private FirebaseFirestore db;
     private String personUid;
     private String caregiverUid;
@@ -45,7 +49,13 @@ public class ViewMedicationActivity extends AppCompatActivity {
 
     private RecyclerView calendarRecyclerView;
     private CalendarAdapter calendarAdapter;
-    private List<String> dateList; // Make dateList a class variable
+    private List<String> dateList;
+
+    // Search variables
+    private EditText searchInput;
+    private ImageButton btnClearSearch;
+    private String currentSearchQuery = "";
+    private String currentSelectedDate = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,6 +82,9 @@ public class ViewMedicationActivity extends AppCompatActivity {
             startActivity(intent);
         });
         recyclerView.setAdapter(adapter);
+
+        // Initialize search functionality
+        setupSearch();
 
         setupCalendar();
         loadMedications(personUid);
@@ -100,6 +113,119 @@ public class ViewMedicationActivity extends AppCompatActivity {
             drawerLayout.openDrawer(GravityCompat.START);
         });
     }
+
+    //Search Bar------------------------------------------------------------------------------------------------------
+    private void setupSearch() {
+        searchInput = findViewById(R.id.searchInput);
+        btnClearSearch = findViewById(R.id.btnClearSearch);
+
+        // Text change listener for real-time search
+        searchInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                currentSearchQuery = s.toString().trim();
+                updateClearButtonVisibility();
+                applyFilters(); // Apply both date and search filters
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        // Clear search button
+        btnClearSearch.setOnClickListener(v -> {
+            searchInput.setText("");
+            currentSearchQuery = "";
+            applyFilters();
+        });
+    }
+
+    private void updateClearButtonVisibility() {
+        if (currentSearchQuery.isEmpty()) {
+            btnClearSearch.setVisibility(View.GONE);
+        } else {
+            btnClearSearch.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void applyFilters() {
+        filteredMedications.clear();
+
+        if (currentSearchQuery.isEmpty()) {
+            // No search query, just filter by date
+            for (Model_medication med : allMedications) {
+                if (med.getDate() != null && med.getDate().equals(currentSelectedDate)) {
+                    filteredMedications.add(med);
+                }
+            }
+        } else {
+            // Apply both date and search filters
+            String searchLower = currentSearchQuery.toLowerCase();
+            for (Model_medication med : allMedications) {
+                boolean matchesDate = med.getDate() != null && med.getDate().equals(currentSelectedDate);
+                boolean matchesSearch = matchesSearchQuery(med, searchLower);
+
+                if (matchesDate && matchesSearch) {
+                    filteredMedications.add(med);
+                }
+            }
+        }
+
+        // Update the displayed list
+        medicationList.clear();
+        medicationList.addAll(filteredMedications);
+        adapter.notifyDataSetChanged();
+
+        // Show empty state if no results
+        showEmptyStateIfNeeded();
+    }
+
+    private boolean matchesSearchQuery(Model_medication medication, String searchQuery) {
+        // Search in medication name
+        if (medication.getName() != null &&
+                medication.getName().toLowerCase().contains(searchQuery)) {
+            return true;
+        }
+
+        // Search in dosage
+        if (medication.getDosage() != null &&
+                medication.getDosage().toLowerCase().contains(searchQuery)) {
+            return true;
+        }
+
+        // Search in unit
+        if (medication.getUnit() != null &&
+                medication.getUnit().toLowerCase().contains(searchQuery)) {
+            return true;
+        }
+
+        // Search in status
+        if (medication.getStatus() != null &&
+                medication.getStatus().toLowerCase().contains(searchQuery)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private void showEmptyStateIfNeeded() {
+        // You can add an empty state TextView in your XML and show/hide it here
+        if (medicationList.isEmpty()) {
+            // Show empty state message
+            if (currentSearchQuery.isEmpty()) {
+                // No medications for selected date
+                Toast.makeText(this, "No medications for selected date", Toast.LENGTH_SHORT).show();
+            } else {
+                // No search results
+                Toast.makeText(this, "No medications found for: " + currentSearchQuery, Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    //-----------------------------------------------------------------------------------------------------------------------------------------
 
     private void loadMedications(String personUid) {
         if (personUid == null || personUid.isEmpty()) {
@@ -135,7 +261,8 @@ public class ViewMedicationActivity extends AppCompatActivity {
                         // Default to today's date
                         String today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                                 .format(Calendar.getInstance().getTime());
-                        filterMedicationsByDate(today);
+                        currentSelectedDate = today;
+                        applyFilters(); // Apply both date and search filters
 
                         // Load medication status for calendar AFTER loading medications
                         loadMedicationStatusForCalendar(caregiverUid, personUid);
@@ -150,7 +277,7 @@ public class ViewMedicationActivity extends AppCompatActivity {
         );
 
         // Generate ±15 days around today
-        dateList = new ArrayList<>(); // Initialize the class variable
+        dateList = new ArrayList<>();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
         Calendar cal = Calendar.getInstance();
         for (int i = -15; i <= 15; i++) {
@@ -160,9 +287,11 @@ public class ViewMedicationActivity extends AppCompatActivity {
         }
 
         String today = sdf.format(cal.getTime());
+        currentSelectedDate = today;
 
         calendarAdapter = new CalendarAdapter(dateList, today, selectedDate -> {
-            filterMedicationsByDate(selectedDate);
+            currentSelectedDate = selectedDate;
+            applyFilters(); // Apply both date and search filters when date changes
         });
         calendarRecyclerView.setAdapter(calendarAdapter);
 
@@ -173,15 +302,7 @@ public class ViewMedicationActivity extends AppCompatActivity {
         }
     }
 
-    private void filterMedicationsByDate(String date) {
-        medicationList.clear();
-        for (Model_medication med : allMedications) {
-            if (med.getDate() != null && med.getDate().equals(date)) {
-                medicationList.add(med);
-            }
-        }
-        adapter.notifyDataSetChanged();
-    }
+    // Remove the old filterMedicationsByDate method and replace with applyFilters
 
     // Remove the dateList parameter since it's now a class variable
     private void loadMedicationStatusForCalendar(String caregiverUid, String personUid) {

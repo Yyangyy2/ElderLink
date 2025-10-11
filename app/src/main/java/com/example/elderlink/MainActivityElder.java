@@ -11,6 +11,7 @@ import android.os.BatteryManager;
 import android.os.Bundle;
 import android.util.Base64;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -56,6 +57,10 @@ public class MainActivityElder extends AppCompatActivity {
     private String caregiverUid;
     private String personUid;
     private BroadcastReceiver batteryReceiver;
+    private TextView noMedsToday;
+
+    // Dashboard variables
+    private RecyclerView dashboardRecyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,11 +74,13 @@ public class MainActivityElder extends AppCompatActivity {
         Button logoutButton = findViewById(R.id.logoutButton);
         tvOverallProgress = findViewById(R.id.tvOverallProgress);
         tvTodayProgress = findViewById(R.id.tvTodayProgress);
+        noMedsToday = findViewById(R.id.noMedsToday);
 
-        RecyclerView dashboardRecyclerView = findViewById(R.id.dashboardRecyclerView);
+        dashboardRecyclerView = findViewById(R.id.dashboardRecyclerView);
         dashboardRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         dashboardAdapter = new DashboardAdapter(dateGroupList);
         dashboardRecyclerView.setAdapter(dashboardAdapter);
+
 
 
 
@@ -90,6 +97,7 @@ public class MainActivityElder extends AppCompatActivity {
 
         // Load medications and group by date
         loadMedicationsFromFirestore(caregiverUid, personUid, dateGroupList, dashboardAdapter);
+
 
 
 
@@ -264,6 +272,8 @@ public class MainActivityElder extends AppCompatActivity {
                         }
                         groupMedicationsByDate(medicationList);
                         calculateOverallProgress();
+                        updatenoMedsToday();  // Show/hide empty state based on data
+
                     } else {
                         Log.e("Dashboard", "Error getting medications: ", task.getException());
                     }
@@ -284,7 +294,27 @@ public class MainActivityElder extends AppCompatActivity {
             dateGroupList.add(new DateGroup(todayStr, medsForToday));
         }
         dashboardAdapter.notifyDataSetChanged();
+        updatenoMedsToday(); // Update empty state after grouping
     }
+
+
+
+    // Update empty state visibility
+    private void updatenoMedsToday() {
+        if (noMedsToday != null) {
+            if (dateGroupList.isEmpty()) {
+                noMedsToday.setVisibility(View.VISIBLE);
+                dashboardRecyclerView.setVisibility(View.GONE);
+            } else {
+                noMedsToday.setVisibility(View.GONE);
+                dashboardRecyclerView.setVisibility(View.VISIBLE);
+            }
+        }
+    }
+
+
+
+
 
 
     //Gray out dates without meds in date picker
@@ -295,7 +325,15 @@ public class MainActivityElder extends AppCompatActivity {
                 medDates.add(med.getDate());
             }
         }
-        if (medDates.isEmpty()) return;
+        if (medDates.isEmpty()) {
+            // Show message if no medications at all
+            if (noMedsToday != null) {
+                noMedsToday.setText("No medications available");
+                noMedsToday.setVisibility(View.VISIBLE);
+                dashboardRecyclerView.setVisibility(View.GONE);
+            }
+            return;
+        }
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
         try {
             Date minDate = sdf.parse(Collections.min(medDates));
@@ -308,6 +346,12 @@ public class MainActivityElder extends AppCompatActivity {
                         if (medDates.contains(selectedDate)) {
                             filterByDate(selectedDate, caregiverUid, personUid);
                         } else {
+                            // Show message if no meds on selected date
+                            if (noMedsToday != null) {
+                                noMedsToday.setText("No medications on " + selectedDate);
+                                noMedsToday.setVisibility(View.VISIBLE);
+                                dashboardRecyclerView.setVisibility(View.GONE);
+                            }
                             Log.w("DatePicker", "No medication on " + selectedDate);
                         }
                     },

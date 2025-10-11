@@ -120,11 +120,12 @@
                 android:id="@+id/link_terms"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:clickable="true"
+                android:focusable="true"
                 android:text="Terms and Conditions"
                 android:textColor="#0000FF"
                 android:textStyle="bold"
-                android:clickable="true"
-                android:focusable="true" />
+                tools:ignore="TouchTargetSizeCheck" />
         </LinearLayout>
 
 

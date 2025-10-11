@@ -11,17 +11,19 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.elderlink.R;
 
-import java.text.BreakIterator;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class CalendarAdapter extends RecyclerView.Adapter<CalendarAdapter.CalendarViewHolder> {
     private List<String> dateList;
     private String selectedDate;
     private OnDateClickListener listener;
+    private Map<String, String> dateStatusMap; // Map to store status for each date
 
     public interface OnDateClickListener {
         void onDateClick(String date);
@@ -31,6 +33,14 @@ public class CalendarAdapter extends RecyclerView.Adapter<CalendarAdapter.Calend
         this.dateList = dateList;
         this.selectedDate = selectedDate;
         this.listener = listener;
+        this.dateStatusMap = new HashMap<>();
+    }
+
+    // Method to update medication status for dates
+    public void updateDateStatus(Map<String, String> statusMap) {
+        this.dateStatusMap.clear();
+        this.dateStatusMap.putAll(statusMap);
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -44,58 +54,75 @@ public class CalendarAdapter extends RecyclerView.Adapter<CalendarAdapter.Calend
     @Override
     public void onBindViewHolder(@NonNull CalendarViewHolder holder, int position) {
         String date = dateList.get(position);
-        holder.dateText.setText(date);
 
+        // Format the date for display
+        String formattedDate = formatDateForDisplay(date);
+        holder.dateText.setText(formattedDate);
 
-        String rawDate = dateList.get(position);
-
-        // Format the date from yyyy-MM-dd to EEE MMM d (for display)
-        try {
-            SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-            Date parsedDate = inputFormat.parse(rawDate);
-
-            SimpleDateFormat outputFormat = new SimpleDateFormat("EEEE\nMMM d", Locale.getDefault());
-            String formattedDate = outputFormat.format(parsedDate);
-
-            holder.dateText.setText(formattedDate);  // shows Thu, Aug 21 format
-        } catch (ParseException e) {
-            e.printStackTrace();
-            holder.dateText.setText(rawDate); // fallback
-        }
-
-
-        // Get today's date (yyyy-MM-dd)
+        // Get today's date
         String today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                 .format(new Date());
 
         // Reset default style first
         holder.dateText.setBackgroundColor(Color.TRANSPARENT);
         holder.dateText.setTextColor(Color.BLACK);
+        holder.indicatorDot.setVisibility(View.VISIBLE);
 
-        // Always mark today with black border
+        // Set indicator dot color based on medication status
+        String status = dateStatusMap.get(date);
+        if (status != null) {
+            switch (status) {
+                case "GREEN": // All medications taken
+                    holder.indicatorDot.setBackgroundResource(R.drawable.indicator_dot_green);
+                    break;
+                case "RED": // At least one medication missed
+                    holder.indicatorDot.setBackgroundResource(R.drawable.indicator_dot_red);
+                    break;
+                case "BLUE": // null, Upcoming, or Pending
+                    holder.indicatorDot.setBackgroundResource(R.drawable.indicator_dot_default);
+                    break;
+                default:
+                    holder.indicatorDot.setVisibility(View.INVISIBLE);
+            }
+        } else {
+            // No medications for this date
+            holder.indicatorDot.setVisibility(View.INVISIBLE);
+        }
+
+        // Mark today with black border
         if (date.equals(today)) {
             holder.dateText.setBackgroundResource(R.drawable.calendar_today_border);
             holder.dateText.setTextColor(Color.WHITE);
         }
 
-        // color selected date
+        // Color selected date
         if (date.equals(selectedDate)) {
             holder.dateText.setTextColor(Color.WHITE);
             holder.dateText.setBackgroundColor(Color.parseColor("#0066ff")); // blue fill
-            // if selected date is also today, keep border visible:
+            // If selected date is also today, keep border visible:
             if (date.equals(today)) {
                 holder.dateText.setBackgroundResource(R.drawable.calendar_today_border);
             }
         }
-
-
 
         holder.itemView.setOnClickListener(v -> {
             selectedDate = date;
             listener.onDateClick(date);
             notifyDataSetChanged();
         });
+    }
 
+    private String formatDateForDisplay(String rawDate) {
+        try {
+            SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+            Date parsedDate = inputFormat.parse(rawDate);
+
+            SimpleDateFormat outputFormat = new SimpleDateFormat("EEEE\nMMM d", Locale.getDefault());
+            return outputFormat.format(parsedDate);
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return rawDate; // fallback
+        }
     }
 
     @Override
@@ -105,11 +132,12 @@ public class CalendarAdapter extends RecyclerView.Adapter<CalendarAdapter.Calend
 
     static class CalendarViewHolder extends RecyclerView.ViewHolder {
         TextView dateText;
+        View indicatorDot;
 
         public CalendarViewHolder(@NonNull View itemView) {
             super(itemView);
             dateText = itemView.findViewById(R.id.calendarDateText);
+            indicatorDot = itemView.findViewById(R.id.indicatorDot);
         }
     }
 }
-

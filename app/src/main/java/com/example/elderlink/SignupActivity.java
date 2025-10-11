@@ -8,6 +8,9 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.app.AlertDialog;
+import android.widget.CheckBox;
+
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -35,8 +38,37 @@ public class SignupActivity extends AppCompatActivity {
         signupPassword = findViewById(R.id.signup_password);
         signupButton = findViewById(R.id.signup_button);
         loginRedirectText = findViewById(R.id.loginRedirectText);
+        CheckBox checkboxTerms = findViewById(R.id.checkbox_terms);
+        TextView linkTerms = findViewById(R.id.link_terms);
+
 
         auth = FirebaseAuth.getInstance();
+
+
+        // Checkbox logic for Terms and Conditions---------------------------------------------------------------------------------------------------
+
+        // Initially disable the Sign Up button if checkbox is not checked
+        signupButton.setEnabled(false);
+        signupButton.setAlpha(0.5f); // visual feedback
+
+        // Enable button only when checkbox is ticked
+        checkboxTerms.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            signupButton.setEnabled(isChecked);
+            signupButton.setAlpha(isChecked ? 1f : 0.5f);
+        });
+
+        // Show Terms and Conditions dialog
+        linkTerms.setOnClickListener(v -> {
+            new AlertDialog.Builder(SignupActivity.this)
+                    .setTitle("Terms and Conditions")
+                    .setMessage("By using this app, you agree to our policy on data privacy, " +
+                            "location tracking, and caregiver-elder data sharing. " +
+                            "Please ensure you have consent from the elderly before enabling GPS tracking.")
+                    .setPositiveButton("OK", null)
+                    .show();
+        });
+        //--------------------------------------------------------------------------------------------------------------------------------------------
+
 
         signupButton.setOnClickListener(view -> {
             String email = signupEmail.getText().toString().trim();

@@ -29,6 +29,7 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -41,12 +42,15 @@ import com.example.elderlink.view_medication.Model_medication;
 import com.example.elderlink.view_medication.ViewMedicationActivityElderSide;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldPath;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.SetOptions;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class MainActivityElder extends AppCompatActivity {
 
@@ -84,6 +88,7 @@ public class MainActivityElder extends AppCompatActivity {
 
 
 
+
         // Get data from intent
         String name = getIntent().getStringExtra("personName");
         personUid = getIntent().getStringExtra("personUid");
@@ -91,6 +96,9 @@ public class MainActivityElder extends AppCompatActivity {
 
         nameText.setText(name);
 
+
+        //For display people caring for you section
+        setupCaregiverRecyclerView();
 
         // Start battery monitoring
         startBatteryMonitoring();
@@ -178,6 +186,10 @@ public class MainActivityElder extends AppCompatActivity {
         btnFilterDate.setOnClickListener(v -> {
             showDatePickerWithMedDates(medicationList);
         });
+
+
+
+
 
 
 
@@ -437,6 +449,144 @@ public class MainActivityElder extends AppCompatActivity {
         tvOverallProgress.setText(overallPercentage + "%");
         int todayPercentage = todayTotal > 0 ? (int) ((todayTaken * 100.0f) / todayTotal) : 0;
         tvTodayProgress.setText(todayPercentage + "%");
+    }
+
+
+
+
+    // People caring for you section, Caregiver RecyclerView methods---------------------------------------------------------------------------------------------------------------------------------
+    private void setupCaregiverRecyclerView() {
+        RecyclerView caregiverRecyclerView = findViewById(R.id.caregiverRecyclerView);
+        caregiverRecyclerView.setLayoutManager(new LinearLayoutManager(this));   // Set how the items will be arranged (vertical list)
+
+        List<String> caregiverList = new ArrayList<>();     // Create an empty list to store caregiver names
+        findAllCaregiversWithAccess(caregiverList, caregiverRecyclerView);   // Start the process to find all caregivers
+    }
+
+    private void findAllCaregiversWithAccess(List<String> caregiverList, RecyclerView recyclerView) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        // Search all "people" collections across all users
+        // This is like searching every user's "people" folder at once
+        db.collectionGroup("people")
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    Log.d("CaregiverRecyclerView", "Found " + querySnapshot.size() + " total people documents");
+
+                    Set<String> caregiverUids = new HashSet<>();     // Use a Set to store unique caregiver IDs (no duplicates)
+
+                    // Find documents that match the personUid
+                    for (DocumentSnapshot personDoc : querySnapshot) {
+                        // Check if this document has the same ID as the current elder
+                        if (personDoc.getId().equals(personUid)) {
+                            // If yes, this means some caregiver has access to the elder
+                            // Figure out which caregiver owns this document
+                            // Path format: "users/{caregiverUid}/people/{personUid}"
+                            String docPath = personDoc.getReference().getPath();
+                            String[] pathSegments = docPath.split("/");
+                            if (pathSegments.length >= 2) {
+                                String foundCaregiverUid = pathSegments[1];  // The caregiver UID is the second part of the path, pathSegments[1]
+                                caregiverUids.add(foundCaregiverUid);
+                                Log.d("CaregiverRecyclerView", "Found caregiver with access: " + foundCaregiverUid);
+                            }
+                        }
+                    }
+
+                    if (caregiverUids.isEmpty()) {     // If no caregivers found, just show the current user
+                        addCurrentCaregiverOnly(caregiverList, recyclerView);
+                    } else {      // If we found caregivers, get their usernames. fetchCaregiverUsernames
+                        fetchCaregiverUsernames(caregiverUids, caregiverList, recyclerView);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("CaregiverRecyclerView", "Error finding caregivers with access: ", e);
+                    addCurrentCaregiverOnly(caregiverList, recyclerView);
+                });
+    }
+
+    private void fetchCaregiverUsernames(Set<String> caregiverUids, List<String> caregiverList, RecyclerView recyclerView) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        final int totalCaregivers = caregiverUids.size();
+        final int[] processedCount = {0};            // Counter for completed requests
+
+
+        // For each caregiver ID found, get their username
+        for (String caregiverUid : caregiverUids) {
+            db.collection("users")
+                    .document(caregiverUid)
+                    .get()
+                    .addOnSuccessListener(documentSnapshot -> {
+                        String displayName;
+
+                        if (documentSnapshot.exists()) {
+                            String username = documentSnapshot.getString("username");     // Get the username from the user document
+                            if (caregiverUid.equals(this.caregiverUid)) {
+                                displayName = (username != null ? username : "You") + " (You)";   // If this is the current user, mark it as "(You)"
+                            } else {
+                                displayName = username != null ? username : "Caregiver";     // For other caregivers, just use their username
+                            }
+                        } else {
+                            displayName = caregiverUid.equals(this.caregiverUid) ? "You (You)" : "Caregiver";    // If user document doesn't exist, use placeholder
+                        }
+
+                        caregiverList.add(displayName);   // Add the name to our list
+                        processedCount[0]++;
+
+                        // Check if processed all caregivers
+                        if (processedCount[0] >= totalCaregivers) {
+                            updateCaregiverAdapter(caregiverList, recyclerView);   // When all usernames are fetched, update the display adapter
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e("CaregiverRecyclerView", "Error fetching username for " + caregiverUid + ": ", e);
+                        String displayName = caregiverUid.equals(this.caregiverUid) ? "You (You)" : "Caregiver";
+                        caregiverList.add(displayName);
+                        processedCount[0]++;      // Mark as completed even if failed
+
+                        if (processedCount[0] >= totalCaregivers) {
+                            updateCaregiverAdapter(caregiverList, recyclerView);
+                        }
+                    });
+        }
+    }
+
+    private void addCurrentCaregiverOnly(List<String> caregiverList, RecyclerView recyclerView) {
+        // Fallback: Only show the current caregiver (used when no others found or error occurs)
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        db.collection("users")
+                .document(caregiverUid)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        String username = documentSnapshot.getString("username");
+                        caregiverList.add((username != null ? username : "You") + " (You)");
+                    } else {
+                        caregiverList.add("You (You)");
+                    }
+                    caregiverList.add("No other caregivers");
+                    updateCaregiverAdapter(caregiverList, recyclerView);
+                })
+                .addOnFailureListener(e -> {   // Even if this fails, show something
+                    caregiverList.add("You (You)");
+                    caregiverList.add("No other caregivers");
+                    updateCaregiverAdapter(caregiverList, recyclerView);
+                });
+    }
+
+    private void updateCaregiverAdapter(List<String> caregiverList, RecyclerView recyclerView) {
+        // Sort list to put current user first, organize and display the list
+        Collections.sort(caregiverList, (name1, name2) -> {
+            boolean isYou1 = name1.contains("(You)");   // Check if name1 contains "(You)" - this means it's the current user
+            boolean isYou2 = name2.contains("(You)");   // Check if name2 contains "(You)" - this means it's the current user
+            if (isYou1 && !isYou2) return -1;          // name1 is "You", name2 is not → name1 comes FIRST
+            if (!isYou1 && isYou2) return 1;           // name1 is not "You", name2 is → name2 comes FIRST
+            return name1.compareTo(name2);             // Both are same type (both "You" or both not) → sort alphabetically
+
+        });
+
+        CaregiverAdapter caregiverAdapter = new CaregiverAdapter(caregiverList);
+        recyclerView.setAdapter(caregiverAdapter);
     }
 
 

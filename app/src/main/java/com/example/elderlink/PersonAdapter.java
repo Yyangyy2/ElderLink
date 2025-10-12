@@ -30,6 +30,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.WriteBatch;
@@ -266,7 +267,7 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
                 });
     }
 
-    //Share Person (now create a reference to original owner instead of copying subcollections)----------------------------------------------------------------------------------------------------------------------------------
+    //Share Person----------------------------------------------------------------------------------------------------------------------------------
     private void sharePerson(Person person, int position) {
         final String personUid = person.getId();
 
@@ -282,7 +283,7 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
             Log.e("SharePerson", "Caregiver UID is null — cannot share person.");
             return;
         }
-        final String caregiverUid = temporaryUid;       // original owner
+        final String caregiverUid = temporaryUid; // original owner
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
         // Create share dialog
@@ -315,14 +316,14 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
                             return;
                         }
 
-                        String targetUserUid = query.getDocuments().get(0).getId();
+                        DocumentSnapshot targetUserDoc = query.getDocuments().get(0);
+                        String targetUserUid = targetUserDoc.getId();
 
-                        // Create a lightweight reference in the target user's people collection that points to the original owner
+                        // STEP 2: Create reference in target user's people collection with ownerUid
                         Map<String, Object> refData = new HashMap<>();
                         refData.put("name", person.getName());
                         refData.put("imageBase64", person.getImageBase64() != null ? person.getImageBase64() : "");
-                        // store ownerUid so app knows where to read the canonical data (medications)
-                        refData.put("ownerUid", caregiverUid);
+                        refData.put("ownerUid", caregiverUid); // Point to original owner
 
                         db.collection("users")
                                 .document(targetUserUid)
@@ -332,12 +333,13 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
                                 .addOnSuccessListener(aVoid -> {
                                     dialog.dismiss();
                                     showSuccessPopup();
+                                    Log.d("SharePerson", "Successfully shared person with " + targetEmail);
                                 })
                                 .addOnFailureListener(e -> {
                                     Toast.makeText(context, "Failed to share person: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    Log.e("SharePerson", "Sharing failed: " + e.getMessage());
                                     dialog.dismiss();
                                 });
-
                     })
                     .addOnFailureListener(e -> {
                         Toast.makeText(context, "Error finding user: " + e.getMessage(), Toast.LENGTH_SHORT).show();

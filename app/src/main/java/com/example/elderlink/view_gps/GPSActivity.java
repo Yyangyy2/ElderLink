@@ -2,6 +2,7 @@ package com.example.elderlink.view_gps;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
@@ -22,6 +23,9 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
+import com.example.elderlink.CheckOnElderlyActivity;
+import com.example.elderlink.MainActivityElder;
+import com.example.elderlink.ProfilePageElder_ElderSide;
 import com.example.elderlink.R;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -143,6 +147,11 @@ public class GPSActivity extends AppCompatActivity {
         // Back button - GPSActivity
         FloatingActionButton fabBack = findViewById(R.id.fabBack);
         fabBack.setOnClickListener(v -> {
+            Intent intent = new Intent(GPSActivity.this, CheckOnElderlyActivity.class);
+            intent.putExtra("personUid", personUid);
+            intent.putExtra("personName", personName);
+            intent.putExtra("caregiverUid", caregiverUid);
+            startActivity(intent);
             finish();
         });
     }

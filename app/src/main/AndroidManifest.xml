@@ -69,6 +69,10 @@
             android:exported="false"
             android:theme="@style/Theme.ElderLink" />
 
+        <activity android:name=".ProfilePageElder_ElderSide"
+            android:exported="false"
+            android:theme="@style/Theme.ElderLink" />
+
         <activity android:name=".view_Ask_Ai.ChatActivity"
             android:exported="false"
             android:theme="@style/Theme.ElderLink" />

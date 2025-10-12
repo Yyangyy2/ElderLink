@@ -116,7 +116,7 @@ public class ProfilePageElder extends AppCompatActivity {
                 "imageBase64", imageBase64
         ).addOnSuccessListener(aVoid -> {
             Toast.makeText(ProfilePageElder.this, "Profile saved successfully!", Toast.LENGTH_SHORT).show();
-            finish();
+
         }).addOnFailureListener(e ->
                 Toast.makeText(ProfilePageElder.this, "Failed to save profile: " + e.getMessage(), Toast.LENGTH_SHORT).show()
         );

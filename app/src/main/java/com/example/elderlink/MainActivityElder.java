@@ -470,45 +470,38 @@ public class MainActivityElder extends AppCompatActivity {
     // People caring for you section, Caregiver RecyclerView methods---------------------------------------------------------------------------------------------------------------------------------
     private void setupCaregiverRecyclerView() {
         RecyclerView caregiverRecyclerView = findViewById(R.id.caregiverRecyclerView);
-        caregiverRecyclerView.setLayoutManager(new LinearLayoutManager(this));   // Set how the items will be arranged (vertical list)
+        caregiverRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        List<String> caregiverList = new ArrayList<>();     // Create an empty list to store caregiver names
-        findAllCaregiversWithAccess(caregiverList, caregiverRecyclerView);   // Start the process to find all caregivers
+        List<Caregiver> caregiverList = new ArrayList<>(); // Change to Caregiver objects
+        findAllCaregiversWithAccess(caregiverList, caregiverRecyclerView);
     }
 
-    private void findAllCaregiversWithAccess(List<String> caregiverList, RecyclerView recyclerView) {
+    private void findAllCaregiversWithAccess(List<Caregiver> caregiverList, RecyclerView recyclerView) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        // Search all "people" collections across all users
-        // This is like searching every user's "people" folder at once
         db.collectionGroup("people")
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
                     Log.d("CaregiverRecyclerView", "Found " + querySnapshot.size() + " total people documents");
 
-                    Set<String> caregiverUids = new HashSet<>();     // Use a Set to store unique caregiver IDs (no duplicates)
+                    Set<String> caregiverUids = new HashSet<>();
 
-                    // Find documents that match the personUid
                     for (DocumentSnapshot personDoc : querySnapshot) {
-                        // Check if this document has the same ID as the current elder
                         if (personDoc.getId().equals(personUid)) {
-                            // If yes, this means some caregiver has access to the elder
-                            // Figure out which caregiver owns this document
-                            // Path format: "users/{caregiverUid}/people/{personUid}"
                             String docPath = personDoc.getReference().getPath();
                             String[] pathSegments = docPath.split("/");
                             if (pathSegments.length >= 2) {
-                                String foundCaregiverUid = pathSegments[1];  // The caregiver UID is the second part of the path, pathSegments[1]
+                                String foundCaregiverUid = pathSegments[1];
                                 caregiverUids.add(foundCaregiverUid);
                                 Log.d("CaregiverRecyclerView", "Found caregiver with access: " + foundCaregiverUid);
                             }
                         }
                     }
 
-                    if (caregiverUids.isEmpty()) {     // If no caregivers found, show message
+                    if (caregiverUids.isEmpty()) {
                         showNoCaregiversMessage(caregiverList, recyclerView);
-                    } else {      // If we found caregivers, get their usernames
-                        fetchCaregiverUsernames(caregiverUids, caregiverList, recyclerView);
+                    } else {
+                        fetchCaregiverDetails(caregiverUids, caregiverList, recyclerView);
                     }
                 })
                 .addOnFailureListener(e -> {
@@ -517,39 +510,45 @@ public class MainActivityElder extends AppCompatActivity {
                 });
     }
 
-    private void fetchCaregiverUsernames(Set<String> caregiverUids, List<String> caregiverList, RecyclerView recyclerView) {
+    private void fetchCaregiverDetails(Set<String> caregiverUids, List<Caregiver> caregiverList, RecyclerView recyclerView) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         final int totalCaregivers = caregiverUids.size();
-        final int[] processedCount = {0};            // Counter for completed requests
+        final int[] processedCount = {0};
 
-        // For each caregiver ID found, get their username
         for (String caregiverUid : caregiverUids) {
             db.collection("users")
                     .document(caregiverUid)
                     .get()
                     .addOnSuccessListener(documentSnapshot -> {
-                        String displayName;
-
                         if (documentSnapshot.exists()) {
-                            String username = documentSnapshot.getString("username");     // Get the username from the user document
-                            displayName = username != null ? username : "Caregiver";     // Use the username or default to "Caregiver"
+                            String username = documentSnapshot.getString("username");
+                            String email = documentSnapshot.getString("email");
+                            String phone = documentSnapshot.getString("phone");
+
+                            // Check if this is the current caregiver
+                            boolean isCurrentUser = caregiverUid.equals(this.caregiverUid);
+
+                            // Use default values if data is missing
+                            String displayName = username != null ? username : "Caregiver";
+                            String displayEmail = email != null ? email : "No email";
+                            String displayPhone = phone != null ? phone : "Not provided";
+
+                            caregiverList.add(new Caregiver(displayName, displayEmail, displayPhone, isCurrentUser));
                         } else {
-                            displayName = "Caregiver";    // If user document doesn't exist, use "Caregiver"
+                            // Add placeholder if user document doesn't exist
+                            caregiverList.add(new Caregiver("Caregiver", "No email", "Not provided", false));
                         }
 
-                        caregiverList.add(displayName);   // Add the name to our list
                         processedCount[0]++;
-
-                        // Check if processed all caregivers
                         if (processedCount[0] >= totalCaregivers) {
-                            updateCaregiverAdapter(caregiverList, recyclerView);   // When all usernames are fetched, update the display adapter
+                            updateCaregiverAdapter(caregiverList, recyclerView);
                         }
                     })
                     .addOnFailureListener(e -> {
-                        Log.e("CaregiverRecyclerView", "Error fetching username for " + caregiverUid + ": ", e);
-                        String displayName = "Caregiver";  // Use "Caregiver" as fallback
-                        caregiverList.add(displayName);
-                        processedCount[0]++;      // Mark as completed even if failed
+                        Log.e("CaregiverRecyclerView", "Error fetching caregiver details: ", e);
+                        // Add placeholder on failure
+                        caregiverList.add(new Caregiver("Caregiver", "No email", "Not provided", false));
+                        processedCount[0]++;
 
                         if (processedCount[0] >= totalCaregivers) {
                             updateCaregiverAdapter(caregiverList, recyclerView);
@@ -558,15 +557,19 @@ public class MainActivityElder extends AppCompatActivity {
         }
     }
 
-    private void showNoCaregiversMessage(List<String> caregiverList, RecyclerView recyclerView) {
-        // Show message when no caregivers are found
-        caregiverList.add("No caregivers assigned");
+    private void showNoCaregiversMessage(List<Caregiver> caregiverList, RecyclerView recyclerView) {
+        // Create a placeholder caregiver to show the message
+        caregiverList.add(new Caregiver("No caregivers assigned", "Contact administrator", "N/A", false));
         updateCaregiverAdapter(caregiverList, recyclerView);
     }
 
-    private void updateCaregiverAdapter(List<String> caregiverList, RecyclerView recyclerView) {
-        // Sort the list alphabetically
-        Collections.sort(caregiverList);
+    private void updateCaregiverAdapter(List<Caregiver> caregiverList, RecyclerView recyclerView) {
+        // Sort list to put current user first
+        Collections.sort(caregiverList, (c1, c2) -> {
+            if (c1.isCurrentUser() && !c2.isCurrentUser()) return -1;
+            if (!c1.isCurrentUser() && c2.isCurrentUser()) return 1;
+            return c1.getName().compareTo(c2.getName());
+        });
 
         CaregiverAdapter caregiverAdapter = new CaregiverAdapter(caregiverList);
         recyclerView.setAdapter(caregiverAdapter);

@@ -1,8 +1,5 @@
-//This adapter is for displaying People caring for you section in MainActivityElder.
-
 package com.example.elderlink;
 
-import android.graphics.Typeface;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,9 +11,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
 public class CaregiverAdapter extends RecyclerView.Adapter<CaregiverAdapter.CaregiverViewHolder> {
-    private List<String> caregiverList;
+    private List<Caregiver> caregiverList;
 
-    public CaregiverAdapter(List<String> caregiverList) {
+    public CaregiverAdapter(List<Caregiver> caregiverList) {
         this.caregiverList = caregiverList;
     }
 
@@ -30,18 +27,17 @@ public class CaregiverAdapter extends RecyclerView.Adapter<CaregiverAdapter.Care
 
     @Override
     public void onBindViewHolder(@NonNull CaregiverViewHolder holder, int position) {
-        String caregiverInfo = caregiverList.get(position);
+        Caregiver caregiver = caregiverList.get(position);
 
-        // Remove the "(You)" suffix for display if present
-        String displayName = caregiverInfo.replace(" (You)", "");
-        holder.caregiverName.setText(displayName);
+        holder.caregiverName.setText(caregiver.getName());
+        holder.caregiverEmail.setText(caregiver.getEmail());
+        holder.caregiverPhone.setText(caregiver.getPhone() != null ? caregiver.getPhone() : "Not provided");
 
-        // Style differently if it's the main caregiver
-        if (caregiverInfo.contains("(You)")) {
-            holder.caregiverName.setTypeface(holder.caregiverName.getTypeface(), Typeface.BOLD);
-            // You can add other styling like different color if needed
+        // Show "You" badge if this is the current caregiver
+        if (caregiver.isCurrentUser()) {
+            holder.youBadge.setVisibility(View.VISIBLE);
         } else {
-            holder.caregiverName.setTypeface(holder.caregiverName.getTypeface(), Typeface.NORMAL);
+            holder.youBadge.setVisibility(View.GONE);
         }
     }
 
@@ -51,11 +47,14 @@ public class CaregiverAdapter extends RecyclerView.Adapter<CaregiverAdapter.Care
     }
 
     static class CaregiverViewHolder extends RecyclerView.ViewHolder {
-        TextView caregiverName;
+        TextView caregiverName, caregiverEmail, caregiverPhone, youBadge;
 
         CaregiverViewHolder(@NonNull View itemView) {
             super(itemView);
             caregiverName = itemView.findViewById(R.id.caregiverName);
+            caregiverEmail = itemView.findViewById(R.id.caregiverEmail);
+            caregiverPhone = itemView.findViewById(R.id.caregiverPhone);
+            youBadge = itemView.findViewById(R.id.youBadge);
         }
     }
 }

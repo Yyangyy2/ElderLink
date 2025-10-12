@@ -116,6 +116,16 @@ public class MainActivity extends AppCompatActivity {
                     userNameTextView.setText("No Name");
                 });
 
+
+        // Info Button (to ProfilePageCaregiver)--------------------------------------------------------------------------------------------------------------
+        Button infoButton = findViewById(R.id.infobtn);
+        infoButton.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, ProfilePageCaregiver.class);
+
+            startActivity(intent);
+            finish();
+        });
+
         // Log out Caregiver----------------------------------------------------------------------------------------------------------
         logoutButton.setOnClickListener(v -> {
             FirebaseAuth.getInstance().signOut();

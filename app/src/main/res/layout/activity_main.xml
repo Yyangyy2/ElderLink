@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schebas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -14,12 +15,18 @@
         android:padding="16dp">
 
         <!-- Welcome Text -->
+
+        <!-- Header Buttons Container -->
+
         <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
+            android:id="@+id/welcomeLayout"
+            android:layout_width="162dp"
+            android:layout_height="71dp"
             android:layout_marginStart="10dp"
-            android:gravity="center_vertical">
+            android:layout_marginEnd="22dp"
+            android:layout_toStartOf="@+id/headerButtons"
+            android:gravity="center_vertical"
+            android:orientation="vertical">
 
             <TextView
                 android:id="@+id/welcomeText"
@@ -38,17 +45,37 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Logout Button -->
-        <Button
-            android:id="@+id/logoutButton"
+        <LinearLayout
+            android:id="@+id/headerButtons"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Log out"
-            android:textSize="12sp"
-            android:background="@drawable/circle_button"
-            android:textColor="#FFFFFF"
+            android:layout_height="match_parent"
             android:layout_alignParentEnd="true"
-            android:layout_marginTop="10dp" />
+            android:layout_marginEnd="9dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <!-- Info Button -->
+            <Button
+                android:id="@+id/infobtn"
+                style="?attr/borderlessButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="0dp"
+                android:text="Info >"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                tools:ignore="TouchTargetSizeCheck" />
+
+            <!-- Logout Button -->
+            <Button
+                android:id="@+id/logoutButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/circle_button"
+                android:text="Log out"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp" />
+        </LinearLayout>
     </RelativeLayout>
 
     <!-- Search Bar -->
@@ -97,7 +124,7 @@
         android:textSize="16sp"
         android:textStyle="bold" />
 
-    <!-- RecyclerView (no ScrollView wrapper) -->
+    <!-- RecyclerView -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/peopleRecyclerView"
         android:layout_width="match_parent"

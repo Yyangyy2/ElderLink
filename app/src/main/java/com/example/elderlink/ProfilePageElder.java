@@ -27,7 +27,7 @@ public class ProfilePageElder extends AppCompatActivity {
     private Button btnChangeImage, btnSave;
 
     private FirebaseFirestore db;
-    private String caregiverId, personUid;
+    private String caregiverUid, personUid;
 
     private static final int PICK_IMAGE_REQUEST = 1;
     private String imageBase64 = "";
@@ -46,7 +46,7 @@ public class ProfilePageElder extends AppCompatActivity {
         btnSave = findViewById(R.id.btnSave);
 
         db = FirebaseFirestore.getInstance();
-        caregiverId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        caregiverUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
         personUid = getIntent().getStringExtra("personUid");
         if (personUid == null) {
@@ -71,7 +71,7 @@ public class ProfilePageElder extends AppCompatActivity {
 
     private void loadElderProfile() {
         DocumentReference elderRef = db.collection("users")
-                .document(caregiverId)
+                .document(caregiverUid)
                 .collection("people")
                 .document(personUid);
 
@@ -104,7 +104,7 @@ public class ProfilePageElder extends AppCompatActivity {
 
     private void saveProfile() {
         DocumentReference elderRef = db.collection("users")
-                .document(caregiverId)
+                .document(caregiverUid)
                 .collection("people")
                 .document(personUid);
 

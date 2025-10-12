@@ -48,7 +48,8 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
     private List<Model_medication> filteredMedications = new ArrayList<>(); // For search results
     private FirebaseFirestore db;
     private String personUid;
-    private String caregiverUid;
+    private String caregiverUid; // intent-provided owner (may be null)
+    private String OwnerUid; //  original owner
 
     private RecyclerView calendarRecyclerView;
     private CalendarAdapter calendarAdapter;
@@ -80,11 +81,7 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
         recyclerView.setLayoutManager(gridLayoutManager);
 
         adapter = new MedicationAdapter(this, medicationList, medication -> {
-            // handle edit click → open AddMedicationActivity in edit mode----- change to same acitivity due to not allowing edit
-//            Intent intent = new Intent(ViewMedicationActivityElderSide.this, ViewMedicationActivityElderSide.class);
-//            intent.putExtra("personUid", personUid);
-//            intent.putExtra("medId", medication.getId());
-//            startActivity(intent);
+            // handle edit click 10 open AddMedicationActivity in edit mode----- change to same acitivity due to not allowing edit
         });
         recyclerView.setAdapter(adapter);
 
@@ -92,8 +89,8 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
         setupSearch();
 
         setupCalendar();
-        loadMedications(personUid);
-        listenForMedicationReminders(caregiverUid, personUid);
+        resolveOwnerAndLoadMedications();
+        listenForMedicationReminders();
 
         // Bottom Navigation Bar
         ImageButton navHome = findViewById(R.id.navHome);
@@ -235,16 +232,33 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
         }
     }
 
-    private void loadMedications(String personUid) {
-        if (personUid == null || personUid.isEmpty()) {
-            Toast.makeText(this, "No person specified.", Toast.LENGTH_LONG).show();
-            return;
+    private void resolveOwnerAndLoadMedications() {
+        if (personUid == null || personUid.isEmpty()) return;
+
+        if (caregiverUid != null && !caregiverUid.isEmpty()) {
+            OwnerUid = caregiverUid;
+            attachMedicationsListener(OwnerUid);
+        } else {
+            String currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser().getUid();
+            db.collection("users").document(currentUser).collection("people").document(personUid).get()
+                    .addOnSuccessListener(doc -> {
+                        String owner = null;
+                        if (doc.exists()) owner = doc.getString("ownerUid");
+                        if (owner == null || owner.isEmpty()) owner = currentUser;
+                        OwnerUid = owner;
+                        attachMedicationsListener(OwnerUid);
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.w("ViewMedElder", "Failed to resolve owner, default to current user", e);
+                        OwnerUid = currentUser;
+                        attachMedicationsListener(OwnerUid);
+                    });
         }
+    }
 
-        String userUid = getIntent().getStringExtra("caregiverUid");
-
+    private void attachMedicationsListener(String ownerUid) {
         db.collection("users")
-                .document(userUid)
+                .document(ownerUid)
                 .collection("people")
                 .document(personUid)
                 .collection("medications")
@@ -264,14 +278,11 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
                             }
                         }
 
-                        // Default to today's date
-                        String today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                                .format(Calendar.getInstance().getTime());
+                        String today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Calendar.getInstance().getTime());
                         currentSelectedDate = today;
-                        applyFilters(); // Apply both date and search filters
+                        applyFilters();
 
-                        // Load medication status for calendar AFTER loading medications
-                        loadMedicationStatusForCalendar(caregiverUid, personUid);
+                        loadMedicationStatusForCalendar(ownerUid);
                     }
                 });
     }
@@ -282,7 +293,7 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
                 new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         );
 
-        // Generate ±15 days around today
+        // Generate 015 days around today
         dateList = new ArrayList<>(); // Initialize the class variable
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
         Calendar cal = Calendar.getInstance();
@@ -309,7 +320,7 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
     }
 
     // Remove the dateList parameter since it's now a class variable
-    private void loadMedicationStatusForCalendar(String caregiverUid, String personUid) {
+    private void loadMedicationStatusForCalendar(String caregiverUid) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         Map<String, String> dateStatusMap = new HashMap<>();
 
@@ -321,7 +332,6 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
                 .get()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        // Group medications by date
                         Map<String, List<String>> dateMedicationsMap = new HashMap<>();
 
                         for (QueryDocumentSnapshot document : task.getResult()) {
@@ -337,7 +347,6 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
                             }
                         }
 
-                        // Determine overall status for each date
                         for (Map.Entry<String, List<String>> entry : dateMedicationsMap.entrySet()) {
                             String date = entry.getKey();
                             List<String> statuses = entry.getValue();
@@ -346,7 +355,6 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
                             dateStatusMap.put(date, overallStatus);
                         }
 
-                        // Update the calendar adapter
                         if (calendarAdapter != null) {
                             calendarAdapter.updateDateStatus(dateStatusMap);
                         }
@@ -385,9 +393,20 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
     }
 
     // Elder listens for caregiver-scheduled meds and schedules alarms locally
-    private void listenForMedicationReminders(String caregiverUid, String personUid) {
+    private void listenForMedicationReminders() {
+        // Ensure we have OwnerUid (if not, try to resolve quickly)
+        if (OwnerUid == null) {
+            if (caregiverUid != null && !caregiverUid.isEmpty()) {
+                OwnerUid = caregiverUid;
+            } else {
+                String currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser().getUid();
+                OwnerUid = currentUser; // fallback; ideally resolve earlier
+            }
+        }
+
+        final String owner = OwnerUid;
         db.collection("users")
-                .document(caregiverUid)
+                .document(owner)
                 .collection("people")
                 .document(personUid)
                 .collection("medications")
@@ -404,11 +423,11 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
 
                         switch (dc.getType()) {
                             case ADDED:
-                                scheduleMedication(this, med);
+                                scheduleMedication(this, med, owner);
                                 break;
                             case MODIFIED:
                                 cancelMedication(this, med.getId());
-                                scheduleMedication(this, med);
+                                scheduleMedication(this, med, owner);
                                 break;
                             case REMOVED:
                                 cancelMedication(this, med.getId());
@@ -418,7 +437,7 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
                 });
     }
 
-    private void scheduleMedication(Context context, Model_medication med) {
+    private void scheduleMedication(Context context, Model_medication med, String ownerUid) {
         try {
             long triggerAt = med.getTimeMillis(); // get milliseconds from model
             long now = System.currentTimeMillis();
@@ -434,7 +453,7 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
             intent.putExtra("medInfo", med.getName() + " " + med.getDosage() + " " + med.getUnit());
             intent.putExtra("retryCount", 0);
             intent.putExtra("personUid", personUid);
-            intent.putExtra("caregiverUid",caregiverUid);
+            intent.putExtra("caregiverUid", ownerUid);
             intent.putExtra("role", "elder");
 
             int requestCode = med.getId().hashCode();

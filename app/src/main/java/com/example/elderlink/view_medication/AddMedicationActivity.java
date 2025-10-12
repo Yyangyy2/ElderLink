@@ -53,7 +53,8 @@ public class AddMedicationActivity extends AppCompatActivity {
     private ActivityResultLauncher<String> imagePickerLauncher;
 
     private FirebaseFirestore firestore;
-    private String caregiverUid;
+    private String caregiverUid; // current signed-in user
+    private String OwnerUid; // the owner for this person (could be different if shared)
     private String personUid;
     private String personName;
     @Nullable
@@ -84,10 +85,6 @@ public class AddMedicationActivity extends AppCompatActivity {
         deleteMedicationBtn = findViewById(R.id.deleteMedicationBtn);
         switchReminder = findViewById(R.id.switchReminder);
 
-
-
-
-
         // Spinner Unit setup--------------------------------------------------------------------------
         ArrayAdapter<String> unitsAdapter = new ArrayAdapter<>(
                 this,
@@ -106,8 +103,6 @@ public class AddMedicationActivity extends AppCompatActivity {
         unitsAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerMedicationRepeatType.setAdapter(repeatTypeAdapter);
 
-
-
         // Firestore
         firestore = FirebaseFirestore.getInstance();
         if (FirebaseAuth.getInstance().getCurrentUser() == null) {
@@ -123,13 +118,21 @@ public class AddMedicationActivity extends AppCompatActivity {
         medId = getIntent().getStringExtra("medId");
         isEditMode = (medId != null && !medId.isEmpty());
 
+        // If caregiverUid (owner) is provided in intent (when the person is a shared reference), use it as OwnerUid
+        String ownerFromIntent = getIntent().getStringExtra("caregiverUid");
+        if (ownerFromIntent != null && !ownerFromIntent.isEmpty()) {
+            OwnerUid = ownerFromIntent;
+        } else {
+            OwnerUid = caregiverUid; // default to current user
+        }
+
         if (personUid == null || personUid.isEmpty()) {
             Toast.makeText(this, "No person specified.", Toast.LENGTH_LONG).show();
             finish();
             return;
         }
 
-        Log.d(TAG, "caregiverUid=" + caregiverUid + ", personUid=" + personUid + ", medId=" + medId);
+        Log.d(TAG, "caregiverUid=" + caregiverUid + ", OwnerUid=" + OwnerUid + ", personUid=" + personUid + ", medId=" + medId);
 
         // Hide delete button if adding new
         if (!isEditMode) {
@@ -201,8 +204,9 @@ public class AddMedicationActivity extends AppCompatActivity {
     }
 
     private void loadMedicationForEdit() {
+        // Use OwnerUid when reading the document so we edit the canonical medication
         DocumentReference docRef = firestore.collection("users")
-                .document(caregiverUid)
+                .document(OwnerUid)
                 .collection("people")
                 .document(personUid)
                 .collection("medications")
@@ -326,8 +330,9 @@ public class AddMedicationActivity extends AppCompatActivity {
                 null    //set status null because no status yet
         );
 
+        // Write to OwnerUid so shared persons' medications remain canonical and in sync
         firestore.collection("users")
-                .document(caregiverUid)
+                .document(OwnerUid)
                 .collection("people")
                 .document(personUid)
                 .collection("medications")
@@ -338,14 +343,12 @@ public class AddMedicationActivity extends AppCompatActivity {
 
                     if (reminderEnabled) {
                         String medInfo = name + " : " + dosage + " " + unit;
-                        scheduleReminder(docId, medInfo,personName,personUid,caregiverUid, date, time);
+                        scheduleReminder(docId, medInfo,personName,personUid,OwnerUid, date, time);
 
                     }
                 })
                 .addOnFailureListener(e -> Log.e(TAG, "Save failed", e));
     }
-
-
 
     //Reminder (Initial start the reminder to fire to ReminderReceiver.java)------------------------------------------------------------------------------------------------------------------------------------
     private void scheduleReminder(String medId, String medInfo,String personName,String personUid,String caregiverUid, String date, String time) {
@@ -356,7 +359,7 @@ public class AddMedicationActivity extends AppCompatActivity {
             long trigger = d.getTime();
 
 
-            AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);   //Without AlarmManager, reminders won’t survive when the app closes.
+            AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);   //Without AlarmManager, reminders wont survive when the app closes.
             Intent intent = new Intent(this, ReminderReceiver.class);     //Pass the below data to ReminderReceiver.java
             intent.putExtra("medId", medId);
             intent.putExtra("medInfo", medInfo);
@@ -388,8 +391,9 @@ public class AddMedicationActivity extends AppCompatActivity {
             return;
         }
 
+        // Delete from OwnerUid so canonical medication removed
         firestore.collection("users")
-                .document(caregiverUid)
+                .document(OwnerUid)
                 .collection("people")
                 .document(personUid)
                 .collection("medications")

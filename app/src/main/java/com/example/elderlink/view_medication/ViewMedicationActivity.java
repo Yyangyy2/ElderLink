@@ -44,7 +44,7 @@ public class ViewMedicationActivity extends AppCompatActivity {
     private List<Model_medication> filteredMedications = new ArrayList<>(); // For search results
     private FirebaseFirestore db;
     private String personUid;
-    private String caregiverUid;
+    private String caregiverUid; // intent-provided caregiver/owner uid (may be original owner)
     private String personName;
 
     private RecyclerView calendarRecyclerView;
@@ -95,6 +95,7 @@ public class ViewMedicationActivity extends AppCompatActivity {
             Intent intent = new Intent(ViewMedicationActivity.this, AddMedicationActivity.class);
             String personUid = getIntent().getStringExtra("personUid");
             intent.putExtra("personUid", personUid);
+            intent.putExtra("caregiverUid", caregiverUid);
             startActivity(intent);
         });
 
@@ -233,12 +234,38 @@ public class ViewMedicationActivity extends AppCompatActivity {
             return;
         }
 
-        String userUid = com.google.firebase.auth.FirebaseAuth.getInstance()
-                .getCurrentUser()
-                .getUid();
+        // Resolve owner UID: prefer caregiverUid passed in intent (owner), otherwise check local person doc's ownerUid, else use current user
+        String intentOwner = caregiverUid;
+        if (intentOwner != null && !intentOwner.isEmpty()) {
+            // directly listen to owner's medications
+            attachMedicationsListener(intentOwner, personUid);
+        } else {
+            String currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser().getUid();
+            db.collection("users")
+                    .document(currentUser)
+                    .collection("people")
+                    .document(personUid)
+                    .get()
+                    .addOnSuccessListener(doc -> {
+                        String owner = null;
+                        if (doc.exists()) {
+                            owner = doc.getString("ownerUid");
+                        }
+                        if (owner == null || owner.isEmpty()) owner = currentUser;
+                        attachMedicationsListener(owner, personUid);
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.w("ViewMedication", "Failed to resolve ownerUid, defaulting to current user", e);
+                        attachMedicationsListener(currentUser, personUid);
+                    });
+        }
+    }
+
+    private void attachMedicationsListener(String ownerUid, String personUid) {
+        this.caregiverUid = ownerUid; // remember owner
 
         db.collection("users")
-                .document(userUid)
+                .document(ownerUid)
                 .collection("people")
                 .document(personUid)
                 .collection("medications")
@@ -265,7 +292,7 @@ public class ViewMedicationActivity extends AppCompatActivity {
                         applyFilters(); // Apply both date and search filters
 
                         // Load medication status for calendar AFTER loading medications
-                        loadMedicationStatusForCalendar(caregiverUid, personUid);
+                        loadMedicationStatusForCalendar(ownerUid, personUid);
                     }
                 });
     }

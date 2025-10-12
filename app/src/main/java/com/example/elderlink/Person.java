@@ -5,6 +5,7 @@ public class Person {
     private String name;
     private String imageBase64;
     private String pin;
+    private String ownerUid; // if this person doc is a reference/shared entry, ownerUid points to the original owner
 
     public Person() {
 
@@ -15,10 +16,7 @@ public class Person {
         this.imageBase64 = imageBase64;
         this.pin = pin;
         this.id = id;
-
     }
-
-
 
     public String getId() {
         return id;
@@ -41,5 +39,7 @@ public class Person {
 
     public String getPin() { return pin; }
 
+    public String getOwnerUid() { return ownerUid; }
+    public void setOwnerUid(String ownerUid) { this.ownerUid = ownerUid; }
 
 }

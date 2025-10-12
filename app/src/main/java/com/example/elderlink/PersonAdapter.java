@@ -34,7 +34,9 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.WriteBatch;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonViewHolder> {
 
@@ -71,6 +73,9 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
         String personUid = person.getId();
         String caregiverUid = uid;
 
+        // Determine owner UID: if this person doc has ownerUid (shared reference), use it; otherwise use caregiverUid (local owner)
+        String ownerUid = person.getOwnerUid() != null && !person.getOwnerUid().isEmpty() ? person.getOwnerUid() : caregiverUid;
+
 
         // Decode Base64 image if available, otherwise use profile_placeholder from drawable
         if (person.getImageBase64() != null && !person.getImageBase64().isEmpty()) {
@@ -97,9 +102,9 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
 
                 // Pass data so the new page knows which person it is
                 intent.putExtra("personName", person.getName());
-                //intent.putExtra("personImageBase64", person.getImageBase64());
                 intent.putExtra("personUid", personUid);
-                intent.putExtra("caregiverUid",caregiverUid);
+                // Pass ownerUid so activity reads medications from original owner when shared
+                intent.putExtra("caregiverUid", ownerUid);
 
                 context.startActivity(intent);
             });
@@ -128,9 +133,6 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
             if (holder.checkBtn != null) holder.checkBtn.setVisibility(View.GONE);
             if (holder.moreBtn != null) holder.moreBtn.setVisibility(View.GONE);
 
-
-
-
             //--------------PIN Section------------------[within Elder mode]---------------------------------------------------------
             holder.itemView.setOnClickListener(v -> {
                 Dialog dialog = new Dialog(context);
@@ -154,10 +156,12 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
                     //Hash entered PIN
                     String enteredHash = hashPin(enteredPin);
 
-                    //Fetch stored hashed PIN from Firestore
+                    //Fetch stored hashed PIN from Firestore -- use ownerUid so elder login works for shared persons
+                    String docOwner = person.getOwnerUid() != null && !person.getOwnerUid().isEmpty() ? person.getOwnerUid() : uid;
+
                     FirebaseFirestore.getInstance()
                             .collection("users")
-                            .document(uid)
+                            .document(docOwner)
                             .collection("people")
                             .document(person.getId())
                             .get()
@@ -173,8 +177,7 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
                                         // Pass data ( elder name,elder uid, caregiver uid)
                                         intent.putExtra("personName", person.getName());
                                         intent.putExtra("personUid", person.getId());
-                                        //intent.putExtra("personImageBase64", person.getImageBase64());
-                                        intent.putExtra("caregiverUid", uid);
+                                        intent.putExtra("caregiverUid", docOwner);
 
                                         context.startActivity(intent);
 
@@ -198,11 +201,6 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
                 cancelBtn.setOnClickListener(view -> dialog.dismiss());
                 dialog.show();
             });
-
-
-
-
-
         }
     }
 
@@ -268,12 +266,10 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
                 });
     }
 
-    //Share Person----------------------------------------------------------------------------------------------------------------------------------
+    //Share Person (now create a reference to original owner instead of copying subcollections)----------------------------------------------------------------------------------------------------------------------------------
     private void sharePerson(Person person, int position) {
-        final String personUid = person.getId();    //Use final means This person’s ID is fixed/lock it/unchangeable, don’t let it change while the code runs|| The code inside .addOnSuccessListener() actually runs later, not immediately.
-        //So, between now and that “later,” personUid could be changed by other parts of your code if it’s not locked (final).
+        final String personUid = person.getId();
 
-        // find which user (caregiver) is currently sharing the person, below here is like going through customs, check logs------------------------
         String temporaryUid = this.uid;
         if (temporaryUid == null || temporaryUid.isEmpty()) {
             temporaryUid = FirebaseAuth.getInstance().getCurrentUser() != null
@@ -286,9 +282,7 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
             Log.e("SharePerson", "Caregiver UID is null — cannot share person.");
             return;
         }
-        //I can't write "final String caregiverUid = uid" because the uid is a global variable, it may change by other code/methods.
-        //Another reason is bcz listeners requires to have final
-        final String caregiverUid = temporaryUid;       // lock it as final, to be used inside Firebase listeners (.addOnSuccessListener())
+        final String caregiverUid = temporaryUid;       // original owner
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
         // Create share dialog
@@ -323,39 +317,27 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
 
                         String targetUserUid = query.getDocuments().get(0).getId();
 
-                        // STEP 2: Read the source person's doc
+                        // Create a lightweight reference in the target user's people collection that points to the original owner
+                        Map<String, Object> refData = new HashMap<>();
+                        refData.put("name", person.getName());
+                        refData.put("imageBase64", person.getImageBase64() != null ? person.getImageBase64() : "");
+                        // store ownerUid so app knows where to read the canonical data (medications)
+                        refData.put("ownerUid", caregiverUid);
+
                         db.collection("users")
-                                .document(caregiverUid)
+                                .document(targetUserUid)
                                 .collection("people")
                                 .document(personUid)
-                                .get()
-                                .addOnSuccessListener(personDoc -> {
-                                    if (!personDoc.exists()) {
-                                        Toast.makeText(context, "Source person not found", Toast.LENGTH_SHORT).show();
-                                        dialog.dismiss();
-                                        return;
-                                    }
-
-                                    // STEP 3: Write person doc to target user based on email found/inputted (copy and paste)
-                                    db.collection("users")
-                                            .document(targetUserUid)
-                                            .collection("people")
-                                            .document(personUid)
-                                            .set(personDoc.getData())
-                                            .addOnSuccessListener(aVoid -> {
-
-                                                // STEP 4: Copy all subcollections under this person----------!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                                                copyAllSubcollections(db, caregiverUid, targetUserUid, personUid, dialog);
-                                            })
-                                            .addOnFailureListener(e -> {
-                                                Toast.makeText(context, "Failed to share person: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                                                dialog.dismiss();
-                                            });
+                                .set(refData)
+                                .addOnSuccessListener(aVoid -> {
+                                    dialog.dismiss();
+                                    showSuccessPopup();
                                 })
                                 .addOnFailureListener(e -> {
-                                    Toast.makeText(context, "Error reading person: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(context, "Failed to share person: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                                     dialog.dismiss();
                                 });
+
                     })
                     .addOnFailureListener(e -> {
                         Toast.makeText(context, "Error finding user: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -364,50 +346,6 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
         });
     }
 
-
-    // Copy all subcollections (like medications) from one person (elder) to another user’s account (caregiver).
-
-    private void copyAllSubcollections(FirebaseFirestore db, String fromUid, String toUid, String personUid, AlertDialog dialog) {
-        db.collection("users")
-                .document(fromUid)
-                .collection("people")
-                .document(personUid)
-                .collection("medications")
-                .get()
-                .addOnSuccessListener(subQuery -> {
-                    if (subQuery.isEmpty()) {
-                        dialog.dismiss();
-                        showSuccessPopup();
-                        return;
-                    }
-
-                    WriteBatch batch = db.batch();  // Batch write, a special Firestore tool that lets you group multiple write operations into a single request.
-                    // This is more efficient and ensures all writes succeed or fail together.
-                    for (QueryDocumentSnapshot doc : subQuery) {     // for loop every medication document found under this person
-                        DocumentReference targetDoc = db.collection("users")
-                                .document(toUid)
-                                .collection("people")
-                                .document(personUid)
-                                .collection("medications")
-                                .document(doc.getId());
-                        batch.set(targetDoc, doc.getData());   // set the data of each medication document to the new location
-                    }
-
-                    batch.commit()    //commit = executes
-                            .addOnSuccessListener(aVoid -> {
-                                dialog.dismiss();
-                                showSuccessPopup();
-                            })
-                            .addOnFailureListener(e -> {
-                                Toast.makeText(context, "Failed copying subcollections: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                                dialog.dismiss();
-                            });
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(context, "Error reading subcollections: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    dialog.dismiss();
-                });
-    }
 
 
 
@@ -426,16 +364,6 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
         okBtn.setOnClickListener(v -> successDialog.dismiss());
         successDialog.show();
     }
-
-
-
-
-
-
-
-
-
-
 
 
 

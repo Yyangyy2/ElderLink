@@ -85,6 +85,10 @@
             android:exported="false"
             android:theme="@style/Theme.ElderLink" />
 
+        <activity android:name=".view_collaborators.ViewCollaborators"
+            android:exported="false"
+            android:theme="@style/Theme.ElderLink" />
+
 
         <!--adjustPan|stateHidden is to stop the UI from resizing when keyboard pops up-->
         <activity android:name=".view_medication.ViewMedicationActivity"

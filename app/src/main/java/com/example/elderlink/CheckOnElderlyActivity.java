@@ -21,6 +21,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.elderlink.view_Ask_Ai.ChatActivity;
+import com.example.elderlink.view_collaborators.ViewCollaborators;
 import com.example.elderlink.view_gps.GPSActivity;
 import com.example.elderlink.view_medication.Model_medication;
 import com.example.elderlink.view_medication.ViewMedicationActivity;
@@ -149,6 +150,16 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
         ImageButton btnAibot = findViewById(R.id.btnAibot);
         btnAibot.setOnClickListener(v -> {
             Intent intent = new Intent(CheckOnElderlyActivity.this, ChatActivity.class);
+            intent.putExtra("personUid", personUid);
+            intent.putExtra("personName", personName);
+            startActivity(intent);
+            finish();
+        });
+
+        //View Collaborators Button (to Collaborators)------------------------------------------------
+        ImageButton btnCollaborators = findViewById(R.id.btnCollaborators);
+        btnCollaborators.setOnClickListener(v -> {
+            Intent intent = new Intent(CheckOnElderlyActivity.this, ViewCollaborators.class);
             intent.putExtra("personUid", personUid);
             intent.putExtra("personName", personName);
             startActivity(intent);

@@ -221,7 +221,6 @@
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/btnCollaborators"
                 android:layout_width="0dp"
                 android:layout_height="120dp"
                 android:layout_columnWeight="1"
@@ -231,12 +230,13 @@
                 android:background="@drawable/custom_border">
 
                 <ImageButton
-                    android:layout_width="60dp"
-                    android:layout_height="60dp"
-                    android:src="@drawable/view_collaborators"
-                    android:scaleType="centerInside"
+                    android:id="@+id/btnCollaborators"
+                    android:layout_width="109dp"
+                    android:layout_height="73dp"
                     android:background="@android:color/transparent"
-                    android:contentDescription="Collaborators" />
+                    android:contentDescription="Collaborators"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/view_collab_logo" />
 
                 <TextView
                     android:layout_width="wrap_content"

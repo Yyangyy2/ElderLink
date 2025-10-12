@@ -144,7 +144,7 @@ public class GPSActivity extends AppCompatActivity {
         fabSafeZone.setOnClickListener(v -> showSafeZoneDialog());
 
 
-        // Back button - GPSActivity
+        // Back button
         FloatingActionButton fabBack = findViewById(R.id.fabBack);
         fabBack.setOnClickListener(v -> {
             Intent intent = new Intent(GPSActivity.this, CheckOnElderlyActivity.class);

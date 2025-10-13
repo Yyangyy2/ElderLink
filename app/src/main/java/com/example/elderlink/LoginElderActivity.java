@@ -114,7 +114,7 @@ public class LoginElderActivity extends AppCompatActivity {
                                                     }
 
                                                     // Attach adapter - pass context + list (PersonAdapter constructor in your code expects Context + List<Person>)
-                                                    PersonAdapter adapter = new PersonAdapter(LoginElderActivity.this, personList, true, caregiverUid);
+                                                    PersonAdapter adapter = new PersonAdapter(LoginElderActivity.this, personList, true, caregiverUid, caregiverUsername);
                                                     recyclerView.setAdapter(adapter);
 
                                                     // Build AlertDialog popup

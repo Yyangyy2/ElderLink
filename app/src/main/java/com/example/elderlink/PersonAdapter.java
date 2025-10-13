@@ -45,13 +45,15 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
     private List<Person> personList;
     private boolean isLoginElder; // true = elder view, false = caregiver view
     private String uid; //caregiver's uid, should be caregiverUid but idk why I wrote uid previously
+    private String username; // caregiver's name for passing to CheckOnElderlyActivity
 
 
-    public PersonAdapter(Context context, List<Person> personList, boolean isLoginElder, String uid) {
+    public PersonAdapter(Context context, List<Person> personList, boolean isLoginElder, String uid, String username) {
         this.context = context;
         this.personList = personList;
         this.isLoginElder = isLoginElder;
         this.uid = uid; //caregiver's uid
+        this.username = username;
     }
 
     @Override
@@ -104,7 +106,7 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
                 // Pass data so the new page knows which person it is
                 intent.putExtra("personName", person.getName());
                 intent.putExtra("personUid", personUid);
-                // Pass ownerUid so activity reads medications from original owner when shared
+                intent.putExtra("username", username);
                 intent.putExtra("caregiverUid", ownerUid);
 
                 context.startActivity(intent);

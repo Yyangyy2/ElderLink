@@ -6,13 +6,18 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.util.Base64;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
@@ -27,6 +32,7 @@ import com.example.elderlink.view_medication.Model_medication;
 import com.example.elderlink.view_medication.ViewMedicationActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
@@ -35,8 +41,10 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class CheckOnElderlyActivity extends AppCompatActivity {
 
@@ -46,11 +54,18 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
     private final List<DateGroup> dateGroupList = new ArrayList<>();    //Get model from DateGroup
 
     private TextView tvTodayProgress, tvOverallProgress;
-    private String caregiverUid, personUid, personName;
+    private String caregiverUid, username, personUid, personName;
+
     private FirebaseFirestore db;
     private final List<Model_medication> medicationList = new ArrayList<>();   //keep meds in Model_medication list for date picker
 
     private TextView noMedsToday;
+
+    // Shared Notes variables
+    private LinearLayout notesContainer;
+    private EditText noteEditText;
+    private Button addNoteButton;
+    private List<SharedNote> notesList;
 
     @SuppressLint("ResourceType")
     @Override
@@ -67,6 +82,7 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
         // Get data from intent
         personName = getIntent().getStringExtra("personName");
         personUid = getIntent().getStringExtra("personUid");
+        username = getIntent().getStringExtra("username");
         String caregiverUidIntent = getIntent().getStringExtra("caregiverUid");
         if (caregiverUidIntent != null) {
             caregiverUid = caregiverUidIntent;
@@ -81,6 +97,10 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
         // Initialize dashboard views
         initializeDashboardViews();
         setupDashboardRecyclerView();
+
+        // Initialize Shared Notes
+        initializeSharedNotes();
+
 
         // Fetch elder profile from Firestore
         DocumentReference elderRef = db.collection("users")
@@ -101,6 +121,10 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
 
         // Load medications for dashboard
         loadMedicationsFromFirestore();
+
+        // Load shared notes from Firestore
+        loadSharedNotesFromFirestore();
+
 
         //Back Button (to MainPage)------------------------------------------------
         ImageButton backButton = findViewById(R.id.backButton);
@@ -189,7 +213,7 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
         });
     }
 
-    //Dashboard --------------------------------------------------------------------------------------
+    //Dashboard ------------[Medication Adherence]---------------------------------------------------------------------------------
     private void initializeDashboardViews() {
         tvTodayProgress = findViewById(R.id.tvTodayProgress);
         tvOverallProgress = findViewById(R.id.tvOverallProgress);
@@ -381,5 +405,147 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
         int todayPercentage = todayTotal > 0 ? (int) ((todayTaken * 100.0f) / todayTotal) : 0;
         tvTodayProgress.setText(todayPercentage + "%");
     }
+
+
+
+
+
+    // Dashboard ---------[Shared Notes] ----------------------------------------------------------------------------------------
+    private void initializeSharedNotes() {
+        notesContainer = findViewById(R.id.notesContainer);
+        noteEditText = findViewById(R.id.noteEditText);
+        addNoteButton = findViewById(R.id.addNoteButton);
+
+        notesList = new ArrayList<>();
+
+        // Set up click listener for adding notes
+        addNoteButton.setOnClickListener(v -> addNewNote());
+    }
+
+    private void loadSharedNotesFromFirestore() {
+        db.collection("users")
+                .document(caregiverUid)
+                .collection("people")
+                .document(personUid)
+                .collection("shared_notes")
+                .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        notesList.clear();
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            String authorName = document.getString("authorName");
+                            String content = document.getString("content");
+                            String timestamp = document.getString("timestamp");
+                            String noteId = document.getId();
+
+                            if (authorName != null && content != null && timestamp != null) {
+                                notesList.add(new SharedNote(authorName, content, timestamp, noteId)); // Changed to SharedNote
+                            }
+                        }
+                        refreshNotesDisplay();
+                    } else {
+                        Log.e("SharedNotes", "Error loading notes: ", task.getException());
+                    }
+                });
+    }
+
+    private void addNewNote() {
+        String noteContent = noteEditText.getText().toString().trim();
+
+        if (noteContent.isEmpty()) {
+            Toast.makeText(this, "Please enter a note", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+
+        String timestamp = getCurrentTimestamp();
+
+        // Create note data for Firestore
+        Map<String, Object> noteData = new HashMap<>();
+        noteData.put("authorName", username);
+        noteData.put("content", noteContent);
+        noteData.put("timestamp", timestamp);
+        noteData.put("createdAt", FieldValue.serverTimestamp());
+
+        // Add to Firestore
+        db.collection("users")
+                .document(caregiverUid)
+                .collection("people")
+                .document(personUid)
+                .collection("shared_notes")
+                .add(noteData)
+                .addOnSuccessListener(documentReference -> {
+                    // Clear input
+                    noteEditText.setText("");
+
+                    // Reload notes to show the new one
+                    loadSharedNotesFromFirestore();
+
+                    Toast.makeText(this, "Note added successfully", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Failed to add note", Toast.LENGTH_SHORT).show();
+                    Log.e("SharedNotes", "Error adding note: ", e);
+                });
+    }
+
+    private void refreshNotesDisplay() {
+        // Remove all note views except the add note section (last child)
+        int childCount = notesContainer.getChildCount();
+        for (int i = childCount - 2; i >= 0; i--) {
+            notesContainer.removeViewAt(i);
+        }
+
+        // Add all notes
+        for (int i = 0; i < notesList.size(); i++) {
+            SharedNote note = notesList.get(i);
+            View noteView = createNoteView(note);
+            notesContainer.addView(noteView, i); // Insert at beginning for newest first
+        }
+    }
+
+    private View createNoteView(SharedNote note) { // Changed parameter type to SharedNote
+        LayoutInflater inflater = LayoutInflater.from(this);
+        View noteView = inflater.inflate(R.layout.item_dashboard_note, notesContainer, false);
+
+        TextView authorName = noteView.findViewById(R.id.authorName);
+        TextView noteContent = noteView.findViewById(R.id.noteContent);
+        TextView timestamp = noteView.findViewById(R.id.timestamp);
+
+        authorName.setText(note.getAuthorName());
+        noteContent.setText(note.getContent());
+        timestamp.setText(note.getTimestamp());
+
+        return noteView;
+    }
+
+    private String getCurrentTimestamp() {
+        SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy 'at' hh:mm a", Locale.getDefault());
+        return sdf.format(new Date());
+    }
+
+    // Note model class
+    public static class SharedNote {
+        private String authorName;
+        private String content;
+        private String timestamp;
+        private String noteId;
+
+        public SharedNote(String authorName, String content, String timestamp, String noteId) {
+            this.authorName = authorName;
+            this.content = content;
+            this.timestamp = timestamp;
+            this.noteId = noteId;
+        }
+
+        public String getAuthorName() { return authorName; }
+        public String getContent() { return content; }
+        public String getTimestamp() { return timestamp; }
+        public String getNoteId() { return noteId; }
+    }
+
+
+
 }
 

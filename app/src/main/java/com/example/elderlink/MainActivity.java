@@ -50,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
     private String selectedImageBase64 = "";
     private ImageView imagePreview;
     private ListenerRegistration peopleListener;
+    private String username = "";
 
     // Search variables
     private EditText searchBar;
@@ -75,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
         filteredPersonList = new ArrayList<>();
 
 
-        adapter = new PersonAdapter(this, filteredPersonList, false, uid);
+        adapter = new PersonAdapter(this, filteredPersonList, false, uid,"");
         recyclerView.setAdapter(adapter);
 
         if (FirebaseAuth.getInstance().getCurrentUser() == null) {
@@ -106,14 +107,27 @@ public class MainActivity extends AppCompatActivity {
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
-                        String username = documentSnapshot.getString("username");
+                        username = documentSnapshot.getString("username");
                         userNameTextView.setText(username != null ? username : "No Name");
+
+                        // Update the adapter with the actual username
+                        if (adapter != null) {
+                            // Create a new adapter with the correct username
+                            adapter = new PersonAdapter(MainActivity.this, filteredPersonList, false, uid, username);
+                            recyclerView.setAdapter(adapter);
+                        }
                     } else {
-                        userNameTextView.setText("No Name");
+                        username = "No Name";
+                        userNameTextView.setText(username);
+                        adapter = new PersonAdapter(MainActivity.this, filteredPersonList, false, uid, username);
+                        recyclerView.setAdapter(adapter);
                     }
                 })
                 .addOnFailureListener(e -> {
-                    userNameTextView.setText("No Name");
+                    username = "No Name";
+                    userNameTextView.setText(username);
+                    adapter = new PersonAdapter(MainActivity.this, filteredPersonList, false, uid, username);
+                    recyclerView.setAdapter(adapter);
                 });
 
 

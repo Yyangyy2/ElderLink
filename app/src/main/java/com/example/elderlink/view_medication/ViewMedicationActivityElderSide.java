@@ -110,6 +110,11 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
         navMenu.setOnClickListener(v -> {
             drawerLayout.openDrawer(GravityCompat.START);
         });
+
+        // Hide Floating Action Button
+        FloatingActionButton addMedicationFab = findViewById(R.id.addMedicationFab);
+        addMedicationFab.setVisibility(View.GONE);
+
     }
 
     private void setupSearch() {

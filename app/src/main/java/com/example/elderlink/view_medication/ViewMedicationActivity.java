@@ -329,7 +329,7 @@ public class ViewMedicationActivity extends AppCompatActivity {
         }
     }
 
-    // Remove the old filterMedicationsByDate method and replace with applyFilters
+
 
     // Remove the dateList parameter since it's now a class variable
     private void loadMedicationStatusForCalendar(String caregiverUid, String personUid) {

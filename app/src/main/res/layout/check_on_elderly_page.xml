@@ -417,85 +417,91 @@
 
 
         <!-- Shared Notes dashboard Section -->
-            <LinearLayout
+        <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:layout_margin="16dp">
 
-                <TextView
-                    android:id="@+id/SharedNotesLabel"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Shared Notes Dashboard"
-                    android:textSize="16sp"
-                    android:textStyle="bold"/>
+            <TextView
+                android:id="@+id/SharedNotesLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Shared Notes Dashboard"
+                android:textSize="16sp"
+                android:textStyle="bold"/>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Collaborate with your care team"
-                    android:textSize="12sp"
-                    android:textColor="#666"
-                    android:layout_marginTop="4dp"
-                    android:layout_marginBottom="16dp"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Collaborate with your care team"
+                android:textSize="12sp"
+                android:textColor="#666"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="16dp"/>
 
-                <!-- Notes List Container -->
-                <LinearLayout
-                    android:id="@+id/notesContainer"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:background="@android:color/white"
-                    android:elevation="4dp"
-                    android:padding="16dp">
+            <!-- Scrollable Notes Container -->
+            <androidx.core.widget.NestedScrollView
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:background="@android:color/white"
+                android:elevation="4dp">
 
-                    <!-- Add New Note Section -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:layout_marginTop="8dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Add a note for the care team..."
-                            android:textSize="12sp"
-                            android:textStyle="bold"
-                            android:textColor="#2962FF"
-                            android:layout_marginBottom="8dp" />
-
-                        <EditText
-                            android:id="@+id/noteEditText"
-                            android:layout_width="match_parent"
-                            android:layout_height="80dp"
-                            android:background="@drawable/edittext_background"
-                            android:padding="8dp"
-                            android:gravity="top"
-                            android:hint="Type your message here..."
-                            android:inputType="textMultiLine"
-                            android:maxLines="4"
-                            android:scrollbars="vertical" />
-
-                        <Button
-                            android:id="@+id/addNoteButton"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="end"
-                            android:layout_marginTop="8dp"
-                            android:text="Post Note"
-                            android:textColor="@android:color/white"
-                            android:background="#2962FF"
-                            android:paddingHorizontal="20dp"
-                            android:paddingVertical="6dp"
-                            android:textSize="12sp" />
-
-                    </LinearLayout>
-
-                </LinearLayout>
+            <LinearLayout
+                android:id="@+id/notesContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
 
             </LinearLayout>
+
+            </androidx.core.widget.NestedScrollView>
+
+            <!-- Add New Note Section -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="8dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Add a note for the care team..."
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="#2962FF"
+                    android:layout_marginBottom="8dp" />
+
+                <EditText
+                    android:id="@+id/noteEditText"
+                    android:layout_width="match_parent"
+                    android:layout_height="80dp"
+                    android:background="@drawable/edittext_background"
+                    android:padding="8dp"
+                    android:gravity="top"
+                    android:hint="Type your message here..."
+                    android:inputType="textMultiLine"
+                    android:maxLines="4"
+                    android:scrollbars="vertical" />
+
+                <Button
+                    android:id="@+id/addNoteButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:layout_marginTop="8dp"
+                    android:text="Post Note"
+                    android:textColor="@android:color/white"
+                    android:background="#2962FF"
+                    android:paddingHorizontal="20dp"
+                    android:paddingVertical="6dp"
+                    android:textSize="12sp" />
+
+            </LinearLayout>
+
+        </LinearLayout>
 
 
 

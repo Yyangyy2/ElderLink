@@ -58,30 +58,6 @@
 
 
 
-        <!-- Notification -->
-        <LinearLayout
-            android:id="@+id/btnNotification"
-            android:layout_width="225dp"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="8dp"
-            android:gravity="center_vertical">
-
-            <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:src="@drawable/nav_notification"
-                android:contentDescription="Medication Icon"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:text="Notification                  >"
-                android:textSize="13sp"/>
-        </LinearLayout>
-
-
         <!-- Medication -->
         <LinearLayout
             android:id="@+id/btnleftMedication"
@@ -95,7 +71,7 @@
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:contentDescription="Medication Icon"
-                android:src="@drawable/view_medication_logo" />
+                android:src="@drawable/view_medication_logo_new" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -132,7 +108,7 @@
 
         <!-- View Essentials -->
         <LinearLayout
-            android:id="@+id/btnleftEssentials"
+            android:id="@+id/btnleftAskaibot"
             android:layout_width="225dp"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -142,20 +118,20 @@
             <ImageView
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:src="@drawable/view_essentials"
-                android:contentDescription="Dashboard Icon"/>
+                android:src="@drawable/view_aibot"
+                android:contentDescription="Ask Ai Icon"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
-                android:text="Essentials                     >"
+                android:text="Ask Ai                            >"
                 android:textSize="13sp"/>
         </LinearLayout>
 
         <!-- Dashboard -->
         <LinearLayout
-            android:id="@+id/btnleftDashboard"
+            android:id="@+id/btnleftGPS"
             android:layout_width="225dp"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -165,14 +141,14 @@
             <ImageView
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:src="@drawable/view_dashboard"
-                android:contentDescription="Dashboard Icon"/>
+                android:src="@drawable/view_gps_logo"
+                android:contentDescription="GPS Icon"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
-                android:text="Dashboard                    >"
+                android:text="GPS                               >"
                 android:textSize="13sp"/>
         </LinearLayout>
 
@@ -190,7 +166,7 @@
             <ImageView
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:src="@drawable/view_collaborators"
+                android:src="@drawable/view_collab_logo"
                 android:contentDescription="Dashboard Icon"/>
 
             <TextView

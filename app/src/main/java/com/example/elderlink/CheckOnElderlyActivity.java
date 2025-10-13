@@ -5,10 +5,12 @@ import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.util.Base64;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -431,24 +433,26 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
                 .collection("people")
                 .document(personUid)
                 .collection("shared_notes")
-                .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
-                .get()
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
+                .orderBy("createdAt", com.google.firebase.firestore.Query.Direction.DESCENDING)
+                .addSnapshotListener((snapshots, error) -> {
+                    if (error != null) {
+                        Log.e("SharedNotes", "Listen failed", error);
+                        return;
+                    }
+
+                    if (snapshots != null && !snapshots.isEmpty()) {
                         notesList.clear();
-                        for (QueryDocumentSnapshot document : task.getResult()) {
+                        for (QueryDocumentSnapshot document : snapshots) {
                             String authorName = document.getString("authorName");
                             String content = document.getString("content");
                             String timestamp = document.getString("timestamp");
                             String noteId = document.getId();
 
                             if (authorName != null && content != null && timestamp != null) {
-                                notesList.add(new SharedNote(authorName, content, timestamp, noteId)); // Changed to SharedNote
+                                notesList.add(new SharedNote(authorName, content, timestamp, noteId));
                             }
                         }
                         refreshNotesDisplay();
-                    } else {
-                        Log.e("SharedNotes", "Error loading notes: ", task.getException());
                     }
                 });
     }
@@ -493,18 +497,29 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
                 });
     }
 
+    //auto refresh notes display
     private void refreshNotesDisplay() {
-        // Remove all note views except the add note section (last child)
         int childCount = notesContainer.getChildCount();
         for (int i = childCount - 2; i >= 0; i--) {
             notesContainer.removeViewAt(i);
         }
 
-        // Add all notes
-        for (int i = 0; i < notesList.size(); i++) {
-            SharedNote note = notesList.get(i);
-            View noteView = createNoteView(note);
-            notesContainer.addView(noteView, i); // Insert at beginning for newest first
+        // Show empty state if no notes
+        if (notesList.isEmpty()) {
+            TextView emptyText = new TextView(this);
+            emptyText.setText("No notes yet. Be the first to share something!");
+            emptyText.setTextSize(14);
+            emptyText.setTextColor(Color.GRAY);
+            emptyText.setGravity(Gravity.CENTER);
+            emptyText.setPadding(0, 32, 0, 32);
+            notesContainer.addView(emptyText, 0);
+        } else {
+            // Add all notes
+            for (int i = 0; i < notesList.size(); i++) {
+                SharedNote note = notesList.get(i);
+                View noteView = createNoteView(note);
+                notesContainer.addView(noteView, i);
+            }
         }
     }
 

@@ -46,7 +46,7 @@ public class ProfilePageElder extends AppCompatActivity {
         btnSave = findViewById(R.id.btnSave);
 
         db = FirebaseFirestore.getInstance();
-        caregiverUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        caregiverUid = getIntent().getStringExtra("caregiverUid");
 
         personUid = getIntent().getStringExtra("personUid");
         if (personUid == null) {
@@ -64,6 +64,7 @@ public class ProfilePageElder extends AppCompatActivity {
             Intent intent = new Intent(ProfilePageElder.this, CheckOnElderlyActivity.class);
             intent.putExtra("personUid", personUid);
             intent.putExtra("personName", name.getText().toString());
+            intent.putExtra("caregiverUid", caregiverUid);
             startActivity(intent);
             finish();
         });

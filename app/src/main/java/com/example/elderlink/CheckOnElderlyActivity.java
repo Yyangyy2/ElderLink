@@ -140,6 +140,7 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
             Intent intent = new Intent(CheckOnElderlyActivity.this, ProfilePageElder.class);
             intent.putExtra("personUid", personUid);
             intent.putExtra("personName", personName);
+            intent.putExtra("caregiverUid", caregiverUid);
             startActivity(intent);
             finish();
         });
@@ -176,6 +177,7 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
             Intent intent = new Intent(CheckOnElderlyActivity.this, ChatActivity.class);
             intent.putExtra("personUid", personUid);
             intent.putExtra("personName", personName);
+            intent.putExtra("caregiverUid", caregiverUid);
             startActivity(intent);
             finish();
         });
@@ -186,6 +188,7 @@ public class CheckOnElderlyActivity extends AppCompatActivity {
             Intent intent = new Intent(CheckOnElderlyActivity.this, ViewCollaborators.class);
             intent.putExtra("personUid", personUid);
             intent.putExtra("personName", personName);
+            intent.putExtra("caregiverUid", caregiverUid);
             startActivity(intent);
             finish();
         });

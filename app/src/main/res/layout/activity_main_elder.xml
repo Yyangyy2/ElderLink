@@ -155,12 +155,12 @@
 
                 <ImageButton
                     android:id="@+id/btnShoutForHelp"
-                    android:layout_width="89dp"
-                    android:layout_height="75dp"
+                    android:layout_width="104dp"
+                    android:layout_height="80dp"
                     android:background="@android:color/transparent"
                     android:contentDescription="Shout for Help"
                     android:scaleType="centerInside"
-                    android:src="@drawable/view_shout_for_help" />
+                    android:src="@drawable/view_shout_for_help_logo" />
 
                 <TextView
                     android:layout_width="wrap_content"

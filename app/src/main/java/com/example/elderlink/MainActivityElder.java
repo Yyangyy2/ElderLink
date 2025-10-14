@@ -72,7 +72,6 @@ public class MainActivityElder extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_elder);
 
-        DrawerMenu.setupMenu(this); // Add the Left side menu
 
         TextView nameText = findViewById(R.id.personName);
         ImageView imageView = findViewById(R.id.personImage);
@@ -137,14 +136,6 @@ public class MainActivityElder extends AppCompatActivity {
             imageView.setImageResource(R.drawable.profile_placeholder);
         }
 
-        //Open Left navigation menu------------------------------------------------ rmb add DrawerMenu.setupMenu(this); on top
-        DrawerLayout drawerLayout = findViewById(R.id.drawerLayout);
-        ImageButton navMenu = findViewById(R.id.navMenu);
-
-        // When clicking the button, open the drawer
-        navMenu.setOnClickListener(v -> {
-            drawerLayout.openDrawer(GravityCompat.START); // START is opens from left; END opens from right
-        });
 
 
 

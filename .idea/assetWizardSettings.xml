@@ -308,7 +308,7 @@
                                 <PersistentState>
                                   <option name="values">
                                     <map>
-                                      <entry key="url" value="file:/$USER_HOME$/AppData/Local/Android/Sdk/icons/material/materialicons/email/baseline_email_24.xml" />
+                                      <entry key="url" value="file:/$USER_HOME$/AppData/Local/Android/Sdk/icons/material/materialicons/record_voice_over/baseline_record_voice_over_24.xml" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -318,7 +318,7 @@
                         </option>
                         <option name="values">
                           <map>
-                            <entry key="outputName" value="email_icon" />
+                            <entry key="outputName" value="shout_for_help" />
                             <entry key="sourceFile" value="C:\Users\user\AndroidStudioProjects\ElderLink" />
                           </map>
                         </option>

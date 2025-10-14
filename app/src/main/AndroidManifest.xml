@@ -16,6 +16,18 @@
 
 
 
+    <!-- Permissions for wake-word detection -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.CALL_PHONE"
+        tools:ignore="PermissionImpliesUnsupportedChromeOsHardware" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+
+
 
 
 
@@ -89,6 +101,10 @@
             android:exported="false"
             android:theme="@style/Theme.ElderLink" />
 
+        <activity android:name=".view_shout_for_help.Help_MainActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ElderLink" />
+
 
         <!--adjustPan|stateHidden is to stop the UI from resizing when keyboard pops up-->
         <activity android:name=".view_medication.ViewMedicationActivity"
@@ -121,6 +137,24 @@
             android:name=".view_medication.ReminderActionReceiver"
             android:exported="true"
             android:enabled="true" />
+
+        <receiver
+            android:name=".view_shout_for_help.BootReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <service
+            android:name=".view_shout_for_help.VoiceService"
+            android:exported="false"
+            android:foregroundServiceType="microphone"
+            tools:ignore="ForegroundServicePermission">
+        </service>
 
 
 

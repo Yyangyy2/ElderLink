@@ -94,12 +94,11 @@ public class ProfilePageCaregiver extends AppCompatActivity {
         // Remove all non-digit characters
         String cleanPhone = phoneNum.replaceAll("[^\\d]", "");
 
-        // Malaysian phone number validation
-        // Must start with 01, followed by 1-9 (not 0), and total 10-11 digits
-        if (cleanPhone.matches("^01[1-9]\\d{7,8}$")) {
+        // Malaysian phone number validation - exactly 10 digits starting with 01
+        if (cleanPhone.matches("^01\\d{8}$")) {
             return true;
         } else {
-            phone.setError("Please enter a valid Malaysian phone number\n\nExamples:\n• 0123456789\n• 012-345 6789\n• 011-1234 5678\n\nMust start with 01 and be 10-11 digits");
+            phone.setError("Please enter a valid Malaysian phone number\n\nExamples:\n• 0123456789\n• 012-345 6789\n\nMust start with 01 and be exactly 10 digits");
             return false;
         }
     }

@@ -144,7 +144,7 @@
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/btnAppointment"
+
                 android:layout_width="0dp"
                 android:layout_height="120dp"
                 android:layout_columnWeight="1"
@@ -154,19 +154,20 @@
                 android:orientation="vertical">
 
                 <ImageButton
-                    android:layout_width="60dp"
-                    android:layout_height="60dp"
+                    android:id="@+id/btnShoutForHelp"
+                    android:layout_width="89dp"
+                    android:layout_height="75dp"
                     android:background="@android:color/transparent"
-                    android:contentDescription="Doctor Appointment"
+                    android:contentDescription="Shout for Help"
                     android:scaleType="centerInside"
-                    android:src="@drawable/view_doctor_appointment" />
+                    android:src="@drawable/view_shout_for_help" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:gravity="center"
-                    android:text="View Doctor’s Appointment"
+                    android:text="Shout for Help"
                     android:textSize="12sp"
                     android:textStyle="bold" />
             </LinearLayout>

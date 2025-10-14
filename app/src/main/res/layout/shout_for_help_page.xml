@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="#f5f5f5">
+
+    <!-- Header -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Shout for Help"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="#2962FF"
+        android:gravity="center"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Choose a caregiver to call when you shout 'Help Help'"
+        android:textSize="14sp"
+        android:textColor="#666"
+        android:gravity="center"
+        android:layout_marginBottom="24dp" />
+
+    <!-- Current Selection -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="@android:color/white"
+        android:padding="16dp"
+        android:elevation="2dp"
+        android:layout_marginBottom="16dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Current Emergency Contact:"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/currentContactText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Not set"
+            android:textSize="14sp"
+            android:textColor="#2962FF" />
+
+    </LinearLayout>
+
+    <!-- Caregivers List -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Caregivers Available:"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/caregiversRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginBottom="16dp" />
+
+    <!-- No Caregivers Message -->
+    <TextView
+        android:id="@+id/noCaregiversText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="No caregivers available"
+        android:textSize="14sp"
+        android:textColor="#666"
+        android:gravity="center"
+        android:padding="32dp"
+        android:visibility="gone" />
+
+    <!-- Enable/disable switch Button -->
+    <Button
+        android:id="@+id/switchEDButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Enable/Disable Button"
+        android:textColor="@android:color/white"
+        android:background="#2962FF"
+        android:padding="12dp"
+        android:layout_marginBottom="12dp"
+        android:textSize="16sp" />
+
+    <!-- back Button -->
+    <Button
+        android:id="@+id/btnBack"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Back"
+        android:textColor="@android:color/white"
+        android:background="#2962FF"
+        android:padding="12dp"
+        android:textSize="16sp" />
+
+</LinearLayout>

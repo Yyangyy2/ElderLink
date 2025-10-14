@@ -40,6 +40,7 @@ import com.example.elderlink.R;
 import com.example.elderlink.view_Ask_Ai.ChatActivityElder;
 import com.example.elderlink.view_medication.Model_medication;
 import com.example.elderlink.view_medication.ViewMedicationActivityElderSide;
+import com.example.elderlink.view_shout_for_help.Help_MainActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -59,7 +60,7 @@ public class MainActivityElder extends AppCompatActivity {
     private DashboardAdapter dashboardAdapter;                                // adapter for dashboard
     private TextView tvOverallProgress, tvTodayProgress;
     private String caregiverUid;
-    private String personUid;
+    private String personUid,personName;
     private BroadcastReceiver batteryReceiver;
     private TextView noMedsToday;
 
@@ -90,11 +91,11 @@ public class MainActivityElder extends AppCompatActivity {
 
 
         // Get data from intent
-        String name = getIntent().getStringExtra("personName");
+        personName = getIntent().getStringExtra("personName");
         personUid = getIntent().getStringExtra("personUid");
         caregiverUid = getIntent().getStringExtra("caregiverUid");
 
-        nameText.setText(name);
+        nameText.setText(personName);
 
 
         //For display people caring for you section
@@ -152,7 +153,7 @@ public class MainActivityElder extends AppCompatActivity {
         infoButton.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivityElder.this, ProfilePageElder_ElderSide.class);
             intent.putExtra("personUid", personUid);
-            intent.putExtra("personName", name);
+            intent.putExtra("personName", personName);
             intent.putExtra("caregiverUid", caregiverUid);
             startActivity(intent);
             finish();
@@ -163,7 +164,19 @@ public class MainActivityElder extends AppCompatActivity {
         btnMedication.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivityElder.this, ViewMedicationActivityElderSide.class);
             intent.putExtra("personUid", personUid);
-            intent.putExtra("personName", name);
+            intent.putExtra("personName", personName);
+            intent.putExtra("caregiverUid", caregiverUid);
+            startActivity(intent);
+            finish();
+        });
+
+
+        //View Shout for Help Button (to Shout for Help)------------------------------------------------
+        ImageButton btnShoutForHelp = findViewById(R.id.btnShoutForHelp);
+        btnShoutForHelp.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivityElder.this, Help_MainActivity.class);
+            intent.putExtra("personUid", personUid);
+            intent.putExtra("personName", personName);
             intent.putExtra("caregiverUid", caregiverUid);
             startActivity(intent);
             finish();
@@ -174,7 +187,7 @@ public class MainActivityElder extends AppCompatActivity {
         btnAibot.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivityElder.this, ChatActivityElder.class);
             intent.putExtra("personUid", personUid);
-            intent.putExtra("personName", name);
+            intent.putExtra("personName", personName);
             intent.putExtra("caregiverUid", caregiverUid);
             startActivity(intent);
             finish();

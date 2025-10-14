@@ -92,6 +92,7 @@ dependencies {
     implementation ("com.google.android.gms:play-services-location:21.0.1")
     implementation ("com.google.android.material:material:1.9.0")
     implementation ("androidx.work:work-runtime:2.9.0")
+    implementation ("ai.picovoice:porcupine-android:3.0.1")
 
 
 

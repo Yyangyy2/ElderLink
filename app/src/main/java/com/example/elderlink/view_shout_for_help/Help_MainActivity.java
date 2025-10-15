@@ -22,9 +22,11 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+
 import com.example.elderlink.Caregiver;
 import com.example.elderlink.MainActivityElder;
 import com.example.elderlink.R;
+import com.example.elderlink.BuildConfig;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
@@ -39,7 +41,7 @@ public class Help_MainActivity extends AppCompatActivity {
     private static final String TAG = "EmergencyVoiceApp";
     private static final int PERMISSIONS_REQUEST = 1;
     private static final int OVERLAY_PERMISSION_REQUEST = 2;
-    public static final String ACCESS_KEY = "zITht9gzaq+ohiH8xLid9iPFjxPnMCh95GBbkOIvlInDxQsvcCQFcw==";
+    public static final String ACCESS_KEY = BuildConfig.WAKEWORD_API_KEY;
 
     // No default number - will be null until selected
     public static String EMERGENCY_NUMBER = null;

@@ -5,8 +5,9 @@ plugins {
     alias(libs.plugins.google.gms.google.services)
 }
 
-// Load .env properties (optional) so sensitive keys can be stored outside VCS
+// Load .env properties, so sensitive keys can be stored outside-----------------------------------------------
 val envFile = rootProject.file(".env")
+// Gemini API Key
 val geminiApiKeyFromEnv: String? = if (envFile.exists()) {
     envFile.readLines()
         .map { it.trim() }
@@ -15,6 +16,16 @@ val geminiApiKeyFromEnv: String? = if (envFile.exists()) {
 } else null
 val geminiApiKey: String? = geminiApiKeyFromEnv ?: System.getenv("GEMINI_API_KEY")
 
+// Wakeword API Key
+val wakewordApiKeyFromEnv: String? = if (envFile.exists()) {
+    envFile.readLines()
+        .map { it.trim() }
+        .firstOrNull { it.startsWith("WAKEWORD_API_KEY=") }
+        ?.substringAfter("=")
+} else null
+val wakewordApiKey: String? = wakewordApiKeyFromEnv ?: System.getenv("WAKEWORD_API_KEY")
+
+//--------------------------------------------------------------------------------------------------------------
 android {
     namespace = "com.example.elderlink"
     compileSdk = 35
@@ -28,8 +39,9 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // Expose the GEMINI API key to the app via BuildConfig (empty string if not provided)
+        // Load API keys from .env
         buildConfigField("String", "GEMINI_API_KEY", "\"${geminiApiKey ?: ""}\"")
+        buildConfigField("String", "WAKEWORD_API_KEY", "\"${wakewordApiKey ?: ""}\"")
     }
 
     buildTypes {

@@ -40,7 +40,7 @@ public class ChatActivity extends AppCompatActivity {
 
     // Debug here: Update URL possible for newer version of gemini
     private static final String GEMINI_URL =
-            "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=" + BuildConfig.GEMINI_API_KEY;
+            "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=" + BuildConfig.GEMINI_API_KEY;   //Key stored at .env (locally for protection)
 
 
 

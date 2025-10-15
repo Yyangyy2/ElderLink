@@ -33,8 +33,8 @@
             android:gravity="center_vertical">
 
             <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:src="@drawable/nav_home"
                 android:contentDescription="Home Icon"/>
 
@@ -42,7 +42,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
-                android:text="Home                              >"
+                android:text="Home                            >"
                 android:textSize="13sp"/>
         </LinearLayout>
 
@@ -65,11 +65,11 @@
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:padding="8dp">
+            android:padding="4dp">
 
             <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="50dp"
+                android:layout_height="60dp"
                 android:contentDescription="Medication Icon"
                 android:src="@drawable/view_medication_logo_new" />
 
@@ -77,34 +77,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
-                android:text="Medication                    >"
+                android:text="Medication                >"
                 android:textSize="13sp" />
         </LinearLayout>
 
-
-
-        <!-- Doctor Appointment -->
-        <LinearLayout
-            android:id="@+id/btnleftDoctorAppointment"
-            android:layout_width="225dp"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="8dp">
-
-            <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:contentDescription="Dashboard Icon"
-                android:src="@drawable/view_dashboard" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:text="Doctor's Appointment >"
-                android:textSize="13sp" />
-        </LinearLayout>
 
         <!-- View Essentials -->
         <LinearLayout
@@ -116,8 +92,8 @@
             android:gravity="center_vertical">
 
             <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:src="@drawable/view_aibot"
                 android:contentDescription="Ask Ai Icon"/>
 
@@ -125,7 +101,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
-                android:text="Ask Ai                            >"
+                android:text="Ask Ai                        >"
                 android:textSize="13sp"/>
         </LinearLayout>
 
@@ -139,8 +115,8 @@
             android:gravity="center_vertical">
 
             <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:src="@drawable/view_gps_logo"
                 android:contentDescription="GPS Icon"/>
 
@@ -148,7 +124,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
-                android:text="GPS                               >"
+                android:text="GPS                           >"
                 android:textSize="13sp"/>
         </LinearLayout>
 
@@ -160,12 +136,12 @@
             android:layout_width="225dp"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:padding="8dp"
+            android:padding="2dp"
             android:gravity="center_vertical">
 
             <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="50dp"
+                android:layout_height="70dp"
                 android:src="@drawable/view_collab_logo"
                 android:contentDescription="Dashboard Icon"/>
 
@@ -173,34 +149,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
-                android:text="Collaborators               >"
+                android:text="Collaborators           >"
                 android:textSize="13sp"/>
         </LinearLayout>
 
-
-
-        <!-- Log/View Health -->
-        <LinearLayout
-            android:id="@+id/btnleftHealth"
-            android:layout_width="225dp"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="8dp"
-            android:gravity="center_vertical">
-
-            <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:src="@drawable/view_health_symptoms"
-                android:contentDescription="Dashboard Icon"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:text="Log/View Health         >"
-                android:textSize="13sp"/>
-        </LinearLayout>
 
         <!-- Settings Title -->
         <TextView
@@ -222,8 +174,8 @@
             android:gravity="center_vertical">
 
             <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:src="@drawable/profile_placeholder"
                 android:contentDescription="Account Icon"/>
 
@@ -231,7 +183,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
-                android:text="My Account                  >"
+                android:text="My Account                >"
                 android:textSize="13sp"/>
         </LinearLayout>
 
@@ -245,8 +197,8 @@
             android:gravity="center_vertical">
 
             <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:src="@drawable/nav_logout"
                 android:contentDescription="Logout Icon"/>
 
@@ -254,7 +206,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
-                android:text="Logout                           >"
+                android:text="Logout                         >"
                 android:textSize="13sp"/>
         </LinearLayout>
 

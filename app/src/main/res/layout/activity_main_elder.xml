@@ -395,9 +395,4 @@
 
     </LinearLayout>
     </androidx.core.widget.NestedScrollView>
-
-    <include layout="@layout/left_side_menu"
-        android:layout_width="280dp"
-        android:layout_height="match_parent"
-        android:layout_gravity="start"/> <!-- Include the left side menu within this page -->
 </androidx.drawerlayout.widget.DrawerLayout>

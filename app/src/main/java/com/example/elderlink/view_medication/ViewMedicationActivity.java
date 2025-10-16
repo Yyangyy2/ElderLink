@@ -3,6 +3,7 @@ import com.example.elderlink.DrawerMenu;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.speech.RecognizerIntent;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -52,10 +53,14 @@ public class ViewMedicationActivity extends AppCompatActivity {
     private List<String> dateList;
 
     // Search variables
-    private EditText searchInput;
+    private EditText searchBar;
     private ImageButton btnClearSearch;
     private String currentSearchQuery = "";
     private String currentSelectedDate = "";
+
+    //Mic for search bar
+    private ImageButton micButton;
+    private final int SPEECH_REQUEST_CODE = 101;    // Unique ID to identify the speech-to-text result
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -113,15 +118,31 @@ public class ViewMedicationActivity extends AppCompatActivity {
         navMenu.setOnClickListener(v -> {
             drawerLayout.openDrawer(GravityCompat.START);
         });
+
+        // Mic button for search bar----------------------------------------------------------------------------------------------------------
+        micButton = findViewById(R.id.micButton);
+
+        micButton.setOnClickListener(v -> {
+            Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+            intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak to search...");
+
+            try {
+                startActivityForResult(intent, SPEECH_REQUEST_CODE);
+            } catch (Exception e) {
+                Toast.makeText(this, "Speech recognition not supported", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     //Search Bar------------------------------------------------------------------------------------------------------
     private void setupSearch() {
-        searchInput = findViewById(R.id.searchInput);
+        searchBar = findViewById(R.id.searchBar);
         btnClearSearch = findViewById(R.id.btnClearSearch);
 
         // Text change listener for real-time search
-        searchInput.addTextChangedListener(new TextWatcher() {
+        searchBar.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
@@ -138,7 +159,7 @@ public class ViewMedicationActivity extends AppCompatActivity {
 
         // Clear search button
         btnClearSearch.setOnClickListener(v -> {
-            searchInput.setText("");
+            searchBar.setText("");
             currentSearchQuery = "";
             applyFilters();
         });
@@ -404,6 +425,21 @@ public class ViewMedicationActivity extends AppCompatActivity {
             return "BLUE"; // Some medications not taken yet (null, Upcoming, Pending)
         } else {
             return "BLUE"; // Default case
+        }
+    }
+
+    // Mic for search bar-------------------------------------------------------------------------------------------------------------------------------
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == SPEECH_REQUEST_CODE && resultCode == RESULT_OK && data != null) {
+            ArrayList<String> result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+            if (result != null && !result.isEmpty()) {
+                searchBar.setText(result.get(0));
+                currentSearchQuery = result.get(0);
+                applyFilters();
+            }
         }
     }
 }

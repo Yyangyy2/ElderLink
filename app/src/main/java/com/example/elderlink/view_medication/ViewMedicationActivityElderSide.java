@@ -6,6 +6,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.speech.RecognizerIntent;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -56,10 +57,14 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
     private List<String> dateList;
 
     // Search variables
-    private EditText searchInput;
+    private EditText searchBar;
     private ImageButton btnClearSearch;
     private String currentSearchQuery = "";
     private String currentSelectedDate = "";
+
+    //Mic for search bar
+    private ImageButton micButton;
+    private final int SPEECH_REQUEST_CODE = 101;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -115,14 +120,31 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
         FloatingActionButton addMedicationFab = findViewById(R.id.addMedicationFab);
         addMedicationFab.setVisibility(View.GONE);
 
+
+        // Mic button for search bar----------------------------------------------------------------------------------------------------------
+        micButton = findViewById(R.id.micButton);
+
+        micButton.setOnClickListener(v -> {
+            Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+            intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak to search...");
+
+            try {
+                startActivityForResult(intent, SPEECH_REQUEST_CODE);
+            } catch (Exception e) {
+                Toast.makeText(this, "Speech recognition not supported", Toast.LENGTH_SHORT).show();
+            }
+        });
+
     }
 
     private void setupSearch() {
-        searchInput = findViewById(R.id.searchInput);
+        searchBar = findViewById(R.id.searchBar);
         btnClearSearch = findViewById(R.id.btnClearSearch);
 
         // Text change listener for real-time search
-        searchInput.addTextChangedListener(new TextWatcher() {
+        searchBar.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
@@ -139,7 +161,7 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
 
         // Clear search button
         btnClearSearch.setOnClickListener(v -> {
-            searchInput.setText("");
+            searchBar.setText("");
             currentSearchQuery = "";
             applyFilters();
         });
@@ -520,6 +542,21 @@ public class ViewMedicationActivityElderSide extends AppCompatActivity {
             AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
             if (am != null) am.cancel(pi);
             pi.cancel();
+        }
+    }
+
+    // Mic for search bar-------------------------------------------------------------------------------------------------------------------------------
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == SPEECH_REQUEST_CODE && resultCode == RESULT_OK && data != null) {
+            ArrayList<String> result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+            if (result != null && !result.isEmpty()) {
+                searchBar.setText(result.get(0));
+                currentSearchQuery = result.get(0);
+                applyFilters();
+            }
         }
     }
 }

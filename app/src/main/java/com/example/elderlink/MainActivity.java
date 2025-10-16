@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.speech.RecognizerIntent;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Base64;
@@ -37,6 +38,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -56,6 +58,11 @@ public class MainActivity extends AppCompatActivity {
     private EditText searchBar;
     private ImageButton btnClearSearch;
     private String currentSearchQuery = "";
+
+    //Mic for search bar
+    private ImageButton micButton;
+    private final int SPEECH_REQUEST_CODE = 101;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -148,6 +155,24 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
             finish();
         });
+
+
+        // Mic button for search bar----------------------------------------------------------------------------------------------------------
+        micButton = findViewById(R.id.micButton);
+
+        micButton.setOnClickListener(v -> {
+            Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+            intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak to search...");
+
+            try {
+                startActivityForResult(intent, SPEECH_REQUEST_CODE);
+            } catch (Exception e) {
+                Toast.makeText(this, "Speech recognition not supported", Toast.LENGTH_SHORT).show();
+            }
+        });
+
     }
 
     // Search Bar-------------------------------------------------------------------------------------------------------------------------------
@@ -350,4 +375,23 @@ public class MainActivity extends AppCompatActivity {
             peopleListener.remove(); // Clean up listener
         }
     }
+
+
+    // Mic for search bar-------------------------------------------------------------------------------------------------------------------------------
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == SPEECH_REQUEST_CODE && resultCode == RESULT_OK && data != null) {
+            ArrayList<String> result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+            if (result != null && !result.isEmpty()) {
+                searchBar.setText(result.get(0));
+                currentSearchQuery = result.get(0);
+                applySearchFilter();
+            }
+        }
+    }
+
+
+
 }

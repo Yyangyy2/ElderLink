@@ -103,7 +103,7 @@
                 android:padding="8dp"
                 app:layout_constraintBottom_toTopOf="@id/bottomNavigation"
                 app:layout_constraintTop_toBottomOf="@id/searchBar"
-                tools:ignore="MissingConstraints,SpeakableTextPresentCheck"
+                tools:ignore="MissingConstraints,NotSibling,SpeakableTextPresentCheck"
                 tools:layout_editor_absoluteX="-1dp" />
 
             <!-- Floating Add Button -->

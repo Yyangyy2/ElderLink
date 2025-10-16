@@ -142,8 +142,47 @@ public class ChatActivity extends AppCompatActivity {
             }
         });
 
+        // Mic button for speech-to-text---------------------------------------------------------------------------
+        ImageButton micButton = findViewById(R.id.micButton);
+
+        final int SPEECH_REQUEST_CODE = 101; // Unique ID to identify speech result
+
+        micButton.setOnClickListener(v -> {
+            Intent intent = new Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+            intent.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                    android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+            intent.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, java.util.Locale.getDefault());
+            intent.putExtra(android.speech.RecognizerIntent.EXTRA_PROMPT, "Speak now...");
+
+            try {
+                startActivityForResult(intent, SPEECH_REQUEST_CODE);
+            } catch (android.content.ActivityNotFoundException e) {
+                Toast.makeText(ChatActivity.this, "Speech recognition not supported on this device", Toast.LENGTH_SHORT).show();
+            }
+        });
+
     }
 
+    // Mic button result handler--------------------------------------------------------------------------
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == 101 && resultCode == RESULT_OK && data != null) {
+            java.util.ArrayList<String> result = data.getStringArrayListExtra(
+                    android.speech.RecognizerIntent.EXTRA_RESULTS);
+            if (result != null && !result.isEmpty()) {
+                inputMessage.setText(result.get(0)); // Put recognized speech into EditText
+            }
+        }
+    }
+
+
+
+
+
+
+   // Ai stuff, load meds from Firestore--------------------------------------------------------------------------
     private void loadMedications(String personUid) {
         if (personUid == null || personUid.isEmpty()) {
             Toast.makeText(this, "No person specified.", Toast.LENGTH_LONG).show();

@@ -89,6 +89,14 @@
             android:minHeight="48dp"
             android:padding="10dp" />
 
+        <ImageButton
+            android:id="@+id/micButton"
+            android:layout_width="50dp"
+            android:layout_height="match_parent"
+            android:contentDescription="Voice Search"
+            android:background="@drawable/mic_icon"
+            tools:ignore="TouchTargetSizeCheck" />
+
         <Button
             android:id="@+id/btnSend"
             android:layout_width="wrap_content"

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -10,11 +11,23 @@
         android:id="@+id/pinEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:gravity="center"
         android:hint="Enter 6-digit PIN"
         android:inputType="numberPassword"
         android:maxLength="6"
-        android:gravity="center"
-        android:layout_marginBottom="16dp"/>
+        tools:ignore="TouchTargetSizeCheck" />
+
+    <TextView
+        android:id="@+id/attemptsText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Attempts: 0/5"
+        android:textSize="12sp"
+        android:textColor="#FF0000"
+        android:visibility="gone"
+        android:layout_gravity="center"
+        android:layout_marginBottom="8dp" />
 
     <Button
         android:id="@+id/confirmPinButton"

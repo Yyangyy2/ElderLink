@@ -8,6 +8,7 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Base64;
@@ -46,7 +47,8 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
     private boolean isLoginElder; // true = elder view, false = caregiver view
     private String uid; //caregiver's uid, should be caregiverUid but idk why I wrote uid previously
     private String username; // caregiver's name for passing to CheckOnElderlyActivity
-
+    private static final String PIN_ATTEMPTS_PREFIX = "pin_attempts_";
+    private static final String PIN_COOLDOWN_PREFIX = "pin_cooldown_";
 
     public PersonAdapter(Context context, List<Person> personList, boolean isLoginElder, String uid, String username) {
         this.context = context;
@@ -148,11 +150,49 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
                 EditText pinInput = dialog.findViewById(R.id.pinEditText);
                 Button confirmBtn = dialog.findViewById(R.id.confirmPinButton);
                 Button cancelBtn = dialog.findViewById(R.id.closePopupButton);
+                TextView attemptsText = dialog.findViewById(R.id.attemptsText); // Add this TextView to your layout
+
+                // Create unique keys for this person
+                String personKey = person.getId();
+                String attemptsKey = PIN_ATTEMPTS_PREFIX + personKey;
+                String cooldownKey = PIN_COOLDOWN_PREFIX + personKey;
+
+                SharedPreferences prefs = context.getSharedPreferences("PinSecurity", Context.MODE_PRIVATE);
+                final int[] attemptsArray = {prefs.getInt(attemptsKey, 0)};
+                long cooldownUntil = prefs.getLong(cooldownKey, 0);
+
+                // Check if in cooldown
+                if (System.currentTimeMillis() < cooldownUntil) {
+                    long remainingSeconds = (cooldownUntil - System.currentTimeMillis()) / 1000;
+                    Toast.makeText(context, "Too many attempts. Try again in " + remainingSeconds + " seconds", Toast.LENGTH_LONG).show();
+                    dialog.dismiss();
+                    return;
+                }
+
+                // Update attempts display
+                if (attemptsText != null) {
+                    attemptsText.setText("Attempts: " + attemptsArray[0] + "/5");
+                    attemptsText.setVisibility(View.VISIBLE);
+                }
 
                 confirmBtn.setOnClickListener(view -> {
+                    // Create final copies of variables for use in lambda
+                    final long finalCooldownUntil = cooldownUntil;
+                    final String finalAttemptsKey = attemptsKey;
+                    final String finalCooldownKey = cooldownKey;
+                    final Person finalPerson = person;
+
                     String enteredPin = pinInput.getText().toString().trim();
                     if (enteredPin.length() != 6) {
                         Toast.makeText(context, "Enter a 6-digit PIN", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    // Check cooldown again in case time passed during input
+                    if (System.currentTimeMillis() < finalCooldownUntil) {
+                        long remainingSeconds = (finalCooldownUntil - System.currentTimeMillis()) / 1000;
+                        Toast.makeText(context, "Too many attempts. Try again in " + remainingSeconds + " seconds", Toast.LENGTH_LONG).show();
+                        dialog.dismiss();
                         return;
                     }
 
@@ -160,26 +200,29 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
                     String enteredHash = hashPin(enteredPin);
 
                     //Fetch stored hashed PIN from Firestore -- use ownerUid so elder login works for shared persons
-                    String docOwner = person.getOwnerUid() != null && !person.getOwnerUid().isEmpty() ? person.getOwnerUid() : uid;
+                    String docOwner = finalPerson.getOwnerUid() != null && !finalPerson.getOwnerUid().isEmpty() ? finalPerson.getOwnerUid() : uid;
 
                     FirebaseFirestore.getInstance()
                             .collection("users")
                             .document(docOwner)
                             .collection("people")
-                            .document(person.getId())
+                            .document(finalPerson.getId())
                             .get()
                             .addOnSuccessListener(doc -> {
                                 if (doc.exists()) {
                                     String storedHash = doc.getString("pin"); // hashed pin in Firestore
                                     if (storedHash != null && storedHash.equals(enteredHash)) {
-                                        Toast.makeText(context, "PIN correct for " + person.getName(), Toast.LENGTH_SHORT).show();
+                                        // Reset attempts on successful login
+                                        prefs.edit().putInt(finalAttemptsKey, 0).apply();
+
+                                        Toast.makeText(context, "PIN correct for " + finalPerson.getName(), Toast.LENGTH_SHORT).show();
                                         dialog.dismiss();
 
                                         Intent intent = new Intent(context, MainActivityElder.class);
 
                                         // Pass data ( elder name,elder uid, caregiver uid)
-                                        intent.putExtra("personName", person.getName());
-                                        intent.putExtra("personUid", person.getId());
+                                        intent.putExtra("personName", finalPerson.getName());
+                                        intent.putExtra("personUid", finalPerson.getId());
                                         intent.putExtra("caregiverUid", docOwner);
 
                                         context.startActivity(intent);
@@ -188,9 +231,30 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
                                             ((Activity) context).finish(); //close current screen
                                         }
 
-
                                     } else {
-                                        Toast.makeText(context, "Wrong PIN!", Toast.LENGTH_SHORT).show();
+                                        // Increment failed attempts
+                                        int newAttempts = attemptsArray[0] + 1;
+                                        prefs.edit().putInt(finalAttemptsKey, newAttempts).apply();
+
+                                        // Update the local attempts variable so it reflects in the UI if dialog stays open
+                                        attemptsArray[0] = newAttempts;
+
+                                        if (attemptsText != null) {
+                                            attemptsText.setText("Attempts: " + newAttempts + "/5");
+                                        }
+
+                                        if (newAttempts >= 5) {
+                                            // Start 1 minute cooldown
+                                            long cooldownTime = System.currentTimeMillis() + (60 * 1000); // 1 minute
+                                            prefs.edit().putLong(finalCooldownKey, cooldownTime).apply();
+                                            Toast.makeText(context, "Too many failed attempts. Try again in 1 minute.", Toast.LENGTH_LONG).show();
+                                            dialog.dismiss();
+                                        } else {
+                                            Toast.makeText(context, "Wrong PIN! Attempts: " + newAttempts + "/5", Toast.LENGTH_SHORT).show();
+                                            // Don't dismiss the dialog - let user try again
+                                            pinInput.setText(""); // Clear the input for next attempt
+                                            pinInput.requestFocus(); // Focus back to input
+                                        }
                                     }
                                 } else {
                                     Toast.makeText(context, "Person not found!", Toast.LENGTH_SHORT).show();

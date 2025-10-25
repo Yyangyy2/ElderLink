@@ -81,6 +81,12 @@ public class SignupActivity extends AppCompatActivity {
             }
 
 
+            // Password validation
+            if (!isValidPassword(password)) {
+                return;
+            }
+
+
             FirebaseFirestore db = FirebaseFirestore.getInstance();
 
             //Check if username already exists to avoid duplication
@@ -143,6 +149,29 @@ public class SignupActivity extends AppCompatActivity {
 
 
 
+    }
+
+
+
+    private boolean isValidPassword(String password) {
+        if (password.length() < 8) {
+            Toast.makeText(this, "Password must be at least 8 characters", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        boolean hasUppercase = !password.equals(password.toLowerCase());
+        boolean hasLowercase = !password.equals(password.toUpperCase());
+        boolean hasDigit = password.matches(".*\\d.*");
+        boolean hasSpecial = password.matches(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?].*");
+
+        if (!hasUppercase || !hasLowercase || !hasDigit || !hasSpecial) {
+            Toast.makeText(this,
+                    "Password must contain:\nUpper,lowercase,number,special character",
+                    Toast.LENGTH_LONG).show();
+            return false;
+        }
+
+        return true;
     }
 }
 

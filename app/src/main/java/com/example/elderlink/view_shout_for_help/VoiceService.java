@@ -1,6 +1,8 @@
 package com.example.elderlink.view_shout_for_help;
+
 import com.example.elderlink.view_shout_for_help.Help_MainActivity;
 
+import android.Manifest;
 import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -8,6 +10,8 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ServiceInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
@@ -36,9 +40,29 @@ public class VoiceService extends Service {
         super.onCreate();
         Log.d(TAG, "VoiceService onCreate() called");
 
+        // Defensive permission check
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED) {
+            Log.e(TAG, "RECORD_AUDIO not granted — stopping VoiceService to avoid SecurityException");
+            stopSelf();
+            return;
+        }
+
         createNotificationChannel();
         acquireWakeLock();
-        startForeground(NOTIF_ID, buildNotification());
+
+        Notification notification = buildNotification();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(
+                    NOTIF_ID,
+                    notification,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+            );
+        } else {
+            startForeground(NOTIF_ID, notification);
+        }
+
         initPorcupine();
     }
 

@@ -12,10 +12,10 @@ import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -31,7 +31,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -114,27 +114,26 @@ public class Help_MainActivity extends AppCompatActivity {
             stopVoiceService();
             isServiceEnabled = false;
             Toast.makeText(this, "Voice detection disabled", Toast.LENGTH_SHORT).show();
+            saveServiceState();
+            updateButtonAppearance();
         } else {
             // Check if emergency number is set before enabling
             if (EMERGENCY_NUMBER == null) {
                 Toast.makeText(this, "Please select a caregiver with phone number first", Toast.LENGTH_LONG).show();
                 return;
             }
+            // Do NOT flip the enabled flag yet; only set it after the service actually starts successfully
             checkPermissionsAndStartService();
-            isServiceEnabled = true;
-            Toast.makeText(this, "Voice detection enabled", Toast.LENGTH_SHORT).show();
         }
-        saveServiceState();
-        updateButtonAppearance();
     }
 
     private void updateButtonAppearance() {
         if (isServiceEnabled) {
             switchEDButton.setText("Disable Voice Detection");
-            switchEDButton.setBackgroundColor(getResources().getColor(android.R.color.holo_red_dark));
+            switchEDButton.setBackgroundColor(ContextCompat.getColor(this, android.R.color.holo_red_dark));
         } else {
             switchEDButton.setText("Enable Voice Detection");
-            switchEDButton.setBackgroundColor(getResources().getColor(android.R.color.holo_green_dark));
+            switchEDButton.setBackgroundColor(ContextCompat.getColor(this, android.R.color.holo_green_dark));
         }
     }
 
@@ -196,19 +195,18 @@ public class Help_MainActivity extends AppCompatActivity {
 
     private void loadSavedEmergencyNumber() {
         SharedPreferences prefs = getSharedPreferences("EmergencySettings", MODE_PRIVATE);
-        String savedNumber = prefs.getString("emergency_number", null); // No default
-        EMERGENCY_NUMBER = savedNumber;
+        EMERGENCY_NUMBER = prefs.getString("emergency_number", null);
         updateCurrentContactDisplay();
     }
 
     private void updateCurrentContactDisplay() {
         if (EMERGENCY_NUMBER == null) {
             currentContactText.setText("No phone number selected");
-            currentContactText.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+            currentContactText.setTextColor(ContextCompat.getColor(this, android.R.color.holo_red_dark));
         } else {
             String displayNumber = EMERGENCY_NUMBER.replace("tel:", "");
             currentContactText.setText(displayNumber);
-            currentContactText.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+            currentContactText.setTextColor(ContextCompat.getColor(this, android.R.color.holo_green_dark));
         }
     }
 
@@ -268,9 +266,9 @@ public class Help_MainActivity extends AppCompatActivity {
                             String displayName = username != null ? username : "Caregiver";
                             String displayPhone = phone; // Keep as null if not provided
 
-                            Caregiver caregiver = new Caregiver(displayName,"", displayPhone, false);
+                            Caregiver caregiver = new Caregiver(displayName, "", phone, false);
                             caregiverList.add(caregiver);
-                            Log.d(TAG, "Added caregiver: " + displayName + " - Phone: " + (displayPhone != null ? displayPhone : "No phone"));
+                            Log.d(TAG, "Added caregiver: " + displayName + " - Phone: " + (phone != null ? phone : "No phone"));
                         } else {
                             // Add placeholder if user document doesn't exist
                             caregiverList.add(new Caregiver("Caregiver","", null, false));
@@ -315,7 +313,7 @@ public class Help_MainActivity extends AppCompatActivity {
             caregiversRecyclerView.setVisibility(View.VISIBLE);
 
             // Sort list alphabetically
-            Collections.sort(caregiverList, (c1, c2) -> c1.getName().compareTo(c2.getName()));
+            caregiverList.sort(Comparator.comparing(Caregiver::getName));
 
             caregiverAdapter.notifyDataSetChanged();
             Log.d(TAG, "Caregiver adapter updated with " + caregiverList.size() + " caregivers");
@@ -350,7 +348,7 @@ public class Help_MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         Log.d(TAG, "onRequestPermissionsResult: requestCode=" + requestCode);
 
@@ -438,6 +436,10 @@ public class Help_MainActivity extends AppCompatActivity {
             Intent svc = new Intent(this, VoiceService.class);
             ContextCompat.startForegroundService(this, svc);
             Log.i(TAG, "✅ VoiceService started successfully");
+            // Only mark enabled after successful start
+            isServiceEnabled = true;
+            saveServiceState();
+            updateButtonAppearance();
             Toast.makeText(this, "Voice detection enabled", Toast.LENGTH_SHORT).show();
 
         } catch (Exception e) {

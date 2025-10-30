@@ -182,7 +182,7 @@ public class ChatActivity extends AppCompatActivity {
 
 
 
-   // Ai stuff, load meds from Firestore--------------------------------------------------------------------------
+    // Ai stuff, load meds from Firestore--------------------------------------------------------------------------
     private void loadMedications(String personUid) {
         if (personUid == null || personUid.isEmpty()) {
             Toast.makeText(this, "No person specified.", Toast.LENGTH_LONG).show();

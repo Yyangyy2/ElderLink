@@ -131,9 +131,6 @@ public class ProfilePageCaregiver extends AppCompatActivity {
         if (cleanPhone.length() == 10) {
             // Format: 012-345 6789
             return cleanPhone.replaceFirst("(\\d{3})(\\d{3})(\\d{4})", "$1-$2 $3");
-        } else if (cleanPhone.length() == 11) {
-            // Format: 011-1234 5678
-            return cleanPhone.replaceFirst("(\\d{3})(\\d{4})(\\d{4})", "$1-$2 $3");
         }
 
         // Return original if formatting doesn't apply

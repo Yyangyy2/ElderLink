@@ -5,9 +5,11 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.BatteryManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Base64;
 import android.util.Log;
@@ -16,8 +18,12 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
+import android.Manifest;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -38,6 +44,7 @@ import com.example.elderlink.DrawerMenu;
 import com.example.elderlink.LoginElderActivity;
 import com.example.elderlink.R;
 import com.example.elderlink.view_Ask_Ai.ChatActivityElder;
+import com.example.elderlink.view_gps.LocationTrackingService;
 import com.example.elderlink.view_medication.Model_medication;
 import com.example.elderlink.view_medication.ViewMedicationActivityElderSide;
 import com.example.elderlink.view_shout_for_help.Help_MainActivity;
@@ -54,6 +61,7 @@ import java.util.List;
 import java.util.Set;
 
 public class MainActivityElder extends AppCompatActivity {
+    private static final int PERMISSION_REQUEST_CODE = 100;
 
     private final List<Model_medication> medicationList = new ArrayList<>();   //keep meds in Model_medication list for date picker
     private final List<DateGroup> dateGroupList = new ArrayList<>();          // keep grouped meds by date
@@ -207,8 +215,21 @@ public class MainActivityElder extends AppCompatActivity {
 
 
 
+        // START LOCATION TRACKING SERVICE
+        startLocationTrackingService(personUid, caregiverUid);
 
-
+        // Check and request location permission
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    PERMISSION_REQUEST_CODE);
+        } else {
+            // Permission already granted, start tracking
+            String personUid = getIntent().getStringExtra("personUid");
+            String caregiverUid = getIntent().getStringExtra("caregiverUid");
+            startLocationTrackingService(personUid, caregiverUid);
+        }
 
 
 
@@ -216,6 +237,36 @@ public class MainActivityElder extends AppCompatActivity {
     }
 
 
+    // Start location tracking service method---------------------------------------------------------------------------------------------------------------------------------
+    private void startLocationTrackingService(String personUid, String caregiverUid) {
+        Intent serviceIntent = new Intent(this, LocationTrackingService.class);
+        serviceIntent.putExtra("personUid", personUid);
+        serviceIntent.putExtra("caregiverUid", caregiverUid);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent); // Android 8+
+        } else {
+            startService(serviceIntent); // Older Android
+        }
+
+        Log.d("MainActivityElder", "Location tracking service started");
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                String personUid = getIntent().getStringExtra("personUid");
+                String caregiverUid = getIntent().getStringExtra("caregiverUid");
+                startLocationTrackingService(personUid, caregiverUid);
+            } else {
+                Toast.makeText(this, "Location permission required for tracking", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
 
 
 

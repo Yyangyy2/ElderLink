@@ -1,3 +1,5 @@
+//Send notification to caregiver when elder exits safe zone
+
 package com.example.elderlink.view_gps;
 
 import android.app.NotificationChannel;
@@ -81,61 +83,4 @@ public class NotificationHelper {
         }
     }
 
-    public static void showNormalNotification(Context context, String title, String message, Class<?> targetActivity) {
-        try {
-            Intent intent = new Intent(context, targetActivity);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            PendingIntent pendingIntent = PendingIntent.getActivity(
-                    context,
-                    0,
-                    intent,
-                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-            );
-
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                    .setSmallIcon(R.drawable.safe_zone_alert_icon)
-                    .setContentTitle(title)
-                    .setContentText(message)
-                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                    .setContentIntent(pendingIntent)
-                    .setAutoCancel(true)
-                    .setStyle(new NotificationCompat.BigTextStyle().bigText(message));
-
-            NotificationManager notificationManager =
-                    (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-
-            if (notificationManager != null) {
-                notificationManager.notify(NOTIFICATION_ID + 1, builder.build());
-                Log.d("NotificationHelper", "Normal notification shown: " + title);
-            }
-        } catch (Exception e) {
-            Log.e("NotificationHelper", "Error showing normal notification: " + e.getMessage());
-        }
-    }
-
-    public static void cancelAllNotifications(Context context) {
-        try {
-            NotificationManager notificationManager =
-                    (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-            if (notificationManager != null) {
-                notificationManager.cancelAll();
-                Log.d("NotificationHelper", "All notifications cancelled");
-            }
-        } catch (Exception e) {
-            Log.e("NotificationHelper", "Error cancelling notifications: " + e.getMessage());
-        }
-    }
-
-    public static void cancelNotification(Context context, int notificationId) {
-        try {
-            NotificationManager notificationManager =
-                    (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-            if (notificationManager != null) {
-                notificationManager.cancel(notificationId);
-                Log.d("NotificationHelper", "Notification cancelled: " + notificationId);
-            }
-        } catch (Exception e) {
-            Log.e("NotificationHelper", "Error cancelling notification: " + e.getMessage());
-        }
-    }
 }

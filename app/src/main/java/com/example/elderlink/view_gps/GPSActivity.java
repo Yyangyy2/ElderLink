@@ -1,3 +1,5 @@
+//Reads location from Firestore & displays on map
+
 package com.example.elderlink.view_gps;
 
 import android.Manifest;
@@ -118,9 +120,6 @@ public class GPSActivity extends AppCompatActivity {
 
         loadSafeZoneFromFirestore();
 
-        // Get one-time location update
-        getOneTimeLocation();
-
         startElderLocationListener();
         startElderBatteryListener(); // Listen for elder's battery status
     }
@@ -156,6 +155,7 @@ public class GPSActivity extends AppCompatActivity {
         });
     }
 
+    // Map setup--------------------------------------------------------------------------------------------------------------------------------
     private void setupMap() {
         // Set tile source programmatically
         mapView.setTileSource(TileSourceFactory.MAPNIK);
@@ -163,81 +163,26 @@ public class GPSActivity extends AppCompatActivity {
         mapView.setBuiltInZoomControls(true);
         mapView.setMultiTouchControls(true);
         mapView.getController().setZoom(15.0);
-        mapView.getController().setCenter(new GeoPoint(5.4141, 100.3288)); // Penang default
+        mapView.getController().setCenter(new GeoPoint(5.4141, 100.3288)); // Start at Penang default
 
-        // Optional: Set zoom limits
+        // Set zoom limits
         mapView.setMinZoomLevel(5.0);
         mapView.setMaxZoomLevel(19.0);
     }
 
+
+    // Status dashboard setup--------------------------------------------------------------------------------------------------------------------------------
     private void setupStatusDashboard() {
-        // Initial status
+        // Initial status as loading state
         updateLocationStatus("Finding location...", "#2962FF");
         updateElderBatteryStatus(-1, false, 0); // Unknown initially
         updateLocationAge(System.currentTimeMillis()); // Initialize with current time
         updateAccuracy(10.0f); // Default high accuracy
     }
 
-    @SuppressLint("MissingPermission")
-    private void getOneTimeLocation() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                    1001);
-            return;
-        }
 
-        updateLocationStatus("Getting location...", "#FF9800");
-        Log.d("GPSActivity", "Getting one-time location update");
-
-        fusedLocationClient.getLastLocation()
-                .addOnSuccessListener(this, location -> {
-                    if (location != null) {
-                        handleLocationUpdate(location, "Last known");
-                    } else {
-                        updateLocationStatus("No last location", "#F44336");
-                    }
-                    // Start continuous updates after getting initial location
-                    startContinuousLocationUpdates();
-                })
-                .addOnFailureListener(e -> {
-                    updateLocationStatus("Location error", "#F44336");
-                    Log.e("GPSActivity", "Failed to get last location: " + e.getMessage());
-                    startContinuousLocationUpdates();   // Start continuous updates even if last location fails
-                });
-    }
-
-    @SuppressLint("MissingPermission")
-    private void startContinuousLocationUpdates() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
-
-        LocationRequest request = LocationRequest.create();
-        request.setInterval(30000); // Update every 30 seconds
-        request.setFastestInterval(15000); // Minimum time between updates: 15 seconds
-        request.setPriority(Priority.PRIORITY_HIGH_ACCURACY);
-        request.setSmallestDisplacement(10); // Update every 10 meters movement
-
-        // Initialize the locationCallback properly
-        locationCallback = new LocationCallback() {
-            @Override
-            public void onLocationResult(LocationResult locationResult) {
-                if (locationResult != null) {
-                    Location location = locationResult.getLastLocation();
-                    if (location != null) {
-                        handleLocationUpdate(location, "Auto-update");
-                    }
-                }
-            }
-        };
-
-        fusedLocationClient.requestLocationUpdates(request, locationCallback, Looper.getMainLooper());
-        Log.d("GPSActivity", "Started continuous location updates");
-    }
-
+    //Retrieves previously saved safe zone settings from Firestore------------------------------------------------------------------------------------
+    //Fetches enabled status, radius, and center coordinates. If enabled, automatically draws the zone circle on map
     private void loadSafeZoneFromFirestore() {
         FirebaseFirestore.getInstance()
                 .collection("users")
@@ -271,25 +216,8 @@ public class GPSActivity extends AppCompatActivity {
                 });
     }
 
-    private void handleLocationUpdate(Location location, String source) {
-        Log.d("GPSActivity", "Got " + source + " location: " + location.getLatitude() + ", " + location.getLongitude());
 
-        // Update accuracy and location age
-        updateAccuracy(location.getAccuracy());
-        updateLocationAge(location);
-
-        // Get address from coordinates (reverse geocoding)
-        getAddressFromLocation(location);
-
-        // Update map and Firestore
-        updateMarker(location.getLatitude(), location.getLongitude(), true);
-        updateLocationInFirestore(location);
-
-        // Check safe zone
-        checkSafeZone(location);
-    }
-
-    // Location Age functionality
+    // Location Age--------------------------------------------------------------------------------------------------------------------------------------------
     private void updateLocationAge(Location newLocation) {
         if (tvLastSeen == null) return;
 
@@ -329,6 +257,7 @@ public class GPSActivity extends AppCompatActivity {
         return distanceMoved > LOCATION_CHANGE_THRESHOLD;
     }
 
+    //Converts milliseconds to readable time format
     private String formatLocationAge(long timeAtLocationMs) {
         long seconds = timeAtLocationMs / 1000;
         long minutes = seconds / 60;
@@ -383,6 +312,7 @@ public class GPSActivity extends AppCompatActivity {
         tvLastSeen.setText(timeText);
     }
 
+    //Converts GPS coordinates to readable physical address
     private void getAddressFromLocation(Location location) {
         // Only show loading if we don't already have an address
         if (tvLocationStatus.getText().toString().contains("Updating") ||
@@ -391,7 +321,7 @@ public class GPSActivity extends AppCompatActivity {
             updateLocationStatus("Getting address...", "#FF9800");
         }
 
-        // Using Android's built-in Geocoder
+        // Using Android's built-in Geocoder API
         Geocoder geocoder = new Geocoder(this, Locale.getDefault());
 
         try {
@@ -423,6 +353,7 @@ public class GPSActivity extends AppCompatActivity {
         }
     }
 
+    //Formats address components into clean readable string
     private String formatAddress(Address address) {
         StringBuilder addressText = new StringBuilder();
 
@@ -478,7 +409,7 @@ public class GPSActivity extends AppCompatActivity {
         return result;
     }
 
-    // Status update methods
+    // Status update methods--------------------------------------------------------------------------------------------------------------------------------------------
     private void updateLocationStatus(String status, String colorHex) {
         if (tvLocationStatus != null) {
             tvLocationStatus.setText(status);
@@ -541,41 +472,11 @@ public class GPSActivity extends AppCompatActivity {
         }
     }
 
-    private void updateLocationInFirestore(Location location) {
-        Map<String, Object> locationData = new HashMap<>();
-        locationData.put("latitude", location.getLatitude());
-        locationData.put("longitude", location.getLongitude());
-        locationData.put("timestamp", System.currentTimeMillis());
 
-        Map<String, Object> updateData = new HashMap<>();
-        updateData.put("location", locationData);
-
-        FirebaseFirestore.getInstance()
-                .collection("users")
-                .document(caregiverUid)
-                .collection("people")
-                .document(personUid)
-                .set(updateData, SetOptions.merge())
-                .addOnSuccessListener(aVoid ->
-                        Log.d("GPSActivity", "One-time location updated in Firestore"))
-                .addOnFailureListener(e ->
-                        Log.e("GPSActivity", "Failed to update location: " + e.getMessage()));
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == 1001) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permission granted, get location
-                getOneTimeLocation();
-            } else {
-                Log.e("GPSActivity", "Location permission denied");
-                updateLocationStatus("Permission denied", "#F44336");
-            }
-        }
-    }
-
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    //Real-time listener for the elderly person's location updates from Firestore----------------------------------------------------------------------------------------------------------------------------------------------
+    //Attaches a Firestore snapshot listener that automatically triggers whenever the elder's location data changes in the database. Updates the map marker and checks for safe zone violations.
+    //This method only extracts data from database
     private void startElderLocationListener() {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
@@ -583,20 +484,20 @@ public class GPSActivity extends AppCompatActivity {
                 .document(caregiverUid)
                 .collection("people")
                 .document(personUid)
-                .addSnapshotListener((snapshot, e) -> {
+                .addSnapshotListener((snapshot, e) -> {         //addSnapshotListener to listen for real-time updates
                     if (e != null) {
                         Log.e("GPSActivity", "Listen failed for elder location", e);
                         return;
                     }
 
                     if (snapshot != null && snapshot.exists()) {
-                        Map<String, Object> locationData = (Map<String, Object>) snapshot.get("location");
+                        Map<String, Object> locationData = (Map<String, Object>) snapshot.get("location");   // Retrieves the nested location field from the document
                         if (locationData != null) {
-                            Double lat = (Double) locationData.get("latitude");
-                            Double lon = (Double) locationData.get("longitude");
-                            Long timestamp = (Long) locationData.get("timestamp");
+                            Double lat = (Double) locationData.get("latitude");                     // Extract latitude
+                            Double lon = (Double) locationData.get("longitude");                    // Extract longitude
+                            Long timestamp = (Long) locationData.get("timestamp");                  // Extract timestamp
                             if (lat != null && lon != null) {
-                                // Create location object for age calculation
+                                // Create location object
                                 Location elderLocation = new Location("elder");
                                 elderLocation.setLatitude(lat);
                                 elderLocation.setLongitude(lon);
@@ -681,6 +582,9 @@ public class GPSActivity extends AppCompatActivity {
         mapView.invalidate();
     }
 
+
+
+    //Handle map lifecycle (Resume/pause map rendering map when activity comes to foreground/background to save battery)--------------------------------------------------
     @Override
     protected void onResume() {
         super.onResume();
@@ -697,6 +601,7 @@ public class GPSActivity extends AppCompatActivity {
         }
     }
 
+    // Cleanup when activity closes on destroy to prevent memory leaks
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -761,6 +666,8 @@ public class GPSActivity extends AppCompatActivity {
         dialog.show();
     }
 
+
+    //Visualization of the circle--------------------------------------------------------------------------------------------------------
     private void drawSafeZone() {
         removeSafeZone(); // Remove existing circle
 
@@ -805,18 +712,22 @@ public class GPSActivity extends AppCompatActivity {
         }
     }
 
-    private void checkSafeZone(Location elderLocation) {
-        if (!isSafeZoneEnabled || safeZoneCenterLat == 0) return;
 
-        float[] results = new float[1];
-        Location.distanceBetween(
-                safeZoneCenterLat, safeZoneCenterLon,
-                elderLocation.getLatitude(), elderLocation.getLongitude(),
+    //-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+    // Detects if elder has exited safe zone and triggers alert--------------------------------------------------------------------------------------------------------
+    private void checkSafeZone(Location elderLocation) {
+        if (!isSafeZoneEnabled || safeZoneCenterLat == 0) return;     //If safeZoneCenterLat == 0, the safe-zone has not been set yet
+
+        float[] results = new float[1];                   //Create array to hold distance result
+        Location.distanceBetween(                          //Built in method Location.distanceBetween
+                safeZoneCenterLat, safeZoneCenterLon,       //The set safe zone center coordinates
+                elderLocation.getLatitude(), elderLocation.getLongitude(),   //The elder's current coordinates
                 results
         );
 
-        float distanceFromCenter = results[0];
-        boolean isOutsideZone = distanceFromCenter > safeZoneRadius;
+        float distanceFromCenter = results[0];                          //Result show distance in meters, by comparing those two coordinates above
+        boolean isOutsideZone = distanceFromCenter > safeZoneRadius;     //Check if distance is greater than the set safe zone radius,
+                                                                        // e.g. safeZoneRadius is 10, if distanceFromCenter is 15, then isOutsideZone = true
 
         if (isOutsideZone) {
             triggerSafeZoneAlert(distanceFromCenter);
@@ -826,17 +737,18 @@ public class GPSActivity extends AppCompatActivity {
     private void triggerSafeZoneAlert(float distance) {
         // Show enhanced local notification with vibration
         showEnhancedLocalNotification(distance);
+        // Save alert to Firestore for record keeping
+        saveAlertToFirestore(distance);
 
-        // Show local alert
+        // Show local alert in app (map) as toast
         Toast.makeText(this, "ALERT: " + personName + " left safe zone!", Toast.LENGTH_LONG).show();
-
         // Log the alert
         Log.d("GPSActivity", "Safe zone alert triggered - Distance: " + distance + " meters");
 
-        // Save alert to Firestore for record keeping
-        saveAlertToFirestore(distance);
     }
 
+
+    // Sends urgent alert notification to caregiver------------------------------------------------------------------------
     private void showEnhancedLocalNotification(float distance) {
         String title = "SAFE ZONE ALERT";
         String message = personName + " has left the safe zone. Current distance: " +

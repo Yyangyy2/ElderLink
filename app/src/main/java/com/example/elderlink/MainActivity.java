@@ -261,6 +261,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // Display people (elders) from Firestore-------------------------------------------------------------------------------------------------------------------------------
     private void onPeopleSnapshot(@NonNull QuerySnapshot snapshots, @NonNull FirebaseFirestoreException e) {
         if (e != null) {
             Log.e("FirestoreListener", "Error loading people", e);

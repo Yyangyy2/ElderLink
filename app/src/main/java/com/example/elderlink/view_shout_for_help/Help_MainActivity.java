@@ -435,7 +435,7 @@ public class Help_MainActivity extends AppCompatActivity {
         try {
             Intent svc = new Intent(this, VoiceService.class);
             ContextCompat.startForegroundService(this, svc);
-            Log.i(TAG, "✅ VoiceService started successfully");
+            Log.i(TAG, "VoiceService started successfully");
             // Only mark enabled after successful start
             isServiceEnabled = true;
             saveServiceState();
@@ -443,7 +443,7 @@ public class Help_MainActivity extends AppCompatActivity {
             Toast.makeText(this, "Voice detection enabled", Toast.LENGTH_SHORT).show();
 
         } catch (Exception e) {
-            Log.e(TAG, "❌ Failed to start VoiceService: " + e.getMessage(), e);
+            Log.e(TAG, "Failed to start VoiceService: " + e.getMessage(), e);
             Toast.makeText(this, "Failed to start service: " + e.getMessage(), Toast.LENGTH_LONG).show();
             isServiceEnabled = false;
             saveServiceState();
@@ -456,9 +456,9 @@ public class Help_MainActivity extends AppCompatActivity {
         try {
             Intent svc = new Intent(this, VoiceService.class);
             stopService(svc);
-            Log.i(TAG, "✅ VoiceService stopped successfully");
+            Log.i(TAG, "VoiceService stopped successfully");
         } catch (Exception e) {
-            Log.e(TAG, "❌ Failed to stop VoiceService: " + e.getMessage(), e);
+            Log.e(TAG, "Failed to stop VoiceService: " + e.getMessage(), e);
         }
     }
 

@@ -125,19 +125,19 @@ public class VoiceService extends Service {
                     .build(this, this::onKeywordDetected);
 
             porcupineManager.start();
-            Log.i(TAG, "✅ Porcupine started successfully - Listening for 'Help Help'");
+            Log.i(TAG, "Porcupine started successfully - Listening for 'Help Help'");
 
         } catch (PorcupineException e) {
-            Log.e(TAG, "❌ Porcupine initialization failed: " + e.getMessage(), e);
+            Log.e(TAG, "Porcupine initialization failed: " + e.getMessage(), e);
             stopSelf();
         } catch (Exception e) {
-            Log.e(TAG, "❌ Unexpected error during Porcupine initialization", e);
+            Log.e(TAG, "Unexpected error during Porcupine initialization", e);
             stopSelf();
         }
     }
 
     private void onKeywordDetected(int index) {
-        Log.i(TAG, "🚨🚨🚨 KEYWORD DETECTED! 'Help Help' heard! Index: " + index);
+        Log.i(TAG, "KEYWORD DETECTED! 'Help Help' heard! Index: " + index);
 
         // Log detection details
         Log.d(TAG, "Detection details:");
@@ -171,12 +171,12 @@ public class VoiceService extends Service {
                         "VoiceService::FullWakeLock"
                 );
                 fullWakeLock.acquire(10000); // 10 seconds
-                Log.d(TAG, "✅ Full wake lock acquired - Device should wake up");
+                Log.d(TAG, "Full wake lock acquired - Device should wake up");
             } else {
-                Log.e(TAG, "❌ PowerManager is null, cannot acquire full wake lock");
+                Log.e(TAG, "PowerManager is null, cannot acquire full wake lock");
             }
         } catch (Exception e) {
-            Log.e(TAG, "❌ Failed to acquire full wake lock", e);
+            Log.e(TAG, "Failed to acquire full wake lock", e);
         }
     }
 
@@ -202,12 +202,12 @@ public class VoiceService extends Service {
             NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
             if (notificationManager != null) {
                 notificationManager.notify(101, builder.build());
-                Log.d(TAG, "✅ Emergency notification shown");
+                Log.d(TAG, "Emergency notification shown");
             } else {
-                Log.e(TAG, "❌ NotificationManager is null");
+                Log.e(TAG, "NotificationManager is null");
             }
         } catch (Exception e) {
-            Log.e(TAG, "❌ Failed to show emergency notification", e);
+            Log.e(TAG, "Failed to show emergency notification", e);
         }
     }
 
@@ -222,13 +222,13 @@ public class VoiceService extends Service {
 
             Log.d(TAG, "Starting call activity with number: " + Help_MainActivity.EMERGENCY_NUMBER);
             startActivity(callIntent);
-            Log.i(TAG, "✅ Emergency call initiated successfully");
+            Log.i(TAG, "Emergency call initiated successfully");
 
         } catch (SecurityException e) {
-            Log.e(TAG, "❌ CALL_PHONE permission denied, falling back to dial", e);
+            Log.e(TAG, "CALL_PHONE permission denied, falling back to dial", e);
             makeEmergencyDial();
         } catch (Exception e) {
-            Log.e(TAG, "❌ Failed to make emergency call", e);
+            Log.e(TAG, "Failed to make emergency call", e);
             makeEmergencyDial();
         }
     }
@@ -240,9 +240,9 @@ public class VoiceService extends Service {
             dialIntent.setData(Uri.parse(Help_MainActivity.EMERGENCY_NUMBER));
             dialIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(dialIntent);
-            Log.i(TAG, "✅ Emergency dial initiated");
+            Log.i(TAG, "Emergency dial initiated");
         } catch (Exception e) {
-            Log.e(TAG, "❌ Failed to make emergency dial", e);
+            Log.e(TAG, "Failed to make emergency dial", e);
         }
     }
 

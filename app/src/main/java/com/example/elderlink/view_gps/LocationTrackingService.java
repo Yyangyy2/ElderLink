@@ -87,7 +87,7 @@ public class LocationTrackingService extends Service {
         locationData.put("latitude", location.getLatitude());
         locationData.put("longitude", location.getLongitude());
         locationData.put("timestamp", System.currentTimeMillis());
-        locationData.put("accuracy", location.getAccuracy());
+        locationData.put("accuracy", location.getAccuracy());             // Accuracy capture here
 
         Map<String, Object> updateData = new HashMap<>();
         updateData.put("location", locationData);

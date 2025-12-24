@@ -153,8 +153,8 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
                 TextView attemptsText = dialog.findViewById(R.id.attemptsText); // Add this TextView to your layout
 
                 // Create unique keys for this person
-                String personKey = person.getId();
-                String attemptsKey = PIN_ATTEMPTS_PREFIX + personKey;
+                String personKey = person.getId();                       // IMPORTANT: use person ID to distinguish between different person, if dont have this,
+                String attemptsKey = PIN_ATTEMPTS_PREFIX + personKey;    // two persons with same name will share same attempts and cooldown which is wrong
                 String cooldownKey = PIN_COOLDOWN_PREFIX + personKey;
 
                 SharedPreferences prefs = context.getSharedPreferences("PinSecurity", Context.MODE_PRIVATE);
@@ -163,7 +163,7 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
 
                 // Check if in cooldown
                 if (System.currentTimeMillis() < cooldownUntil) {
-                    long remainingSeconds = (cooldownUntil - System.currentTimeMillis()) / 1000;
+                    long remainingSeconds = (cooldownUntil - System.currentTimeMillis()) / 1000;    // 1000 Converts milliseconds to seconds for user-friendly display in logcat.
                     Toast.makeText(context, "Too many attempts. Try again in " + remainingSeconds + " seconds", Toast.LENGTH_LONG).show();
                     dialog.dismiss();
                     return;
@@ -176,7 +176,7 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
                 }
 
                 confirmBtn.setOnClickListener(view -> {
-                    // Create final copies of variables for use in lambda
+                    // Create final copies of variables to prevent modification issues in inner class
                     final long finalCooldownUntil = cooldownUntil;
                     final String finalAttemptsKey = attemptsKey;
                     final String finalCooldownKey = cooldownKey;
@@ -211,7 +211,7 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
                             .addOnSuccessListener(doc -> {
                                 if (doc.exists()) {
                                     String storedHash = doc.getString("pin"); // hashed pin in Firestore
-                                    if (storedHash != null && storedHash.equals(enteredHash)) {
+                                    if (storedHash != null && storedHash.equals(enteredHash)) {                  // IMPORTANT: compare hashed PINs here
                                         // Reset attempts on successful login
                                         prefs.edit().putInt(finalAttemptsKey, 0).apply();
 
@@ -251,7 +251,7 @@ public class PersonAdapter extends RecyclerView.Adapter<PersonAdapter.PersonView
                                             dialog.dismiss();
                                         } else {
                                             Toast.makeText(context, "Wrong PIN! Attempts: " + newAttempts + "/5", Toast.LENGTH_SHORT).show();
-                                            // Don't dismiss the dialog - let user try again
+                                            // Don't dismiss the dialog, let user try again
                                             pinInput.setText(""); // Clear the input for next attempt
                                             pinInput.requestFocus(); // Focus back to input
                                         }

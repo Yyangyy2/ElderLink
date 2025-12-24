@@ -80,10 +80,10 @@ public class LoginElderActivity extends AppCompatActivity {
                                 Toast.makeText(this, "Caregiver found!", Toast.LENGTH_SHORT).show();
 
                                 // Fetch "people" under this caregiver
-                                // adjust path according your data model — here we assume a top-level "people" collection that has a field 'caregiverId' or 'username'
-                                // Example below assumes people documents either have 'caregiverUsername' or you have a subcollection under users/<uid>/people
-                                // In your earlier code you stored people as subcollection under users/{uid}/people
-                                // So we first need the caregiver's uid from the user doc we found:
+                                // adjust path according data model, here "people" collection that has a field 'caregiverId' or 'username'
+                                // Example below assumes people documents either have 'caregiverUsername' or have a subcollection under users/<uid>/people
+                                // In my earlier code I stored people as subcollection under users/{uid}/people
+                                // So first need the caregiver's uid from the user doc found:
                                 DocumentSnapshot caregiverDoc = result.getDocuments().get(0);
                                 String caregiverUid = caregiverDoc.getId();
 
@@ -96,7 +96,7 @@ public class LoginElderActivity extends AppCompatActivity {
                                             if (peopleTask.isSuccessful()) {
                                                 QuerySnapshot peopleResult = peopleTask.getResult();
                                                 if (peopleResult != null && !peopleResult.isEmpty()) {
-                                                    // Inflate popup layout (you need to create activity_login_elder_people_item_list.xml)
+
                                                     LayoutInflater inflater = getLayoutInflater();
                                                     View popupView = inflater.inflate(R.layout.activity_login_elder_people_item_list, null);
 

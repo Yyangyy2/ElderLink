@@ -145,7 +145,7 @@ public class VoiceService extends Service {
         Log.d(TAG, "  - Service state: " + (isServiceRunning() ? "Running" : "Stopped"));
         Log.d(TAG, "  - Thread: " + Thread.currentThread().getName());
 
-        // Acquire full wake lock to wake up device
+        // Acquire full wake lock to wake up device screen
         acquireFullWakeLock();
 
         // Show emergency notification
@@ -159,7 +159,7 @@ public class VoiceService extends Service {
         return porcupineManager != null;
     }
 
-    private void acquireFullWakeLock() {
+    private void acquireFullWakeLock() {     // Wakes up the device screen
         Log.d(TAG, "Attempting to acquire full wake lock");
         try {
             PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
@@ -214,10 +214,10 @@ public class VoiceService extends Service {
     private void makeEmergencyCallDirectly() {
         Log.d(TAG, "Attempting to make emergency call directly");
         try {
-            Intent callIntent = new Intent(Intent.ACTION_CALL);
+            Intent callIntent = new Intent(Intent.ACTION_CALL);      // Direct call action
             callIntent.setData(Uri.parse(Help_MainActivity.EMERGENCY_NUMBER));
-            callIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            callIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK |
+            callIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);      // Required when starting activity from service
+            callIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK |    // Clear existing tasks
                     Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
 
             Log.d(TAG, "Starting call activity with number: " + Help_MainActivity.EMERGENCY_NUMBER);
@@ -233,7 +233,7 @@ public class VoiceService extends Service {
         }
     }
 
-    private void makeEmergencyDial() {
+    private void makeEmergencyDial() {        // Fallback to dialer if direct call fails, will not auto call anymore but user must press call
         Log.d(TAG, "Attempting emergency dial fallback");
         try {
             Intent dialIntent = new Intent(Intent.ACTION_DIAL);
@@ -246,6 +246,7 @@ public class VoiceService extends Service {
         }
     }
 
+    // Clean up resources------------------------------------------------------------------------------------------------
     @Override
     public void onDestroy() {
         Log.d(TAG, "VoiceService onDestroy() called");

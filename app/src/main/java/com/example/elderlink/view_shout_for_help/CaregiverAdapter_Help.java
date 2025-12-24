@@ -1,3 +1,5 @@
+// This is a RecyclerView Adapter that displays a list of caregivers for the elderly to choose an emergency contact.
+
 package com.example.elderlink.view_shout_for_help;
 
 import android.view.LayoutInflater;
@@ -40,7 +42,7 @@ public class CaregiverAdapter_Help extends RecyclerView.Adapter<CaregiverAdapter
     public void onBindViewHolder(@NonNull CaregiverViewHolder holder, int position) {
         Caregiver caregiver = caregiverList.get(position);
 
-        // Set basic caregiver information
+        // Set caregiver information（name）
         holder.caregiverName.setText(caregiver.getName());
 
 
@@ -70,7 +72,7 @@ public class CaregiverAdapter_Help extends RecyclerView.Adapter<CaregiverAdapter
             }
         }
 
-        // Show "You" badge if this is the current caregiver
+        // Show "Primary caregiver" badge if this is the current caregiver-- idk why not showing
         if (holder.youBadge != null) {
             if (caregiver.isCurrentUser()) {
                 holder.youBadge.setVisibility(View.VISIBLE);

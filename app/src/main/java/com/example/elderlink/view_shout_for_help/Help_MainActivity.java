@@ -1,3 +1,5 @@
+// Main activity for the "Shout for Help" feature
+
 package com.example.elderlink.view_shout_for_help;
 
 import android.Manifest;
@@ -38,14 +40,14 @@ import java.util.Set;
 
 public class Help_MainActivity extends AppCompatActivity {
 
-    private static final String TAG = "EmergencyVoiceApp";
-    private static final int PERMISSIONS_REQUEST = 1;
-    private static final int OVERLAY_PERMISSION_REQUEST = 2;
-    public static final String ACCESS_KEY = BuildConfig.WAKEWORD_API_KEY;
+    private static final String TAG = "EmergencyVoiceApp";      // Tag for logging
+    private static final int PERMISSIONS_REQUEST = 1;           // Request code for basic permissions
+    private static final int OVERLAY_PERMISSION_REQUEST = 2;    // Request code for overlay permission
+    public static final String ACCESS_KEY = BuildConfig.WAKEWORD_API_KEY;  // Wake word detection API key
 
-    // No default number - will be null until selected
-    public static String EMERGENCY_NUMBER = null;
-    private boolean isServiceEnabled = false;
+
+    public static String EMERGENCY_NUMBER = null;    // No default number - will be null until selected
+    private boolean isServiceEnabled = false;        // Voice detection service default disabled first
 
     private RecyclerView caregiversRecyclerView;
     private TextView currentContactText, noCaregiversText;
@@ -110,7 +112,7 @@ public class Help_MainActivity extends AppCompatActivity {
     }
 
     private void toggleService() {
-        if (isServiceEnabled) {
+        if (isServiceEnabled) {              // Disable the service (default=false)
             stopVoiceService();
             isServiceEnabled = false;
             Toast.makeText(this, "Voice detection disabled", Toast.LENGTH_SHORT).show();
@@ -122,8 +124,8 @@ public class Help_MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "Please select a caregiver with phone number first", Toast.LENGTH_LONG).show();
                 return;
             }
-            // Do NOT flip the enabled flag yet; only set it after the service actually starts successfully
-            checkPermissionsAndStartService();
+
+            checkPermissionsAndStartService();  // This will start the service if permissions are granted
         }
     }
 
@@ -138,7 +140,7 @@ public class Help_MainActivity extends AppCompatActivity {
     }
 
     private void loadServiceState() {
-        SharedPreferences prefs = getSharedPreferences("EmergencySettings", MODE_PRIVATE);
+        SharedPreferences prefs = getSharedPreferences("EmergencySettings", MODE_PRIVATE);  // Load saved state from SharedPreferences
         isServiceEnabled = prefs.getBoolean("service_enabled", false);
         updateButtonAppearance();
 
@@ -152,11 +154,11 @@ public class Help_MainActivity extends AppCompatActivity {
     }
 
     private void saveServiceState() {
-        SharedPreferences prefs = getSharedPreferences("EmergencySettings", MODE_PRIVATE);
+        SharedPreferences prefs = getSharedPreferences("EmergencySettings", MODE_PRIVATE);  // Save current state into SharedPreferences
         prefs.edit().putBoolean("service_enabled", isServiceEnabled).apply();
     }
 
-    private void setupRecyclerView() {
+    private void setupRecyclerView() {    // Set up RecyclerView and its adapter (CaregiverAdapter_Help)
         caregiverAdapter = new CaregiverAdapter_Help(caregiverList, new CaregiverAdapter_Help.OnCaregiverSelectListener() {
             @Override
             public void onCaregiverSelected(Caregiver caregiver) {
@@ -320,7 +322,7 @@ public class Help_MainActivity extends AppCompatActivity {
         });
     }
 
-    // ... REST OF YOUR PERMISSION METHODS REMAIN THE SAME ...
+    // Permission handling and service start/stop logic-------------------------------------------------------------------------------------------
     private void checkPermissionsAndStartService() {
         Log.d(TAG, "Checking permissions");
 
@@ -393,7 +395,7 @@ public class Help_MainActivity extends AppCompatActivity {
         }
     }
 
-    private void requestOverlayPermission() {
+    private void requestOverlayPermission() {            // Overlay Permission allows an app to  display content over any other application that's currently running on the screen.
         Log.d(TAG, "Checking overlay permission");
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (!Settings.canDrawOverlays(this)) {

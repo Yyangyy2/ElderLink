@@ -76,7 +76,7 @@ public class GPSActivity extends AppCompatActivity {
     private FloatingActionButton fabSafeZone;
     private Polygon safeZoneCircle;
     private boolean isSafeZoneEnabled = false;
-    private double safeZoneRadius = 100.0; // meters
+    private double safeZoneRadius = 100.0; // default meters
     private double safeZoneCenterLat = 0;
     private double safeZoneCenterLon = 0;
 
@@ -714,7 +714,7 @@ public class GPSActivity extends AppCompatActivity {
 
 
     //-----------------------------------------------------------------------------------------------------------------------------------------------------------------
-    // Detects if elder has exited safe zone and triggers alert--------------------------------------------------------------------------------------------------------
+    // Detects if elder has exited safe zone and triggers alert-----------[THE SAFEZONE LOGIC HERE]---------------------------------------------------------------------------
     private void checkSafeZone(Location elderLocation) {
         if (!isSafeZoneEnabled || safeZoneCenterLat == 0) return;     //If safeZoneCenterLat == 0, the safe-zone has not been set yet
 

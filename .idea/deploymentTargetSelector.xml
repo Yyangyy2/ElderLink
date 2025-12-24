@@ -4,7 +4,7 @@
     <selectionStates>
       <SelectionState runConfigName="ElderLink">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-10-13T11:29:36.940367500Z">
+        <DropdownSelection timestamp="2025-11-19T12:15:47.875905400Z">
           <Target type="DEFAULT_BOOT">
             <handle>
               <DeviceId pluginId="PhysicalDevice" identifier="serial=R5CW31JLQQP" />

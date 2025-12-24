@@ -1,14 +1,14 @@
 {
   "project_info": {
-    "project_number": "254677168423",
-    "firebase_url": "https://elderlink-5bc8e-default-rtdb.asia-southeast1.firebasedatabase.app",
-    "project_id": "elderlink-5bc8e",
-    "storage_bucket": "elderlink-5bc8e.firebasestorage.app"
+    "project_number": "241369144184",
+    "firebase_url": "https://elderlink2-81295-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "elderlink2-81295",
+    "storage_bucket": "elderlink2-81295.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:254677168423:android:78da60d3589394b7a7f902",
+        "mobilesdk_app_id": "1:241369144184:android:f15d65fcc18f6f63edc68d",
         "android_client_info": {
           "package_name": "com.example.elderlink"
         }
@@ -16,7 +16,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyA5EPwAlgMorHch7-kvhrNEc2ko8zwyMiI"
+          "current_key": "AIzaSyDI0LHN6eXlhCc2ozrKI6FRVn5qjWWEKUI"
         }
       ],
       "services": {

@@ -67,9 +67,9 @@ public class LocationTrackingService extends Service {
             @Override
             public void onLocationResult(LocationResult locationResult) {
                 if (locationResult != null) {
-                    Location location = locationResult.getLastLocation();
+                    Location location = locationResult.getLastLocation();       // IMPORTANT CODE!!!! GETS LOCATION FROM DEVICE HARDWARE
                     if (location != null) {
-                        sendLocationToFirestore(location);
+                        sendLocationToFirestore(location);                      // then give the data to sendLocationToFirestore method to send to firestore
                         Log.d(TAG, "Location sent: " + location.getLatitude() + ", " + location.getLongitude());
                     }
                 }
@@ -87,7 +87,7 @@ public class LocationTrackingService extends Service {
         locationData.put("latitude", location.getLatitude());
         locationData.put("longitude", location.getLongitude());
         locationData.put("timestamp", System.currentTimeMillis());
-        locationData.put("accuracy", location.getAccuracy());             // Accuracy capture here
+        locationData.put("accuracy", location.getAccuracy());             // Accuracy capture here, a built in data that hardware phone already captures
 
         Map<String, Object> updateData = new HashMap<>();
         updateData.put("location", locationData);

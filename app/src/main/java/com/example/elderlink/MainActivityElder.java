@@ -49,6 +49,7 @@ import com.example.elderlink.view_medication.Model_medication;
 import com.example.elderlink.view_medication.ViewMedicationActivityElderSide;
 import com.example.elderlink.view_shout_for_help.Help_MainActivity;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldPath;
@@ -103,7 +104,6 @@ public class MainActivityElder extends AppCompatActivity {
         caregiverUid = getIntent().getStringExtra("caregiverUid");
 
         nameText.setText(personName);
-
 
         //For display people caring for you section
         setupCaregiverRecyclerView();
@@ -629,6 +629,7 @@ public class MainActivityElder extends AppCompatActivity {
         CaregiverAdapter caregiverAdapter = new CaregiverAdapter(caregiverList);
         recyclerView.setAdapter(caregiverAdapter);
     }
+
 
 
 }

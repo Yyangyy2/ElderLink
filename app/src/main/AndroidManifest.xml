@@ -125,6 +125,15 @@
             android:exported="false"
             android:theme="@style/Theme.ElderLink"/>
 
+        <activity android:name=".view_medication_v2.ViewMedicationActivity_v2"
+            android:exported="false"
+            android:windowSoftInputMode="adjustPan|stateHidden"
+            android:theme="@style/Theme.ElderLink"/>
+
+        <activity android:name=".view_medication_v2.AddMedicationActivity_v2"
+            android:exported="false"
+            android:theme="@style/Theme.ElderLink" />
+
 
 
 
